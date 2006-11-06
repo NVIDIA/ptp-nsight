@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.ptp"
       label="%featureName"
-      version="1.0.0"
+      version="1.1.0"
       provider-name="%providerName"
       image="eclipse_update_120.jpg">
 
