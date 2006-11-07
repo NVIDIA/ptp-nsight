@@ -261,6 +261,17 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				controlSystem.addRuntimeListener(this);		
 				monitor.worked(1);
 				monitoringSystem.initiateDiscovery();
+				// give discovery a chance to complete
+				// This is a fix to bug 163289 and is somewhat of a hack (what if
+				// initiateDiscovery doesn't find any machines).  Hopefully v2.0 design
+				// will find a better way.
+				try {
+					while (universe.getMachines().length < 1) {
+						this.wait(500);
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				monitor.done();
 			} catch (CoreException e) {
 				universe.removeChildren();
