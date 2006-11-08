@@ -66,6 +66,8 @@ import org.eclipse.ptp.rtsystem.simulation.SimulationControlSystem;
 import org.eclipse.ptp.rtsystem.simulation.SimulationMonitoringSystem;
 
 public class ModelManager implements IModelManager, IRuntimeListener {
+	private static int MAX_WAIT_DISCOVERY = 10000;		// maximum wait time for discovery (milliseconds)
+	
 	protected ListenerList modelListeners = new ListenerList();
 	protected ListenerList nodeListeners = new ListenerList();
 	protected ListenerList processListeners = new ListenerList();
@@ -261,13 +263,14 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				controlSystem.addRuntimeListener(this);		
 				monitor.worked(1);
 				monitoringSystem.initiateDiscovery();
-				// give discovery a chance to complete
-				// This is a fix to bug 163289 and is somewhat of a hack (what if
-				// initiateDiscovery doesn't find any machines).  Hopefully v2.0 design
-				// will find a better way.
+				// Give discovery a chance to complete.  This is a fix to
+				// bug 163289. Hopefully v2.0 design will find a better way.
 				try {
+					int count = 1;
 					while (universe.getMachines().length < 1) {
 						this.wait(500);
+						count += 1;
+						if (count*500 > MAX_WAIT_DISCOVERY) break;
 					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -545,6 +548,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	private IPJob newJob(int numProcesses, boolean debug, IProgressMonitor monitor) throws CoreException {
 		int jobID = newJobID();
 		String jobName = "job"+jobID;
+		String jobOwner = "";
 		System.out.println("MODEL MANAGER: newJob("+jobID+")");
 		PJob job = new PJob(universe, jobName, "" + (PJob.BASE_OFFSET + jobID) + "", jobID);		
 		if (debug)
@@ -560,8 +564,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		/* we know that we succeeded, so we can create this many procs in the job.  we just
 		 * need to run getProcsStatusForNewJob() to fill in the status later
 		 */
+		IPNode[] nodes = universe.getMachines()[0].getNodes();
+		if (nodes.length > 0) {
+			jobOwner = (String) nodes[0].getAttribute(AttributeConstants.ATTRIB_NODE_USER);
+		}
+		PProcess.deleteOutputFiles(jobName, jobOwner);
 		for (int i = 0; i < numProcesses; i++) {		
-			IPProcessControl proc = new PProcess(job, jobName+"_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
+			IPProcessControl proc = new PProcess(job, jobOwner, jobName+"_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
 			job.addChild(proc);			
 		}
 

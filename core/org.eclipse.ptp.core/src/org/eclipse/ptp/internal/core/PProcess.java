@@ -35,6 +35,31 @@ import org.eclipse.ptp.internal.core.elementcontrols.IPNodeControl;
 import org.eclipse.ptp.internal.core.elementcontrols.IPProcessControl;
 
 public class PProcess extends Parent implements IPProcessControl {
+	
+	public static void deleteOutputFiles(String jobName, String owner) {
+		String path = outputDirPath(jobName, owner);
+		File outputDirectory = new File(path);
+		if (outputDirectory.exists()) {
+			File files[] = outputDirectory.listFiles();
+			for (int i = 0; i < files.length; i++) {
+				files[i].delete();
+			}
+		}
+	}
+	
+	private static String outputDirPath(String jobName, String owner) {
+		String ownerDir = "";
+		if (owner.length() > 0) {
+			ownerDir = "/ptp_" + owner;
+		}
+		Preferences preferences = PTPCorePlugin.getDefault().getPluginPreferences();
+		String path = preferences.getString(PreferenceConstants.OUTPUT_DIR);
+		if (path == null || path.length() == 0) {
+			path = ResourcesPlugin.getWorkspace().getRoot().getLocation().append(PreferenceConstants.DEF_OUTPUT_DIR_NAME).toOSString();
+		}
+		return path.concat(ownerDir + "/" + jobName);
+	}
+	
 	protected String NAME_TAG = "process ";
 	private String pid = null;
 	private String status = null;
@@ -43,14 +68,13 @@ public class PProcess extends Parent implements IPProcessControl {
 	private boolean isTerminated = false;
 	// private List outputList = new ArrayList();
 	private OutputTextFile outputFile = null;
-	protected String outputDirPath = null;
 	protected int storeLine = 0;
 	/*
 	 * the node that this process is running on, or was scheduled on / will be, etc
 	 */
 	protected IPNodeControl node;
 
-	public PProcess(IPElementControl element, String name, String key, String pid, int taskId, String status, String exitCode, String signalName) {
+	public PProcess(IPElementControl element, String owner, String name, String key, String pid, int taskId, String status, String exitCode, String signalName) {
 		super(element, name, key, P_PROCESS);
 		if (element == null) {
 			throw new IllegalArgumentException("Process, " + name +
@@ -61,21 +85,24 @@ public class PProcess extends Parent implements IPProcessControl {
 		this.setAttribute(AttributeConstants.ATTRIB_ISREGISTERED, new Boolean(false));
 		this.exitCode = exitCode;
 		this.status = status;
-		setOutputStore();
-		outputFile = new OutputTextFile(name, outputDirPath, storeLine);
+		
+		String jobName = name.substring(0, name.indexOf('_'));
+		String outputDirectoryPath = outputDirPath(jobName, owner);
+		setOutputStore(outputDirectoryPath);
+		outputFile = new OutputTextFile(Integer.toString(taskId), outputDirectoryPath, storeLine);
 	}
-	private void setOutputStore() {
+
+	private void setOutputStore(String outputDirectoryPath) {
 		Preferences preferences = PTPCorePlugin.getDefault().getPluginPreferences();
-		outputDirPath = preferences.getString(PreferenceConstants.OUTPUT_DIR);
 		storeLine = preferences.getInt(PreferenceConstants.STORE_LINE);
-		if (outputDirPath == null || outputDirPath.length() == 0)
-			outputDirPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().append(PreferenceConstants.DEF_OUTPUT_DIR_NAME).toOSString();
 		if (storeLine == 0)
 			storeLine = PreferenceConstants.DEF_STORE_LINE;
-		File outputDirectory = new File(outputDirPath);
-		if (!outputDirectory.exists())
-			outputDirectory.mkdir();
+		File outputDirectory = new File(outputDirectoryPath);
+		if (!outputDirectory.exists()) {
+			outputDirectory.mkdirs();
+		}
 	}
+
 	public IPJob getJob() {
 		IPElementControl current = this;
 		do {
