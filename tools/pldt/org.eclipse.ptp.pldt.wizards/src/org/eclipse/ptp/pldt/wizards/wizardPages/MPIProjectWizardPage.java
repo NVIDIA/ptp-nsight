@@ -18,6 +18,7 @@ import org.eclipse.cdt.managedbuilder.ui.wizards.MBSCustomPage;
 import org.eclipse.cdt.managedbuilder.ui.wizards.MBSCustomPageManager;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ptp.pldt.mpi.core.MpiIDs;
@@ -35,15 +36,18 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PlatformUI;
 
 /**
- * Wizard Page for collecting info about MPI project
+ * Wizard Page for collecting info about MPI project - appended to end of
+ * "New Managed Make C project" wizard
  * @author Beth Tibbitts
  * 
  */
 public class MPIProjectWizardPage extends MBSCustomPage {
-	private static final boolean traceOn=true;
+	private static final boolean traceOn=false;
 
 	private Composite composite;
 	public static final String PAGE_ID="org.eclipse.ptp.pldt.wizards.wizardPages.MPIProjectWizardPage";
@@ -69,7 +73,6 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	
 	public static final String MPI_COMPILE_COMMAND_PROP_ID = "mpiCompileCommand";
 	public static final String MPI_LINK_COMMAND_PROP_ID = "mpiLinkCommand";
-	
 
 	private String currentMpiIncludePath;
 	private String currentLibName;
@@ -88,7 +91,6 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	private Text mpiCompileCommandField, mpiLinkCommandField;
 	
 	private Label includePathLabel, libLabel, libPathLabel, mpiCompileCommandLabel, mpiLinkCommandLabel;
-
 
 	private Button browseButton;
 	private Button browseButton2;
@@ -109,13 +111,16 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 
 	/**
 	 * The CDT new project wizard page for MPI projects.  
-	 * Adds the include paths and libary information for an MPI project.
+	 * Adds the include paths, library information, etc. for an MPI project.
 	 * This page shows up after the other CDT new project wizard pages.
 	 * 
 	 */
 	public MPIProjectWizardPage() {
 		super(PAGE_ID);
 
+		//CommonPlugin.log(IStatus.ERROR,"Test error");
+		//CommonPlugin.log(IStatus.WARNING,"Test warning");
+		
 		// access the preference store from the MPI plugin
 		preferenceStore = MpiPlugin.getDefault().getPreferenceStore();
 		String mip=preferenceStore.getString(MpiIDs.MPI_INCLUDES);
@@ -124,12 +129,31 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 		// Set the defaults here in the wizard page constructor and just
 		// overwrite them if the user changes them.
 		defaultMpiIncludePath = preferenceStore.getString(MpiIDs.MPI_INCLUDES);
+		if(defaultMpiIncludePath.length()==0) {
+			// warn if no MPI preferences have been set
+			showNoPrefs();
+		}
 		setDefaultOtherNames(defaultMpiIncludePath);
 		// the following sets what will be remembered when we leave the page.
 		setCurrentMpiIncludePath(defaultMpiIncludePath);
+		
+		defaultMpiBuildCommand=preferenceStore.getString(MpiIDs.MPI_BUILD_CMD);
 		setCurrentMpiCompileCommand(defaultMpiBuildCommand);
-		setCurrentMpiLinkCommand(defaultMpiBuildCommand);
+		setCurrentMpiLinkCommand(defaultMpiBuildCommand);		
+	}
 
+	/**
+	 * Warn user that the MPI project preferences aren't set, and thus the new project wizard will not be very useful.
+	 * <br>
+	 * TODO: do we need a "do not show this message again" setting?
+	 */
+	private void showNoPrefs() {
+		Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		StringBuffer buf=new StringBuffer("No MPI Preferences set; ");
+		buf.append("Default project setting will be more useful if MPI preferences are set first. ");
+		buf.append("\nUse Window > Preferences and select Parallel Language Development Tools, which may be under PTP preferences.");
+		buf.append("You can cancel out of new project wizard to enter MPI preferences now.");
+		MessageDialog.openWarning(shell, "No MPI Preferences set", buf.toString());
 	}
 
 	/**
@@ -148,7 +172,15 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	private void setDefaultOtherNames(String mpiIncludePath) {
 		defaultMpiLibName="mpi";
 		setCurrentMpiLibName(defaultMpiLibName);
-		IPath path = Path.fromOSString(mpiIncludePath);
+		
+		// if >1 path in mpi include path, use just the first
+		// one to guess at the libpath
+		String tempPath=mpiIncludePath;
+		int sepLoc=tempPath.indexOf(java.io.File.pathSeparatorChar);
+		if(-1!=sepLoc) {
+			tempPath=mpiIncludePath.substring(0, sepLoc);
+		}
+		IPath path = Path.fromOSString(tempPath);
 		path=path.removeLastSegments(1);
 		path=path.addTrailingSeparator();
 
@@ -161,11 +193,9 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 		String temp=path.toString();
 		temp=stripTrailingSeparator(temp);
 		defaultMpiIncludePath=temp;
-		setCurrentMpiIncludePath(defaultMpiIncludePath);
-		
-		defaultMpiBuildCommand="mpicc";
+		setCurrentMpiIncludePath(defaultMpiIncludePath);	
+			
 		setCurrentMpiCompileCommand(defaultMpiBuildCommand);
-		
 	}
 
 	/**
@@ -241,7 +271,7 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	 * @param selectedPath
 	 */
 	private void updateIncludePathField(String selectedPath) {
-		System.out.println("APWP.updateLocationField to " + selectedPath);
+		if(traceOn)System.out.println("MPWP.updateLocationField to " + selectedPath);
 		includePathField.setText(selectedPath);
 	}
 	/**
@@ -250,7 +280,7 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	 * @param selectedPath
 	 */
 	private void updateLibPathField(String selectedPath) {
-		System.out.println("APWP.updateLocationField to " + selectedPath);
+		if(traceOn)System.out.println("MPWP.updateLocationField to " + selectedPath);
 		libPathField.setText(selectedPath);
 	}
 
@@ -307,9 +337,9 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 	 * @return the string without any trailing separator
 	 */
 	private String stripTrailingSeparator(String str) {
+		if(str.length()==0)return str;
 		char lastChar = str.charAt(str.length() - 1);
-		// BRT how to find ; vs : in a platform-independent manner?
-		if (lastChar == Path.DEVICE_SEPARATOR|| lastChar== ';') {
+		if (lastChar == java.io.File.pathSeparatorChar) {
 			String temp = str.substring(0, str.length() - 1);
 			return temp;
 		}
@@ -354,6 +384,7 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 		});
 
 		// how do we know when next/finish button pushed? we don't.
+		// we just store all info where we can find it when the MPIProjectRunnable runs after all the wizard pages are done.
 		
 		libLabel=new Label(composite, SWT.NONE);
 		libLabel.setText("Library name:");
@@ -613,7 +644,7 @@ public class MPIProjectWizardPage extends MBSCustomPage {
 
 	/**
 	 * Enable/disable "user area" which is the place user can type and make
-	 * changes (includePathField, and its label and button)
+	 * changes (includePathField, its label and button, etc.)
 	 * 
 	 * @param enabled
 	 */
