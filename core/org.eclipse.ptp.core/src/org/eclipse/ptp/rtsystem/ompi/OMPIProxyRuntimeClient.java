@@ -43,7 +43,7 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 		
 		/* if they don't have the ptp_orte_proxy path set, let's try and give them a default that might help */
 		if(proxyPath.equals("")) {
-			proxyPath = PTPCorePlugin.getDefault().locateFragmentFile("org.eclipse.ptp.orte", "ptp_orte_proxy");
+			proxyPath = PTPCorePlugin.getDefault().locateFragmentFile("org.eclipse.ptp", "ptp_orte_proxy");
 			if(proxyPath != null) preferences.setValue(PreferenceConstants.ORTE_PROXY_PATH, proxyPath);
 			else {
 				String err = "Could not find the ORTE server ('ptp_orte_proxy' binary).  "+
@@ -73,8 +73,11 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 			} else {
 				Thread runThread = new Thread("Proxy Server Thread") {
 					public void run() {
-						String cmd = proxyPath2 + " --port="+getSessionPort();
-						System.out.println("RUNNING PROXY SERVER COMMAND: '"+cmd+"'");
+						String[] cmd = new String[2];
+						cmd[0] = proxyPath2;
+						cmd[1] = "--port="+getSessionPort()
+						;
+						System.out.println("RUNNING PROXY SERVER COMMAND: '"+cmd[0]+" "+cmd[1]+"'");
 						
 						try {
 							Process process = Runtime.getRuntime().exec(cmd);
