@@ -10,7 +10,6 @@
 <li><a href="#pSets">Process Sets</a>
 <li><a href="#pSetsOper">Operations on Process Sets</a>
 <li><a href="#pSetsCreate">Creating Process Sets</a>
-<li><a href="#pSetsOper">Operations on Process Sets</a>
 <li><a href="#bkpt">Breakpoints</a>
 <li><a href="#cip">Current Instruction Pointer</a>
 <li><a href="#reg">Process Registration </a> and the Debug view (including stack traces)
@@ -194,9 +193,11 @@ The marker depends on the type of process stopped at that location.
 <li><img src="images/ipReg.gif">Registered process marker
 <li><img src="images/ipUnreg.gif">Un-registered process marker
 </ul>
-<p>In the following image, the green background indicates a process or processes
-stopped in the current process set; the brown background indicates a process
-or processes stopped in another process set.
+<p>The highlight color of the current instruction pointer
+depends on the stack frame. In the following image, 
+the green background indicates a registered process; the brown background indicates an
+unregistered process.  The blue band behind the highlight color of the line tracks
+the current stack frame.
 <p><img src="images/ptpInstrPtr.gif">
 
 
