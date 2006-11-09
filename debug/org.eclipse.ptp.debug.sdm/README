@@ -16,7 +16,7 @@ it will be run on.
 
 		org.eclipse.ptp.linux.x86
 
-2. Run the following command *in the fragment directory* to configure, build and 
+2. Run the following command IN THE FRAGMENT DIRECTORY to configure, build and 
    install the project:
    
    		sh BUILD
