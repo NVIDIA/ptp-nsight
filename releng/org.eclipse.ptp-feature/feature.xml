@@ -19,9 +19,6 @@
    </license>
 
    <requires>
-      <import plugin="org.eclipse.cdt.debug.core"/>
-      <import plugin="org.eclipse.cdt.ui"/>
-      <import plugin="org.eclipse.cdt.managedbuilder.core"/>
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.ui.ide"/>
       <import plugin="org.eclipse.core.runtime"/>
@@ -34,11 +31,16 @@
       <import plugin="org.eclipse.ui.editors"/>
       <import plugin="org.eclipse.jface.text"/>
       <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="org.eclipse.cdt.debug.core"/>
       <import plugin="org.eclipse.cdt.core"/>
+      <import plugin="org.eclipse.cdt.ui"/>
       <import plugin="org.eclipse.cdt.debug.mi.core"/>
       <import plugin="org.eclipse.cdt.launch"/>
       <import plugin="org.eclipse.cdt.debug.mi.ui"/>
+      <import plugin="org.eclipse.cdt.managedbuilder.core"/>
       <import plugin="org.eclipse.help"/>
+      <import plugin="org.eclipse.jface"/>
+      <import plugin="org.eclipse.ui.views"/>
    </requires>
 
    <plugin
