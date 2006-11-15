@@ -39,7 +39,7 @@ encompasses is selected and shown in grey in the editor.
 
 <h2 id="concur">Show concurrency</h2>
 <p><img src="images/ptp-openMPshowConcurrencymenu.gif"> 
-Select a statement, e.g. the statement highlighted in grey above.
+<br>Select a statement, e.g. the statement highlighted in grey above.
 Select the context menu on the highlighted statement, and click "Show Concurrency"
 as indicated above.  The results are shown below:
 <p><img src="images/ptp-openMPshowConcurrency.gif"> 
@@ -58,13 +58,14 @@ The result includes all highlighted statements between the two barriers.  But be
 <p><img src="images/ptp-openMPproblems.gif"> 
 <p>Along with the analysis for finding OpenMP artifacts,
 common problems are also located, and shown in the OpenMP Problems view.
-<p>Types of problems recognized include:
+Like the OpenMP Artifacts view, the OpenMP Problems view can be used to navigate to the source
+code line by double-clicking on the line in the problems view.
+<p>Types of problems targeted for analysis include:
 <!--  problems identified in PASTSemanticCheck.java -->
 <ul>
 <li>Parallel directive dynamically inside another parallel, establishes single thread context</li>
 <li>For directive embedded within critical, ordered, or master extents</li>
 <li>For directive embedded within another parallel for or parallel sections</li>
-<li>Parallel directive dynamically inside another parallel, establishes single thread context</li>
 <li>For directive embedded within another for, sections, or single directive</li>
 <li>Barrier directive not permitted in region extent of for, ordered, sections, single, master, and critical</li>
 <li>Master directive not permitted in dynamic extent of for, sections, or single directives</li>
