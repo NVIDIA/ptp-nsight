@@ -29,6 +29,7 @@ import org.eclipse.ptp.debug.external.core.cdi.VariableManager;
 import org.eclipse.ptp.debug.external.core.cdi.model.StackFrame;
 import org.eclipse.ptp.debug.external.core.cdi.model.Target;
 import org.eclipse.ptp.debug.external.core.cdi.model.Thread;
+import org.eclipse.ptp.debug.external.core.commands.DataEvaluateExpressionCommand;
 import org.eclipse.ptp.debug.external.core.commands.GetAIFCommand;
 
 /**
@@ -42,6 +43,12 @@ public abstract class Variable extends VariableDescriptor implements IPCDIVariab
 	boolean isFake = false;
 	boolean isUpdated = true;
 	
+	//hack
+	public String getValueString(String var) throws PCDIException {
+		DataEvaluateExpressionCommand command = new DataEvaluateExpressionCommand(getTarget().getTask(), getFullName());
+		getTarget().getDebugger().postCommand(command);
+		return command.getStringValue();
+	}
 	public Variable(VariableDescriptor obj) {
 		super(obj);
 	}

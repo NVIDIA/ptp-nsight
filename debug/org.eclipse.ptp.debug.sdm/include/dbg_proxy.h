@@ -48,6 +48,7 @@
 #define DBG_LISTSIGNALS_CMD				"LSI"
 #define DBG_SIGNALINFO_CMD				"SIG"
 #define DBG_CLIHANDLE_CMD				"CHL"
+#define DBG_DATAEVALUATEEXPRESSION_CMD	"DEE"
 #define DBG_QUIT_CMD					"QUI"
 
 #define DBG_STARTSESSION_FMT			"%s %ld \"%s\" \"%s\""
@@ -65,7 +66,7 @@
 #define DBG_SUSPEND_FMT					"%s"
 #define DBG_LISTSTACKFRAMES_FMT			"%s %d"
 #define DBG_SETCURRENTSTACKFRAME_FMT	"%s %d"
-#define DBG_EVALUATEEXPRESSION_FMT		"%s \"%s\""
+#define DBG_EVALUATEEXPRESSION_FMT		"%s \"%s\" %d"
 #define DBG_GETTYPE_FMT					"%s \"%s\""
 #define DBG_LISTLOCALVARIABLES_FMT		"%s"
 #define DBG_LISTARGUMENTS_FMT			"%s %d"
@@ -78,5 +79,6 @@
 #define DBG_LISTSIGNALS_FMT				"%s \"%s\""
 #define DBG_SIGNALINFO_FMT				"%s \"%s\""
 #define DBG_CLIHANDLE_FMT				"%s \"%s\""
+#define DBG_DATAEVALUATEEXPRESSION_FMT	"%s \"%s\""
 
 #endif /* _DBG_PROXY_H_ */

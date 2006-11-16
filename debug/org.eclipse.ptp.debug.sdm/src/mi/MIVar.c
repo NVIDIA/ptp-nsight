@@ -212,7 +212,7 @@ MIGetDataEvaluateExpressionInfo(MICommand *cmd)
 	char *			expr = NULL;
 
 	if (!cmd->completed || cmd->output == NULL || cmd->output->rr == NULL)
-		return NULL;
+		return expr;
 
 	rr = cmd->output->rr;
 	for (SetList(rr->results); (result = (MIResult *)GetListElement(rr->results)) != NULL; ) {

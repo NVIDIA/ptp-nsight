@@ -64,6 +64,7 @@ static int svr_datawritememory(dbg_backend *, char **);
 static int svr_listsignals(dbg_backend *, char **);
 static int svr_signalinfo(dbg_backend *, char **);
 static int svr_clihandle(dbg_backend *, char **);
+static int svr_dataevaluateexpression(dbg_backend *, char **);
 static int svr_quit(dbg_backend *, char **);
 
 static svr_cmd svr_cmd_tab[] =
@@ -95,6 +96,7 @@ static svr_cmd svr_cmd_tab[] =
 	{DBG_LISTSIGNALS_CMD,			svr_listsignals},
 	{DBG_SIGNALINFO_CMD,			svr_signalinfo},
 	{DBG_CLIHANDLE_CMD,				svr_clihandle},
+	{DBG_DATAEVALUATEEXPRESSION_CMD,svr_dataevaluateexpression},
 	{"QUI",							svr_quit},
 };
 
@@ -250,7 +252,7 @@ svr_setcurrentstackframe(dbg_backend *db, char **args)
 static int 
 svr_evaluateexpression(dbg_backend *db, char **args)
 {
-	return db->db_funcs->evaluateexpression(args[1]);
+	return db->db_funcs->evaluateexpression(args[1], atoi(args[2]));
 }
 
 static int 
@@ -319,6 +321,11 @@ static int
 svr_clihandle(dbg_backend *db, char **args)
 {
 	return db->db_funcs->clihandle(args[1]);
+}
+static int
+svr_dataevaluateexpression(dbg_backend *db, char **args)
+{
+	return db->db_funcs->dataevaluateexpression(args[1]);
 }
 
 static int 

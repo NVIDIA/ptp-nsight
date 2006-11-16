@@ -305,11 +305,11 @@ DbgSetCurrentStackframe(session *s, bitset *set, int level)
  * Expression/variable operations
  */
 int 
-DbgEvaluateExpression(session *s, bitset *set, char *exp)
+DbgEvaluateExpression(session *s, bitset *set, char *exp, int isGet)
 {
 	int		res;
 	char *	set_str = bitset_to_str(set);
-	res = proxy_clnt_sendcmd(s->sess_proxy, DBG_EVALUATEEXPRESSION_CMD, DBG_EVALUATEEXPRESSION_FMT, set_str, exp);
+	res = proxy_clnt_sendcmd(s->sess_proxy, DBG_EVALUATEEXPRESSION_CMD, DBG_EVALUATEEXPRESSION_FMT, set_str, exp, isGet);
 	free(set_str);
 	return res;
 }
@@ -422,13 +422,21 @@ DbgSignalInfo(session *s, bitset *set, char* arg)
 	free(set_str);
 	return res;
 }
-
 int
 DbgCLIHandle(session *s, bitset *set, char* arg)
 {
 	int		res;
 	char *	set_str = bitset_to_str(set);
 	res = proxy_clnt_sendcmd(s->sess_proxy, DBG_CLIHANDLE_CMD, DBG_CLIHANDLE_FMT, set_str, arg);
+	free(set_str);
+	return res;
+}
+int
+DbgDataEvaluateExpression(session *s, bitset *set, char* arg)
+{
+	int		res;
+	char *	set_str = bitset_to_str(set);
+	res = proxy_clnt_sendcmd(s->sess_proxy, DBG_DATAEVALUATEEXPRESSION_CMD, DBG_DATAEVALUATEEXPRESSION_FMT, set_str, arg);
 	free(set_str);
 	return res;
 }

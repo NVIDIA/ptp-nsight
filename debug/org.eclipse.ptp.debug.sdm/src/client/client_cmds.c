@@ -495,7 +495,7 @@ DbgClntEvaluateExpression(char **args)
 		return DBGRES_ERR;
 	}
 	
-	asprintf(&cmd, "%s \"%s\"", DBG_EVALUATEEXPRESSION_CMD, args[2]);
+	asprintf(&cmd, "%s \"%s\" %s", DBG_EVALUATEEXPRESSION_CMD, args[2], args[3]);
 	res = ClntSvrSendCommand(set, DBG_EV_WAITALL, cmd, NULL);
 	
 	free(cmd);
@@ -736,6 +736,26 @@ DbgClntCLIHandle(char **args)
 	}
 	
 	asprintf(&cmd, "%s \"%s\"", DBG_CLIHANDLE_CMD, args[2]);
+	res = ClntSvrSendCommand(set, DBG_EV_WAITALL, cmd, NULL);
+	bitset_free(set);
+	
+	return res;
+}
+
+int 
+DbgClntDataEvaluateExpression(char **args)
+{
+	int			res;
+	char *		cmd;
+	bitset *	set; 
+
+	set = str_to_bitset(args[1]);
+	if (set == NULL) {
+		DbgSetError(DBGERR_PROCSET, NULL);
+		return DBGRES_ERR;
+	}
+	
+	asprintf(&cmd, "%s \"%s\"", DBG_DATAEVALUATEEXPRESSION_CMD, args[2]);
 	res = ClntSvrSendCommand(set, DBG_EV_WAITALL, cmd, NULL);
 	bitset_free(set);
 	

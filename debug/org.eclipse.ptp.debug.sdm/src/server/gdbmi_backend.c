@@ -84,8 +84,8 @@ static void *		AsyncFuncData;
 
 static int	SetAndCheckBreak(int, int, int, char *, char *, int, int);
 static int	GetStackframes(int, List **);
-static int	GetAIFVar(char *, AIF **, char **);
-static AIF * ConvertVarToAIF(char *, MIVar *, int);
+static int	GetAIFVar(char *, AIF **, char **, int);
+static AIF * ConvertVarToAIF(char *, MIVar *, int, int);
 static AIF * GetPrimitiveTypeToAIF(int, char *); 
 
 static int	GDBMIInit(void (*)(dbg_event *, void *), void *);
@@ -105,7 +105,7 @@ static int	GDBMIStep(int, int);
 static int	GDBMITerminate(void);
 static int	GDBMIListStackframes(int);
 static int	GDBMISetCurrentStackframe(int);
-static int	GDBMIEvaluateExpression(char *);
+static int	GDBMIEvaluateExpression(char *, int);
 static int	GDBMIGetNativeType(char *);
 #ifdef notdef
 static int	GDBMIGetAIFType(char *);
@@ -121,6 +121,7 @@ static int	GDBMIGetGlobalVariables(void);
 static int	GDBCLIListSignals(char*);
 static int	GDBCLISignalInfo(char*);
 static int	GDBCLIHandle(char*);
+static int	GDBMIDataEvaluateExpression(char*);
 static int	GDBMIQuit(void);
 
 static char* GetModifierType(char *);
@@ -128,7 +129,7 @@ static int getSimpleTypeID(char*, char*);
 static AIF* CreateNamed(AIF*, int);
 
 static char * GetPtypeValue(char *);
-static AIF * ComplexVarToAIF(char *, MIVar *, int);
+static AIF * ComplexVarToAIF(char *, MIVar *, int, int);
 static AIF * GetAIFPointer(char *res, AIF *a);
 static int GetAddressLength();
 static List * GetChangedVariables();
@@ -166,6 +167,7 @@ dbg_backend_funcs	GDBMIBackend =
 	GDBCLIListSignals,
 	GDBCLISignalInfo,
 	GDBCLIHandle,
+	GDBMIDataEvaluateExpression,
 	GDBMIQuit
 };
 
@@ -575,9 +577,11 @@ FindVARByName(char *name)
 {
 	int				i;
 	struct varinfo *map;
+//printf("---- Var: %s, Total: %d\n", name, VARMap.nels);
 	for (i = 0; i < VARMap.nels; i++) {
 		map = &VARMap.maps[i];
-		if (map != NULL && strcmp(map->name, name) == 0) {
+//printf("------ map: %s\n", map->name);
+		if (map != NULL && map->name != NULL && strcmp(map->name, name) == 0) {
 			return map;
 		}
 	}
@@ -710,8 +714,9 @@ GetChangedVariables()
 	}
 	MIGetVarUpdateInfo(cmd, &changes);
 	MICommandFree(cmd);
-	
+
 	changedVars = NewList();
+
 	for (SetList(changes); (var = (MIVarChange *)GetListElement(changes)) != NULL; ) {
 		mi_name = GetParentVar(var->name);
 		
@@ -719,8 +724,10 @@ GetChangedVariables()
 		if (var->in_scope == 1) {
 			if (map != NULL) {
 				replaced_name = replaceName(var->name, map->name);
-				AddToList(changedVars, (void *)strdup(replaced_name));
-				free(replaced_name);
+				if (!InList(changedVars, replaced_name)) {
+					AddToList(changedVars, (void *)strdup(replaced_name));
+					free(replaced_name);
+				}
 			}
 		}
 		else {
@@ -1536,17 +1543,20 @@ DumpBinaryValue(MISession *sess, char *exp, char *file)
 ** Evaluate the expression exp.
 */
 static int
-GDBMIEvaluateExpression(char *exp)
+GDBMIEvaluateExpression(char *exp, int isGet)
 {
 	char *		type;
 	AIF *		a;
 	dbg_event *	e;
 
-	if (GetAIFVar(exp, &a, &type) != DBGRES_OK)
+	if (GetAIFVar(exp, &a, &type, isGet) != DBGRES_OK)
 		return DBGRES_ERR;
 		
 	e = NewDbgEvent(DBGEV_DATA);
 	e->dbg_event_u.data_event.data = a;
+	if (type == NULL) {
+		type = strdup("");
+	}
 	e->dbg_event_u.data_event.type_desc = type;
 	SaveEvent(e);
 
@@ -1600,20 +1610,23 @@ struct simple_type simple_types[] = {
 };
 
 static char *
-GetVarValue(char *var)
+GetVarValue(char *var, int isGet)
 {
-	char *		res;
-	MICommand *	cmd = MIVarEvaluateExpression(var);
-
-	SendCommandWait(DebugSession, cmd);
-	if (!MICommandResultOK(cmd)) {
-		DbgSetError(DBGERR_DEBUGGER, GetLastErrorStr());
+	if (isGet == 1) {
+		char *		res;
+		MICommand *	cmd = MIVarEvaluateExpression(var);
+	
+		SendCommandWait(DebugSession, cmd);
+		if (!MICommandResultOK(cmd)) {
+			DbgSetError(DBGERR_DEBUGGER, GetLastErrorStr());
+			MICommandFree(cmd);
+			return NULL;
+		}
+		res = MIGetVarEvaluateExpressionInfo(cmd);
 		MICommandFree(cmd);
-		return NULL;
-	}
-	res = MIGetVarEvaluateExpressionInfo(cmd);
-	MICommandFree(cmd);
-	return res;
+		return res;
+	}	
+	return strdup("");
 }
 
 static int
@@ -1648,7 +1661,7 @@ GetPtypeValue(char *exp)
 }
 
 static AIF *
-SimpleVarToAIF(char *exp, MIVar *var)
+SimpleVarToAIF(char *exp, MIVar *var, int isGet)
 {
 	int		len;
 	char	*p;
@@ -1663,14 +1676,14 @@ SimpleVarToAIF(char *exp, MIVar *var)
 	} 
 
 	if (strcmp(var->type, "char *") == 0) { /* void pointer */
-		if ((res = GetVarValue(var->name)) != NULL) {
+		if ((res = GetVarValue(var->name, isGet)) != NULL) {
 			return GetAIFPointer(res, CharPointerToAIF(res));			
 		}
 	}
 	
 	if (strcmp(var->type, "void *") == 0) { /* void pointer */
 		av = VoidToAIF(0, 0);
-		a = GetAIFPointer(GetVarValue(var->name), av);
+		a = GetAIFPointer(GetVarValue(var->name, isGet), av);
 		AIFFree(av);
 		return a;
 	} 
@@ -1685,7 +1698,7 @@ SimpleVarToAIF(char *exp, MIVar *var)
 	}
 	
 	if ((type_id = getSimpleTypeID(var->type, exp)) >  -1) {
-		if ((res = GetVarValue(var->name)) != NULL) {
+		if ((res = GetVarValue(var->name, isGet)) != NULL) {
 			return GetPrimitiveTypeToAIF(type_id, res);
 		}
 	}
@@ -1803,7 +1816,7 @@ GetModifierType(char* type)
 }
 
 static AIF *
-CreateStruct(MIVar *var, int named)
+CreateStruct(MIVar *var, int named, int isGet)
 {
 	int		i;
 	MIVar *	v;
@@ -1826,7 +1839,7 @@ CreateStruct(MIVar *var, int named)
 			ac = AIFNull(a);
 		}
 		else {
-			if ( (ac = ConvertVarToAIF(v->exp, v, named)) == NULL ) {
+			if ( (ac = ConvertVarToAIF(v->exp, v, named, isGet)) == NULL ) {
 				AIFFree(a);
 				return NULL;
 			}
@@ -1837,7 +1850,7 @@ CreateStruct(MIVar *var, int named)
 }
 
 static AIF *
-CreateUnion(MIVar *var, int named)
+CreateUnion(MIVar *var, int named, int isGet)
 {
 	int		i;
 	MIVar *	v;
@@ -1859,7 +1872,7 @@ CreateUnion(MIVar *var, int named)
 			ac = AIFNull(a);
 		}
 		else {
-			if ( (ac = ConvertVarToAIF(v->exp, v, named)) == NULL ) {
+			if ( (ac = ConvertVarToAIF(v->exp, v, named, isGet)) == NULL ) {
 				AIFFree(a);
 				return NULL;
 			}
@@ -1885,7 +1898,7 @@ CreateNamed(AIF *a, int named)
 }
 
 static AIF *
-CreateArray(MIVar *var, int named)
+CreateArray(MIVar *var, int named, int isGet)
 {
 	int		i;
 	MIVar *	v;
@@ -1894,7 +1907,7 @@ CreateArray(MIVar *var, int named)
 
 	for (i = 0; i < var->numchild; i++) {
 		v = var->children[i];
-		if ((ac = ConvertVarToAIF(v->exp, v, named)) == NULL) {
+		if ((ac = ConvertVarToAIF(v->exp, v, named, isGet)) == NULL) {
 			return NULL;
 		}
 		if (a == NULL)
@@ -1926,7 +1939,7 @@ GetAIFPointer(char *res, AIF *i)
 }
 
 static AIF *
-ConvertVarToAIF(char *exp, MIVar *var, int named)
+ConvertVarToAIF(char *exp, MIVar *var, int named, int isGet)
 {
 	AIF *	a = NULL;
 	MICommand	*cmd;
@@ -1937,7 +1950,7 @@ ConvertVarToAIF(char *exp, MIVar *var, int named)
 	}
 	
 	if (var->numchild == 0) { //simple type
-		return SimpleVarToAIF(exp, var);
+		return SimpleVarToAIF(exp, var, isGet);
 	}
 	
 	//complex type	
@@ -1951,7 +1964,7 @@ ConvertVarToAIF(char *exp, MIVar *var, int named)
 	MIGetVarListChildrenInfo(var, cmd);
 	MICommandFree(cmd);
 
-	a = ComplexVarToAIF(exp, var, named);
+	a = ComplexVarToAIF(exp, var, named, isGet);
 	if (a == NULL) {
 		DbgSetError(DBGERR_UNKNOWN_TYPE, "type not supported (yet)");
 	}
@@ -1959,7 +1972,7 @@ ConvertVarToAIF(char *exp, MIVar *var, int named)
 }
 
 static AIF * 
-ComplexVarToAIF(char *exp, MIVar *var, int named) 
+ComplexVarToAIF(char *exp, MIVar *var, int named, int isGet) 
 {
 	AIF 	*a;
 	char	*p;
@@ -1969,19 +1982,19 @@ ComplexVarToAIF(char *exp, MIVar *var, int named)
 
 	switch (var->type[strlen(var->type) - 1]) {
 	case ']': /* array */
-		a = CreateArray(var, named);
+		a = CreateArray(var, named, isGet);
 		break;
 
 	case '*': /* pointer */
-		if ((res = GetVarValue(var->name)) == NULL) {
+		if ((res = GetVarValue(var->name, isGet)) == NULL) {
 			a = VoidToAIF(0, 0);
 		}
 		else {//get address
 			type = strdup(var->type);
 			if (strncmp(type, "struct", 6) == 0) {
-				a = CreateStruct(var, named);
+				a = CreateStruct(var, named, isGet);
 			} else if (strncmp(type, "union", 5) == 0) {
-				a = CreateUnion(var, named);
+				a = CreateUnion(var, named, isGet);
 			} else if (strncmp(type, "char *", 6) == 0) {//char pointer
 				a = CharPointerToAIF(res);
 			} else { //other types
@@ -1992,7 +2005,7 @@ ComplexVarToAIF(char *exp, MIVar *var, int named)
 					a = GetPrimitiveTypeToAIF(type_id, res);
 				}
 				else {
-					a = ConvertVarToAIF(var->children[0]->exp, var->children[0], named);
+					a = ConvertVarToAIF(var->children[0]->exp, var->children[0], named, isGet);
 				}
 			}
 			free(type);
@@ -2004,17 +2017,17 @@ ComplexVarToAIF(char *exp, MIVar *var, int named)
 					
 	default:
 		if (strncmp(var->type, "union", 5) == 0) {
-			a = CreateUnion(var, named);
+			a = CreateUnion(var, named, isGet);
 		}
 		else {
 			//if (strncmp(var->type, "struct", 6) == 0) { /* struct */
-			a = CreateStruct(var, named);
+			a = CreateStruct(var, named, isGet);
 		}
 	}
 	
 	if (a == NULL) {//try again with ptype
 		var->type = GetPtypeValue(exp);
-		a = ComplexVarToAIF(NULL, var, named);
+		a = ComplexVarToAIF(NULL, var, named, isGet);
 	}
 	return a;
 }
@@ -2031,7 +2044,7 @@ GDBMIGetNativeType(char *var)
 
 	CHECK_SESSION()
 
-	if (GetAIFVar(var, &a, &type) != DBGRES_OK)
+	if (GetAIFVar(var, &a, &type, 0) != DBGRES_OK)
 		return DBGRES_ERR;
 		
 	e = NewDbgEvent(DBGEV_TYPE);
@@ -2072,7 +2085,7 @@ GDBMIGetAIFType(char *var)
 #endif
 
 static int
-GetAIFVar(char *var, AIF **val, char **type)
+GetAIFVar(char *var, AIF **val, char **type, int isGet)
 {
 	AIF *		res;
 	struct varinfo *map;
@@ -2108,7 +2121,7 @@ GetAIFVar(char *var, AIF **val, char **type)
 	mivar = MIGetVarCreateInfo(cmd);
 	MICommandFree(cmd);
 	*/
-	if ( (res = ConvertVarToAIF(var, mivar, 0)) == NULL ) {
+	if ( (res = ConvertVarToAIF(var, mivar, 0, isGet)) == NULL ) {
 		return DBGRES_ERR;
 	}
 	*type = strdup(mivar->type);
@@ -2505,6 +2518,42 @@ GDBCLIHandle(char *arg)
 	SaveEvent(NewDbgEvent(DBGEV_OK));
 	return DBGRES_OK;
 } 
+
+
+static int
+GDBMIDataEvaluateExpression(char *var)
+{
+	MICommand *cmd;
+	dbg_event *	e;
+	char *expr = NULL;
+		
+	CHECK_SESSION();
+
+	cmd = MIDataEvaluateExpression(var);
+	SendCommandWait(DebugSession, cmd);
+	//if (!MICommandResultOK(cmd)) {
+		//DbgSetError(DBGERR_DEBUGGER, GetLastErrorStr());
+		//MICommandFree(cmd);
+		//return DBGRES_ERR;
+	//}
+
+	/** avoid getting following error to break the whole program
+	 * &"Cannot access memory at address 0x2f9e053f\n"
+	 * ^error,msg="Cannot access memory at address 0x2f9e053f
+	 */
+	e = NewDbgEvent(DBGEV_DATA_EV_EX);
+	if (MICommandResultOK(cmd)) {
+		expr = MIGetDataEvaluateExpressionInfo(cmd);
+	}
+	if (expr == NULL) {
+		expr = strdup("");
+	}
+	e->dbg_event_u.type_desc = expr;
+	MICommandFree(cmd);
+	SaveEvent(e);
+
+	return DBGRES_OK;	
+}
 
 #if 0
 char tohex[] =	{'0', '1', '2', '3', '4', '5', '6', '7', 

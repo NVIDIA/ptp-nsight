@@ -350,6 +350,12 @@ DbgEventToStr(dbg_event *e, char **result)
 		free(str);
 		free(str2);
 		break;
+
+	case DBGEV_DATA_EV_EX:
+		proxy_cstring_to_str(e->dbg_event_u.type_desc, &str);
+		asprintf(result, "%d %s %s", e->event, pstr, str);
+		free(str);
+		break;
 		
 	default:
 		res = -1;
@@ -786,6 +792,12 @@ DbgStrToEvent(char *str, dbg_event **ev)
 			goto error_out;
 		break;
 
+	case DBGEV_DATA_EV_EX:
+		e = NewDbgEvent(DBGEV_DATA_EV_EX);
+		if (proxy_str_to_cstring(*ap++, &e->dbg_event_u.type_desc) < 0)
+			goto error_out;
+		break;
+
 	default:
 		goto error_out;
 	}
@@ -906,6 +918,12 @@ FreeDbgEvent(dbg_event *e) {
 		if (e->dbg_event_u.bpset_event.bp != NULL)
 			FreeBreakpoint(e->dbg_event_u.bpset_event.bp);
 		break;
+
+	case DBGEV_DATA_EV_EX:
+		if (e->dbg_event_u.type_desc != NULL)
+			free(e->dbg_event_u.type_desc);
+		break;
+		
 	}
 	
 	if (e->procs != NULL)

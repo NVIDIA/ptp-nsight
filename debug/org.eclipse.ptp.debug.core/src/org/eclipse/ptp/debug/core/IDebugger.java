@@ -50,6 +50,7 @@ public interface IDebugger {
 	 */
 	
 	/* Program Information */
+	public void dataEvaluateExpression(BitList tasks, String var) throws PCDIException;
 	
 	public int getDebuggerPort() throws CoreException;
 	
@@ -61,8 +62,8 @@ public interface IDebugger {
 	public void setCurrentStackFrame(BitList tasks, int level) throws PCDIException;
 	
 	/* Data Display and Manipulation */
-	public void getAIFValue(BitList tasks, String expr) throws PCDIException;
-	public void evaluateExpression(BitList tasks, String expression) throws PCDIException;
+	public void getAIFValue(BitList tasks, String expr, boolean isGet) throws PCDIException;
+	public void evaluateExpression(BitList tasks, String expression, boolean isGet) throws PCDIException;
 	public void getVariableType(BitList tasks, String varName) throws PCDIException;	
 	public void listArguments(BitList tasks, IPCDIStackFrame frame, int depth) throws PCDIException;
 	public void listLocalVariables(BitList tasks, IPCDIStackFrame frame) throws PCDIException;

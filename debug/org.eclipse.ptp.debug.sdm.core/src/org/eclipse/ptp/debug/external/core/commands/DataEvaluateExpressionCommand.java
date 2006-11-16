@@ -16,24 +16,37 @@
  * 
  * LA-CC 04-115
  *******************************************************************************/
-package org.eclipse.ptp.debug.core.cdi.model;
+package org.eclipse.ptp.debug.external.core.commands;
 
-import org.eclipse.ptp.debug.core.aif.IAIF;
+import org.eclipse.ptp.core.util.BitList;
+import org.eclipse.ptp.debug.core.IAbstractDebugger;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
 
 /**
  * @author Clement chu
  * 
  */
-public interface IPCDIVariable  extends IPCDIVariableDescriptor {
-	boolean isEditable() throws PCDIException;
-	void setValue(String expression) throws PCDIException;
-	void setValue(IAIF aif) throws PCDIException;
-	void dispose() throws PCDIException;
-	boolean equals(IPCDIVariable variable);
-	public void setChildren(IPCDIVariable[] children);
-	public IPCDIVariable[] getChildren();
-	public String getValueString(String var) throws PCDIException;
+public class DataEvaluateExpressionCommand extends AbstractDebugCommand {
+	private String varName = "";
+	
+	public DataEvaluateExpressionCommand(BitList tasks, String varName) {
+		super(tasks);
+		this.varName = varName;
+	}
+	public void preExecCommand(IAbstractDebugger debugger) throws PCDIException {
+		checkBeforeExecCommand(debugger);
+	}
+	public void exec(IAbstractDebugger debugger) throws PCDIException {
+		debugger.dataEvaluateExpression(tasks, varName);
+	}
+	public String getStringValue() throws PCDIException {
+		Object res = getResultValue();
+		if (res instanceof String) {
+			return (String)res;
+		}
+		throw new PCDIException("Unknown value: " + res);
+	}
+	public String getCommandName() {
+		return "Data Evaluate Expression " + varName; 
+	}
 }
-
-

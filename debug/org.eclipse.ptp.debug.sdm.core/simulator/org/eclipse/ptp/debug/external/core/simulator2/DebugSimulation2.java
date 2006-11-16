@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ptp.core.IPJob;
 import org.eclipse.ptp.core.util.BitList;
@@ -168,8 +169,11 @@ public class DebugSimulation2 extends AbstractDebugger implements IDebugger, Obs
 	/***************************************************************************************************************************************************************************************************
 	 * not implement yet
 	 **************************************************************************************************************************************************************************************************/
+	public void dataEvaluateExpression(final BitList tasks, final String var) throws PCDIException {
+		throw new PCDIException(PCDIException.NOT_IMPLEMENTED, "data evaluate expression");
+	}
 	
-	public void getAIFValue(final BitList tasks, final String expr) throws PCDIException {
+	public void getAIFValue(final BitList tasks, final String expr, final boolean isGet) throws PCDIException {
 		new Thread(new Runnable() {
 			public void run() {
 				IAIF aif = null;
@@ -340,7 +344,7 @@ public class DebugSimulation2 extends AbstractDebugger implements IDebugger, Obs
 			}
 		}).start();
 	}
-	public void evaluateExpression(final BitList tasks, final String expression) throws PCDIException {
+	public void evaluateExpression(final BitList tasks, final String expression, boolean isGet) throws PCDIException {
 		new Thread(new Runnable() {
 			public void run() {
 				SimVariable variable = findVariable(expression);

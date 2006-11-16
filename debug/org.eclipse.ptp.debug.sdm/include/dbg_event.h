@@ -57,6 +57,8 @@
 #define DBGEV_DATAW_MEM		DBG_EV_OFFSET + 18
 #define DBGEV_SIGNALS		DBG_EV_OFFSET + 19
 
+#define DBGEV_DATA_EV_EX	DBG_EV_OFFSET + 20
+
 struct dbg_suspend_event {
 	int	reason;
 	

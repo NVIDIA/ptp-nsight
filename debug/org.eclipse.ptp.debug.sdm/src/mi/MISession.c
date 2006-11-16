@@ -316,10 +316,13 @@ ReadResponse(int fd)
 		
 		p = &res_buf[len];
 	}
-	
-#ifdef DEBUG
+
 	if (n > 0)
-		p[n] = '\0';
+		p[n] = '\0';	
+#ifdef DEBUG
+	//why this code for DEBUG only
+	//if (n > 0)
+		//p[n] = '\0';	
 	printf("<<<gdb %s\n", res_buf); fflush(stdout);
 #endif
 
@@ -380,8 +383,7 @@ MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds
 		
 		//output = MIParse(str);
 		MIParse(str, output);
-			
-			
+
 		/*
 		 * The output can consist of:
 		 * 	async oob records that are not necessarily the result of a command

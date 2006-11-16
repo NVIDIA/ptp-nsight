@@ -69,7 +69,7 @@ int 	DbgSetCurrentStackframe(session *s, bitset *set, int level);
 /*
  * Expression/variable operations
  */
-int 	DbgEvaluateExpression(session *s, bitset *set, char *exp);
+int 	DbgEvaluateExpression(session *s, bitset *set, char *exp, int isGet);
 int 	DbgGetType(session *s, bitset *set, char *exp);
 int 	DbgListLocalVariables(session *s, bitset *set);
 int 	DbgListArguments(session *s, bitset *set, int);
@@ -115,5 +115,7 @@ int 	DbgCLIHandle(session *s, bitset *set, char*);
  */
 int 	DbgListSignals(session *s, bitset *set, char*);
 int 	DbgSignalInfo(session *s, bitset *set, char*);
+
+int 	DbgDataEvaluateExpression(session *s, bitset *set, char*);
  
 #endif /* _DBG_H_ */

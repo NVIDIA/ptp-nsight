@@ -225,7 +225,7 @@ do_test(session *s, char *dir, char *exe)
 	
 	itimer_mark(t, "step");
 
-	if (DbgEvaluateExpression(s, p1, "a") < 0) {
+	if (DbgEvaluateExpression(s, p1, "a", 1) < 0) {
 		fprintf(stderr, "error: %s\n", DbgGetErrorStr());
 		return 1;
 	}

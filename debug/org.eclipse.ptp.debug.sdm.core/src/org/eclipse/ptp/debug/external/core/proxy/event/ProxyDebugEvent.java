@@ -20,6 +20,7 @@
 package org.eclipse.ptp.debug.external.core.proxy.event;
 
 import java.math.BigInteger;
+
 import org.eclipse.ptp.core.proxy.event.IProxyEvent;
 import org.eclipse.ptp.core.proxy.event.ProxyEvent;
 import org.eclipse.ptp.core.util.BitList;
@@ -364,6 +365,13 @@ public class ProxyDebugEvent extends ProxyEvent {
 			IAIF data = new AIF(decodeString(args[2]), decodeBytes(args[3]), decodeString(args[4]));
 			evt = new ProxyDebugDataEvent(set, data);
 			break;
+
+		/**
+		 * [2]: type name
+		 */
+		case IProxyDebugEvent.EVENT_DBG_DATA_EV_EX:
+			evt = new ProxyDebugTypeEvent(set, decodeString(args[2]));
+			break;			
 		}
 		return evt;
 	}

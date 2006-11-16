@@ -122,8 +122,8 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 		sendCommand("SCS", procs, Integer.toString(level));
 	}
 
-	public void debugEvaluateExpression(BitList procs, String expr) throws IOException {
-		sendCommand("EEX", procs, expr);
+	public void debugEvaluateExpression(BitList procs, String expr, boolean isGet) throws IOException {
+		sendCommand("EEX", procs, expr, Integer.toString(isGet?1:0));
 	}
 
 	public void debugGetType(BitList procs, String expr) throws IOException {
@@ -141,7 +141,6 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 	public void debugListGlobalVariables(BitList procs) throws IOException {
 		sendCommand("LGV", procs);
 	}
-
 
 	public void debugListInfoThreads(BitList procs) throws IOException {
 		sendCommand("ITH", procs);
@@ -182,5 +181,8 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 	}
 	public void debugCLIHandle(BitList procs, String arg) throws IOException {
 		sendCommand("CHL", procs, arg);
+	}
+	public void dataEvaluateExpression(BitList procs, String arg) throws IOException {
+		sendCommand("DEE", procs, arg);
 	}
 }

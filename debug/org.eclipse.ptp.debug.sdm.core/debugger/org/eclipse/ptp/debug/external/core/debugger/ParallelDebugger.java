@@ -248,16 +248,16 @@ public class ParallelDebugger extends AbstractDebugger implements IDebugger, IPr
 	/**
 	 * evaluate expression for first process in procs
 	 */
-	public void evaluateExpression(BitList tasks, String expr) throws PCDIException {
+	public void evaluateExpression(BitList tasks, String expr, boolean isGet) throws PCDIException {
 		try {
-			proxy.debugEvaluateExpression(tasks, expr);
+			proxy.debugEvaluateExpression(tasks, expr, isGet);
 		} catch (IOException e) {
 			throw new PCDIException(e.getMessage());
 		}
 	}
 	
-	public void getAIFValue(BitList tasks, String expr) throws PCDIException {
-		evaluateExpression(tasks, expr);
+	public void getAIFValue(BitList tasks, String expr, boolean isGet) throws PCDIException {
+		evaluateExpression(tasks, expr, isGet);
 	}
 	/**
 	 * get variable type for first process in procs
@@ -400,6 +400,16 @@ public class ParallelDebugger extends AbstractDebugger implements IDebugger, IPr
 			throw new PCDIException(e.getMessage());
 		}
 	}
+	
+	public void dataEvaluateExpression(BitList tasks, String arg) throws PCDIException {
+		try {
+			proxy.dataEvaluateExpression(tasks, arg);
+		} catch (IOException e) {
+			throw new PCDIException(e.getMessage());
+		}
+	}
+	
+	
 	protected int getErrorCode(int internalErrorCode) {
 		switch (internalErrorCode) {
 		case IParallelDebuggerConstants.DBGERR_DEBUGGER:
@@ -610,6 +620,10 @@ public class ParallelDebugger extends AbstractDebugger implements IDebugger, IPr
 			completeCommand(e.getBitSet(), new PCDIException(errMsg, err_code));
 			handleException(e.getBitSet(), err_code);
 			//completeCommand(e.getBitSet(), new PCDIException(errMsg, getErrorCode(errEvent.getErrorCode())));
+			break;
+
+		case IProxyDebugEvent.EVENT_DBG_DATA_EV_EX:
+			completeCommand(e.getBitSet(), ((ProxyDebugTypeEvent)e).getType());
 			break;
 		}
 	}	

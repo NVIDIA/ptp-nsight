@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
 import org.eclipse.cdt.core.IAddress;
 import org.eclipse.cdt.core.IAddressFactory;
 import org.eclipse.debug.core.DebugException;
@@ -64,6 +65,15 @@ public class PValue extends AbstractPValue {
 		return (getParentVariable() != null) ? getParentVariable().getReferenceTypeName() : null;
 	}
 	public String getValueString() throws DebugException {
+		if (fValueString == null) {
+			IPCDIVariable cdiVar = getParentVariable().getCDIVariable();
+			try {
+				fValueString = cdiVar.getValueString("");
+			} catch (PCDIException e) {
+				setStatus(IPDebugElementStatus.ERROR, e.getMessage());
+			}
+		}
+		/*
 		if (fValueString == null && getUnderlyingValue() != null) {
 			resetStatus();
 			IPStackFrame cframe = getParentVariable().getStackFrame();
@@ -76,6 +86,7 @@ public class PValue extends AbstractPValue {
 				}
 			}
 		}
+		*/
 		return fValueString;
 	}
 	public boolean isAllocated() throws DebugException {

@@ -30,16 +30,21 @@ import org.eclipse.ptp.debug.core.cdi.PCDIException;
  */
 public class GetAIFCommand extends AbstractDebugCommand {
 	private String varName = "";
-	
-	public GetAIFCommand(BitList tasks, String varName) {
+	private boolean isGet = false;
+
+	public GetAIFCommand(BitList tasks, String varName, boolean isGet) {
 		super(tasks);
 		this.varName = varName;
+		this.isGet = isGet;
+	}
+	public GetAIFCommand(BitList tasks, String varName) {
+		this(tasks, varName, false);
 	}
 	public void preExecCommand(IAbstractDebugger debugger) throws PCDIException {
 		checkBeforeExecCommand(debugger);
 	}
 	public void exec(IAbstractDebugger debugger) throws PCDIException {
-		debugger.getAIFValue(tasks, varName);
+		debugger.getAIFValue(tasks, varName, isGet);
 	}
 	public IAIF getAIF() throws PCDIException {
 		try {
@@ -53,6 +58,6 @@ public class GetAIFCommand extends AbstractDebugCommand {
 		}
 	}
 	public String getCommandName() {
-		return "Get AIF"; 
+		return "Get AIF - " + varName; 
 	}
 }
