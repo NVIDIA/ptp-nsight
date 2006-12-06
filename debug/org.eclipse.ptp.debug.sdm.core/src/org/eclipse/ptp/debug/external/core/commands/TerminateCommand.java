@@ -31,6 +31,7 @@ public class TerminateCommand extends AbstractDebugCommand {
 	
 	public TerminateCommand(BitList tasks, boolean sendEvent) {
 		super(tasks, true, true, false);
+		setPriority(PRIORITY_H);
 		this.sendEvent = sendEvent;
 	}
 	public TerminateCommand(BitList tasks) {
@@ -41,7 +42,7 @@ public class TerminateCommand extends AbstractDebugCommand {
 		if (!tasks.isEmpty()) {
 			suspendRunningTasks(debugger);
 			exec(debugger);
-			if (sendEvent) {
+			if (waitForReturn() && sendEvent) {
 				debugger.handleProcessTerminatedEvent(tasks, 0);
 			}
 		}

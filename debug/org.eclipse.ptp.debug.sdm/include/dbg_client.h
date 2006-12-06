@@ -114,5 +114,7 @@ int 	DbgClntListSignals(char **);
 int 	DbgClntSignalInfo(char **);
 
 int 	DbgClntDataEvaluateExpression(char **);
+int 	DbgClntGetPartialAIF(char **);
+int 	DbgClntVariableDelete(char **);
 
 #endif /* _DBG_CLIENT_H_ */

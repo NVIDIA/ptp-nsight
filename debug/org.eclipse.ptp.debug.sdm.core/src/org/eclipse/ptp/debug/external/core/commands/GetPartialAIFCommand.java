@@ -20,31 +20,52 @@ package org.eclipse.ptp.debug.external.core.commands;
 
 import org.eclipse.ptp.core.util.BitList;
 import org.eclipse.ptp.debug.core.IAbstractDebugger;
+import org.eclipse.ptp.debug.core.aif.IAIF;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
-import org.eclipse.ptp.debug.core.cdi.event.IPCDIResumedEvent;
+import org.eclipse.ptp.debug.external.core.proxy.event.ProxyDebugPartialAIFEvent;
 
 /**
  * @author Clement chu
  * 
  */
-public class GoCommand extends AbstractDebugCommand {
-	public GoCommand(BitList tasks) {
-		super(tasks, true, false);
+public class GetPartialAIFCommand extends AbstractDebugCommand {
+	private String name = "";
+	private boolean listChildren = false;
+	private boolean express = false;
+	
+	public GetPartialAIFCommand(BitList tasks, String name, boolean listChildren, boolean express) {
+		super(tasks);
+		this.name = name;
+		this.listChildren = listChildren;
+		this.express = express;
+	}
+	public GetPartialAIFCommand(BitList tasks, String name, boolean listChildren) {
+		this(tasks, name, listChildren, false);
+	}
+	public GetPartialAIFCommand(BitList tasks, String name) {
+		this(tasks, name, false, false);
 	}
 	public void preExecCommand(IAbstractDebugger debugger) throws PCDIException {
-		debugger.filterRunningTasks(tasks);
-		if (!tasks.isEmpty()) {
-			exec(debugger);
-		}
-		else {
-			doCancelWaiting();
-		}
+		checkBeforeExecCommand(debugger);
 	}
 	public void exec(IAbstractDebugger debugger) throws PCDIException {
-		debugger.handleProcessResumedEvent(tasks, IPCDIResumedEvent.CONTINUE);
-		debugger.go(tasks);
-	}	
+		debugger.getPartialAIF(tasks, name, listChildren, express);
+	}
+	public IAIF getPartialAIF() throws PCDIException {
+		Object res = getResultValue();
+		if (res instanceof ProxyDebugPartialAIFEvent) {
+			return ((ProxyDebugPartialAIFEvent)res).getData();
+		}
+		throw new PCDIException("No aif found.");
+	}
+	public String getName() throws PCDIException {
+		Object res = getResultValue();
+		if (res instanceof ProxyDebugPartialAIFEvent) {
+			return ((ProxyDebugPartialAIFEvent)res).getName();
+		}
+		throw new PCDIException("No aif found.");
+	}
 	public String getCommandName() {
-		return "Go"; 
+		return "Get Partial AIF: " + name;
 	}
 }

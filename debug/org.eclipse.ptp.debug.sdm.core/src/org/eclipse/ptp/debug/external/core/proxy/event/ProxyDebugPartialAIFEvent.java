@@ -16,19 +16,37 @@
  * 
  * LA-CC 04-115
  *******************************************************************************/
-package org.eclipse.ptp.debug.external.core.cdi.model.variable;
 
-import org.eclipse.ptp.debug.core.cdi.model.IPCDILocalVariableDescriptor;
-import org.eclipse.ptp.debug.external.core.cdi.model.StackFrame;
-import org.eclipse.ptp.debug.external.core.cdi.model.Target;
-import org.eclipse.ptp.debug.external.core.cdi.model.Thread;
+package org.eclipse.ptp.debug.external.core.proxy.event;
 
-/**
- * @author Clement chu
- *
- */
-public class LocalVariableDescriptor extends VariableDescriptor implements IPCDILocalVariableDescriptor {
-	public LocalVariableDescriptor(Target target, Thread thread, StackFrame frame, String n, String fn, int pos, int depth) {
-		super(target, thread, frame, n, fn, pos, depth);
+import org.eclipse.ptp.core.util.BitList;
+import org.eclipse.ptp.debug.core.aif.IAIF;
+
+
+public class ProxyDebugPartialAIFEvent extends AbstractProxyDebugEvent implements IProxyDebugEvent {
+	private IAIF data;
+	private String name;
+	
+	public ProxyDebugPartialAIFEvent(BitList set, IAIF data, String name) {
+		super(EVENT_DBG_PARTIAL_AIF, set);
+		this.data = data;
+		this.name = name;
+	}
+	public IAIF getData() {
+		return this.data;
+	}
+	public String getName() {
+		return name;
+	}
+	
+	public String toString() {
+		String res = "EVENT_DBG_PARTIAL_AIF " + this.getBitSet().toString();
+		if (this.data != null)
+			res += " " + this.data.toString();
+		else
+			res += " AIFNULL";
+		
+		res += ", name: " + name;
+		return res;
 	}
 }

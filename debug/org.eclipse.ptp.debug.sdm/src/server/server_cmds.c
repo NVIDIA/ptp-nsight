@@ -64,8 +64,11 @@ static int svr_datawritememory(dbg_backend *, char **);
 static int svr_listsignals(dbg_backend *, char **);
 static int svr_signalinfo(dbg_backend *, char **);
 static int svr_clihandle(dbg_backend *, char **);
-static int svr_dataevaluateexpression(dbg_backend *, char **);
 static int svr_quit(dbg_backend *, char **);
+
+static int svr_dataevaluateexpression(dbg_backend *, char **);
+static int svr_getpartialaif(dbg_backend *, char **);
+static int svr_variabledelete(dbg_backend *, char **);
 
 static svr_cmd svr_cmd_tab[] =
 {
@@ -97,6 +100,8 @@ static svr_cmd svr_cmd_tab[] =
 	{DBG_SIGNALINFO_CMD,			svr_signalinfo},
 	{DBG_CLIHANDLE_CMD,				svr_clihandle},
 	{DBG_DATAEVALUATEEXPRESSION_CMD,svr_dataevaluateexpression},
+	{DBG_GETPARTIALAIF_CMD,			svr_getpartialaif},
+	{DBG_VARIABLEDELETE_CMD,		svr_variabledelete},
 	{"QUI",							svr_quit},
 };
 
@@ -240,7 +245,7 @@ svr_terminate(dbg_backend *db, char **args)
 static int 
 svr_liststackframes(dbg_backend *db, char **args)
 {
-	return db->db_funcs->liststackframes(atoi(args[1]));
+	return db->db_funcs->liststackframes(atoi(args[1]), atoi(args[2]));
 }
 
 static int 
@@ -252,7 +257,7 @@ svr_setcurrentstackframe(dbg_backend *db, char **args)
 static int 
 svr_evaluateexpression(dbg_backend *db, char **args)
 {
-	return db->db_funcs->evaluateexpression(args[1], atoi(args[2]));
+	return db->db_funcs->evaluateexpression(args[1]);
 }
 
 static int 
@@ -270,7 +275,7 @@ svr_listlocalvariables(dbg_backend *db, char **args)
 static int 
 svr_listarguments(dbg_backend *db, char **args)
 {
-	return db->db_funcs->listarguments(atoi(args[1]));
+	return db->db_funcs->listarguments(atoi(args[1]), atoi(args[2]));
 }
 
 static int 
@@ -322,14 +327,25 @@ svr_clihandle(dbg_backend *db, char **args)
 {
 	return db->db_funcs->clihandle(args[1]);
 }
-static int
-svr_dataevaluateexpression(dbg_backend *db, char **args)
-{
-	return db->db_funcs->dataevaluateexpression(args[1]);
-}
 
 static int 
 svr_quit(dbg_backend *db, char **args)
 {
 	return db->db_funcs->quit();
+}
+
+static int
+svr_dataevaluateexpression(dbg_backend *db, char **args)
+{
+	return db->db_funcs->dataevaluateexpression(args[1]);
+}
+static int
+svr_getpartialaif(dbg_backend *db, char **args)
+{
+	return db->db_funcs->getpartialaif(args[1], atoi(args[2]), atoi(args[3]));
+}
+static int
+svr_variabledelete(dbg_backend *db, char **args)
+{
+	return db->db_funcs->variabledelete(args[1]);
 }

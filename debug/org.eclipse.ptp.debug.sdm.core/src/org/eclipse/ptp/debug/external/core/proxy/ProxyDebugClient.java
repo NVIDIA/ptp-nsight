@@ -114,16 +114,16 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 		sendCommand("HLT", procs);
 	}
 
-	public void debugListStackframes(BitList procs, int current) throws IOException {
-		sendCommand("LSF", procs, Integer.toString(current));
+	public void debugListStackframes(BitList procs, int low, int high) throws IOException {
+		sendCommand("LSF", procs, Integer.toString(low), Integer.toString(high));
 	}
 
 	public void debugSetCurrentStackframe(BitList procs, int level) throws IOException {
 		sendCommand("SCS", procs, Integer.toString(level));
 	}
 
-	public void debugEvaluateExpression(BitList procs, String expr, boolean isGet) throws IOException {
-		sendCommand("EEX", procs, expr, Integer.toString(isGet?1:0));
+	public void debugEvaluateExpression(BitList procs, String expr) throws IOException {
+		sendCommand("EEX", procs, expr);
 	}
 
 	public void debugGetType(BitList procs, String expr) throws IOException {
@@ -134,8 +134,8 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 		sendCommand("LLV", procs);
 	}
 
-	public void debugListArguments(BitList procs, int level) throws IOException {
-		sendCommand("LAR", procs, Integer.toString(level));
+	public void debugListArguments(BitList procs, int low, int high) throws IOException {
+		sendCommand("LAR", procs, Integer.toString(low), Integer.toString(low));
 	}
 
 	public void debugListGlobalVariables(BitList procs) throws IOException {
@@ -182,7 +182,19 @@ public class ProxyDebugClient extends AbstractProxyDebugClient {
 	public void debugCLIHandle(BitList procs, String arg) throws IOException {
 		sendCommand("CHL", procs, arg);
 	}
-	public void dataEvaluateExpression(BitList procs, String arg) throws IOException {
-		sendCommand("DEE", procs, arg);
+
+	public void debugDataEvaluateExpression(BitList procs, String expr) throws IOException {
+		sendCommand("DEE", procs, expr);
+	}
+	public void debugGetPartialAIF(BitList procs, String name, boolean listChildren, boolean express) throws IOException {
+		String[] args = new String[] {
+				name,
+				Integer.toString(listChildren?1:0),
+				Integer.toString(express?1:0)
+			};
+		sendCommand("GPA", procs, args);
+	}
+	public void debugVariableDelete(BitList procs, String name) throws IOException {
+		sendCommand("VDE", procs, name);
 	}
 }

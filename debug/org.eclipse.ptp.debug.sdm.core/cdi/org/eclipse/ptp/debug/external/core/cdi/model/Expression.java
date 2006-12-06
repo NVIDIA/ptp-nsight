@@ -18,10 +18,12 @@
  *******************************************************************************/
 package org.eclipse.ptp.debug.external.core.cdi.model;
 
+import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIF;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIExpression;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIStackFrame;
+import org.eclipse.ptp.debug.core.cdi.model.IPCDIVariable;
 import org.eclipse.ptp.debug.external.core.cdi.ExpressionManager;
 import org.eclipse.ptp.debug.external.core.cdi.Session;
 import org.eclipse.ptp.debug.external.core.cdi.SourceManager;
@@ -51,54 +53,20 @@ public class Expression extends PObject implements IPCDIExpression {
 		return false;
 	}
 	public IAIF getAIF(IPCDIStackFrame frame) throws PCDIException {
-		Target target = (Target) getTarget();
-		Session session = (Session) (target.getSession());
-		SourceManager sourceMgr = session.getSourceManager();
-		try {
-			return sourceMgr.getAIFFromVariable((StackFrame) frame, getExpressionText());
-		} catch (PCDIException e) {
-			throw new PCDIException(e.getMessage());
+		IPCDIVariable var = getCDIVariable(frame);
+		if (var == null) {
+			Target target = (Target)getTarget();
+			Session session = (Session) (target.getSession());
+			SourceManager sourceMgr = session.getSourceManager();
+			return sourceMgr.getAIF(target, getExpressionText());
 		}
+		return AIFFactory.UNKNOWNAIF();
 	}
-
-	/*
-	public ICDIType getType(ICDIStackFrame frame) throws PCDIException {
-		Type type = null;
-		Target target = (Target) getTarget();
-		Session session = (Session) (target.getSession());
-		SourceManager sourceMgr = session.getSourceManager();
-		IAIF aif = sourceMgr.getAIFFromVariable((StackFrame) frame, getExpressionText());
-		try {
-			type = sourceMgr.getType(target, aif);
-		} catch (PCDIException e) {
-			// Try with ptype.
-			try {
-				String ptype = sourceMgr.getDetailTypeName(target, aif.getDescription());
-				type = sourceMgr.getType(target, ptype);
-			} catch (PCDIException ex) {
-				// Some version of gdb does not work with the name of the class
-				// ex: class data foo --> ptype data --> fails
-				// ex: class data foo --> ptype foo --> succeed
-				try {
-					String ptype = sourceMgr.getDetailTypeNameFromVariable((StackFrame) frame, getExpressionText());
-					type = sourceMgr.getType(target, ptype);
-				} catch (PCDIException e2) {
-					// give up.
-				}
-			}
-		}
-		if (type == null) {
-			type = new IncompleteType(target, aif.getDescription());
-		}
-		return type;
-	}
-	public ICDIValue getValue(ICDIStackFrame context) throws PCDIException {
-		Session session = (Session) getTarget().getSession();
+	public IPCDIVariable getCDIVariable(IPCDIStackFrame frame) throws PCDIException {
+		Session session = (Session)getTarget().getSession();
 		ExpressionManager mgr = session.getExpressionManager();
-		Variable var = mgr.createVariable((StackFrame) context, getExpressionText());
-		return var.getValue();
+		return mgr.createVariable((StackFrame)frame, getExpressionText());
 	}
-	*/
 	public void dispose() throws PCDIException {
 		Session session = (Session) getTarget().getSession();
 		ExpressionManager mgr = session.getExpressionManager();

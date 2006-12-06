@@ -23,10 +23,19 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.ptp.debug.core.aif.IAIF;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
+import org.eclipse.ptp.debug.core.cdi.event.IPCDIEvent;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIExpression;
+import org.eclipse.ptp.debug.external.core.cdi.event.VarChangedEvent;
 import org.eclipse.ptp.debug.external.core.cdi.model.Expression;
+import org.eclipse.ptp.debug.external.core.cdi.model.StackFrame;
 import org.eclipse.ptp.debug.external.core.cdi.model.Target;
+import org.eclipse.ptp.debug.external.core.cdi.model.Thread;
+import org.eclipse.ptp.debug.external.core.cdi.model.variable.LocalVariable;
+import org.eclipse.ptp.debug.external.core.cdi.model.variable.Variable;
+import org.eclipse.ptp.debug.external.core.commands.GetPartialAIFCommand;
+import org.eclipse.ptp.debug.external.core.commands.VariableDeleteCommand;
 
 /**
  * @author Clement chu
@@ -37,10 +46,6 @@ public class ExpressionManager extends Manager {
 	Map expMap;
 	Map varMap;
 
-	public void update(Target target) throws PCDIException {
-		//TODO dunno what implement here?
-	}
-	
 	public ExpressionManager(Session session) {
 		super(session, true);
 		expMap = new Hashtable();
@@ -90,7 +95,42 @@ public class ExpressionManager extends Manager {
 		IPCDIExpression[] expressions = getExpressions(target);
 		destroyExpressions(target, expressions);
 	}
-	/*
+	public void update(Target target, String[] varList) throws PCDIException {
+		//deleteAllVariables(target);
+		List eventList = new ArrayList();
+		for (int i=0; i<varList.length; i++) {
+			Variable variable = getVariable(target, varList[i]);
+			if (variable != null) {
+				variable.setUpdated(true);
+				eventList.add(new VarChangedEvent(target.getSession(), target.getTask(), variable, varList[i]));
+			}
+		}
+		IPCDIEvent[] events = (IPCDIEvent[]) eventList.toArray(new IPCDIEvent[0]);
+		target.getDebugger().fireEvents(events);
+	}
+	public void update(Target target) throws PCDIException {
+		update(target, new String[0]);
+		//deleteAllVariables(target);
+		/*
+		List eventList = new ArrayList();
+		List varList = getVariableList(target);
+		Variable[] variables = (Variable[]) varList.toArray(new Variable[varList.size()]);
+		for (int i = 0; i < variables.length; i++) {
+			Variable variable = variables[i];
+			String keyName = variable.getKeyName();
+			VariableUpdateCommand command = new VariableUpdateCommand(target.getTask(), keyName);
+			target.getDebugger().postCommand(command);
+			String[] changes = command.getChangeNames();
+			variable.setUpdated(true);
+			for (int j=0; j<changes.length; j++) {
+				eventList.add(new VarChangedEvent(target.getSession(), target.getTask(), variable, changes[j]));
+			}
+		}
+		IPCDIEvent[] events = (IPCDIEvent[]) eventList.toArray(new IPCDIEvent[0]);
+		target.getDebugger().fireEvents(events);
+		*/
+	}	
+	
 	public Variable getVariable(Target target, String varName) {
 		if (target == null)
 			return null;
@@ -109,8 +149,30 @@ public class ExpressionManager extends Manager {
 		return null;
 	}
 	public Variable createVariable(StackFrame frame, String code) throws PCDIException {
-		//TODO - implement later
-		throw new PCDIException("Not implement yet - ExpressManager: createVaraible");
+		Target target = (Target)frame.getTarget();
+		Thread currentThread = (Thread)target.getCurrentThread();
+		StackFrame currentFrame = currentThread.getCurrentStackFrame();
+		target.lockTarget();
+		try {
+			target.setCurrentThread(frame.getThread(), false);
+			((Thread)frame.getThread()).setCurrentStackFrame(frame, false);
+
+			GetPartialAIFCommand command = new GetPartialAIFCommand(target.getTask(), code);
+			target.getDebugger().postCommand(command);
+			IAIF aif = command.getPartialAIF();
+			String keyName = command.getName();
+			
+			Variable v = new LocalVariable(target, null, frame, code, null, 0, 0, keyName);
+			v.setAIF(aif);
+			
+			List varList = getVariableList(target);
+			varList.add(v);
+			return v;
+		} finally {
+			target.setCurrentThread(currentThread, false);
+			currentThread.setCurrentStackFrame(currentFrame, false);
+			target.releaseTarget();
+		}
 	}
 	public Variable removeVariableFromList(Target target, String varName) {
 		Variable var = getVariable(target, varName);
@@ -129,11 +191,9 @@ public class ExpressionManager extends Manager {
 		}
 	}	
 	public void deleteVariable(Variable variable) throws PCDIException {
-		//Target target = (Target)variable.getTarget();
-		//TODO - not implement yet
-		//target.getDebugger().vardelete(((Session)getSession().createBitList(target.getTargetID()), variable.getName());
-		//fire variable change event maybe
-		throw new PCDIException("Not implement yet - ExpressionManager: deleteVariable");
+		Target target = (Target)variable.getTarget();
+		VariableDeleteCommand command = new VariableDeleteCommand(target.getTask(), variable.getKeyName());
+		target.getDebugger().postCommand(command);
+		command.waitForReturn();
 	}
-	*/
 }

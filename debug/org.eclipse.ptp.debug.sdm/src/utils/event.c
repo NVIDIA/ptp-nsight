@@ -350,13 +350,23 @@ DbgEventToStr(dbg_event *e, char **result)
 		free(str);
 		free(str2);
 		break;
-
-	case DBGEV_DATA_EV_EX:
-		proxy_cstring_to_str(e->dbg_event_u.type_desc, &str);
+	
+	case DBGEV_DATA_EVA_EX:
+		proxy_cstring_to_str(e->dbg_event_u.data_expression, &str);
 		asprintf(result, "%d %s %s", e->event, pstr, str);
 		free(str);
 		break;
 		
+	case DBGEV_PARTIAL_AIF:
+		dbg_aif_to_str(e->dbg_event_u.partial_aif_event.data, &str);
+		proxy_cstring_to_str(e->dbg_event_u.partial_aif_event.type_desc, &str2);
+		proxy_cstring_to_str(e->dbg_event_u.partial_aif_event.name, &str3);
+		asprintf(result, "%d %s %s %s %s", e->event, pstr, str, str2, str3);
+		free(str);
+		free(str2);
+		free(str3);
+		break;
+
 	default:
 		res = -1;
 		break;
@@ -792,9 +802,17 @@ DbgStrToEvent(char *str, dbg_event **ev)
 			goto error_out;
 		break;
 
-	case DBGEV_DATA_EV_EX:
-		e = NewDbgEvent(DBGEV_DATA_EV_EX);
-		if (proxy_str_to_cstring(*ap++, &e->dbg_event_u.type_desc) < 0)
+	case DBGEV_DATA_EVA_EX:
+		e = NewDbgEvent(DBGEV_DATA_EVA_EX);
+		if (proxy_str_to_cstring(*ap++, &e->dbg_event_u.data_expression) < 0)
+			goto error_out;
+		break;
+
+	case DBGEV_PARTIAL_AIF:
+		e = NewDbgEvent(DBGEV_PARTIAL_AIF);
+		if (dbg_str_to_aif(&ap, &e->dbg_event_u.partial_aif_event.data) < 0 ||
+			proxy_str_to_cstring(*ap++, &e->dbg_event_u.partial_aif_event.type_desc) < 0 ||
+			proxy_str_to_cstring(*ap++, &e->dbg_event_u.partial_aif_event.name) < 0)
 			goto error_out;
 		break;
 
@@ -919,11 +937,19 @@ FreeDbgEvent(dbg_event *e) {
 			FreeBreakpoint(e->dbg_event_u.bpset_event.bp);
 		break;
 
-	case DBGEV_DATA_EV_EX:
-		if (e->dbg_event_u.type_desc != NULL)
-			free(e->dbg_event_u.type_desc);
+	case DBGEV_DATA_EVA_EX:
+		if (e->dbg_event_u.data_expression != NULL)
+			free(e->dbg_event_u.data_expression);
 		break;
-		
+
+	case DBGEV_PARTIAL_AIF:
+		if (e->dbg_event_u.partial_aif_event.data != NULL)
+			AIFFree(e->dbg_event_u.partial_aif_event.data);
+		if (e->dbg_event_u.partial_aif_event.type_desc != NULL)
+			free(e->dbg_event_u.partial_aif_event.type_desc);
+		if (e->dbg_event_u.partial_aif_event.name != NULL)
+			free(e->dbg_event_u.partial_aif_event.name);
+		break;
 	}
 	
 	if (e->procs != NULL)

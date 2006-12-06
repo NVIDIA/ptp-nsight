@@ -38,7 +38,7 @@ public class EvaluateExpressionCommand extends AbstractDebugCommand {
 		exec(debugger);
 	}
 	public void exec(IAbstractDebugger debugger) throws PCDIException {
-		debugger.evaluateExpression(tasks, varName, true);
+		debugger.evaluateExpression(tasks, varName);
 	}
 	public String getExpressionValue() throws PCDIException {
 		Object res = getResultValue();

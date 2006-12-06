@@ -257,7 +257,7 @@ public class Session implements IPCDISession, IPCDISessionObject {
 		getDebugger().postCommand(new StepFinishCommand(tasks));
 	}
 	public IAIF getExpressionValue(BitList tasks, String variable) throws PCDIException {
-		GetAIFCommand command = new GetAIFCommand(tasks, variable, true);
+		GetAIFCommand command = new GetAIFCommand(tasks, variable);
 		getDebugger().postCommand(command);
 		return command.getAIF();
 	}

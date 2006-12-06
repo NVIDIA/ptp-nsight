@@ -63,16 +63,16 @@ int 	DbgSuspend(session *s, bitset *set);
 /*
  * Stack frame operations
  */
-int 	DbgListStackframes(session *s, bitset *set, int current);
+int 	DbgListStackframes(session *s, bitset *set, int low, int high);
 int 	DbgSetCurrentStackframe(session *s, bitset *set, int level);
 
 /*
  * Expression/variable operations
  */
-int 	DbgEvaluateExpression(session *s, bitset *set, char *exp, int isGet);
+int 	DbgEvaluateExpression(session *s, bitset *set, char *exp);
 int 	DbgGetType(session *s, bitset *set, char *exp);
 int 	DbgListLocalVariables(session *s, bitset *set);
-int 	DbgListArguments(session *s, bitset *set, int);
+int 	DbgListArguments(session *s, bitset *set, int, int);
 int 	DbgListGlobalVariables(session *s, bitset *set);
 
 /**
@@ -116,6 +116,14 @@ int 	DbgCLIHandle(session *s, bitset *set, char*);
 int 	DbgListSignals(session *s, bitset *set, char*);
 int 	DbgSignalInfo(session *s, bitset *set, char*);
 
-int 	DbgDataEvaluateExpression(session *s, bitset *set, char*);
- 
+/*
+ * New functions
+ */
+int 	DbgDataEvaluteExpression(session *s, bitset *set, char*);
+int 	DbgVariableCreate(session *s, bitset *set, char*);
+int 	DbgVariableDelete(session *s, bitset *set, char*);
+int 	DbgVariableUpdate(session *s, bitset *set, char*);
+int 	DbgGetPrtialAIF(session *s, bitset *set, char*, int);
+int 	DbgGetAIFValue(session *s, bitset *set, char*);
+
 #endif /* _DBG_H_ */

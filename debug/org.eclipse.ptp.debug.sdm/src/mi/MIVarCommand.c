@@ -89,3 +89,23 @@ MIDataEvaluateExpression(char *name)
 	MICommandAddOption(cmd, name, NULL);
 	return cmd;
 }
+
+MICommand *
+MIVarInfoType(char *name)
+{
+	MICommand *	cmd;
+	
+	cmd = MICommandNew("-var-info-type", MIResultRecordDONE);
+	MICommandAddOption(cmd, name, NULL);
+	return cmd;
+}
+
+MICommand *
+MIVarInfoNumChildren(char *name)
+{
+	MICommand *	cmd;
+	
+	cmd = MICommandNew("-var-info-num-children", MIResultRecordDONE);
+	MICommandAddOption(cmd, name, NULL);
+	return cmd;
+}

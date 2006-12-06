@@ -212,7 +212,7 @@ MIGetDataEvaluateExpressionInfo(MICommand *cmd)
 	char *			expr = NULL;
 
 	if (!cmd->completed || cmd->output == NULL || cmd->output->rr == NULL)
-		return expr;
+		return NULL;
 
 	rr = cmd->output->rr;
 	for (SetList(rr->results); (result = (MIResult *)GetListElement(rr->results)) != NULL; ) {
@@ -305,6 +305,44 @@ MIGetVarUpdateInfo(MICommand *cmd, List** varchanges)
 	for (SetList(rr->results); (result = (MIResult *)GetListElement(rr->results)) != NULL;) {
 		if (strcmp(result->variable, "changelist") == 0) {
 			MIGetVarUpdateParser(result->value, *varchanges);
+		}
+	}
+}
+
+MIVar *
+MIGetVarInfoType(MICommand *cmd)
+{
+	if (!cmd->completed || cmd->output == NULL || cmd->output->rr == NULL)
+		return NULL;
+
+	return MIVarParse(cmd->output->rr->results);
+}
+
+void
+MIGetVarInfoNumChildren(MICommand *cmd, MIVar *var)
+{
+	if (!cmd->completed || cmd->output == NULL || cmd->output->rr == NULL)
+		return NULL;
+
+	List *results;
+	MIValue *	value;
+	MIResult *	result;
+	char *		str;
+
+	if (var == NULL)
+		var = MIVarNew();
+
+	results = cmd->output->rr->results;	
+	for (SetList(results); (result = (MIResult *)GetListElement(results)) != NULL; ) {
+		value = result->value;
+		if (value != NULL && value->type == MIValueTypeConst) {
+			str = value->cstring;
+		} else {
+			str = "";
+		}
+
+		if (strcmp(result->variable, "numchild") == 0) {
+			var->numchild = atoi(str);
 		}
 	}
 }

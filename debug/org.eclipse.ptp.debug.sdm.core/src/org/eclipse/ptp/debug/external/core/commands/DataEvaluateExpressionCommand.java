@@ -21,32 +21,34 @@ package org.eclipse.ptp.debug.external.core.commands;
 import org.eclipse.ptp.core.util.BitList;
 import org.eclipse.ptp.debug.core.IAbstractDebugger;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
+import org.eclipse.ptp.debug.external.core.proxy.event.ProxyDebugDataExpValueEvent;
 
 /**
  * @author Clement chu
  * 
  */
 public class DataEvaluateExpressionCommand extends AbstractDebugCommand {
-	private String varName = "";
+	private String expression = "";
 	
-	public DataEvaluateExpressionCommand(BitList tasks, String varName) {
+	public DataEvaluateExpressionCommand(BitList tasks, String expression) {
 		super(tasks);
-		this.varName = varName;
+		setPriority(PRIORITY_L);
+		this.expression = expression;
 	}
 	public void preExecCommand(IAbstractDebugger debugger) throws PCDIException {
-		checkBeforeExecCommand(debugger);
+		exec(debugger);
 	}
 	public void exec(IAbstractDebugger debugger) throws PCDIException {
-		debugger.dataEvaluateExpression(tasks, varName);
+		debugger.dataEvaluateExpression(tasks, expression);
 	}
-	public String getStringValue() throws PCDIException {
+	public String getExpressionValue() throws PCDIException {
 		Object res = getResultValue();
-		if (res instanceof String) {
-			return (String)res;
+		if (res instanceof ProxyDebugDataExpValueEvent) {
+			return ((ProxyDebugDataExpValueEvent)res).getValue();
 		}
-		throw new PCDIException("Unknown value: " + res);
+		return "";
 	}
 	public String getCommandName() {
-		return "Data Evaluate Expression " + varName; 
+		return "Data Evaluate expression: " + expression; 
 	}
 }

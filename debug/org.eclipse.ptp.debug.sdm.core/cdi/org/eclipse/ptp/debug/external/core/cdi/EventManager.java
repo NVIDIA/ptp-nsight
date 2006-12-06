@@ -173,7 +173,7 @@ public class EventManager extends SessionObject implements IPCDIEventManager, Ob
 		SourceManager srcMgr = session.getSourceManager();
 		MemoryManager memMgr = session.getMemoryManager();
 		*/
-		for (int i = 0; i < procs.length; i++) {
+		for (int i=0; i<procs.length; i++) {
 			try {
 				Target currentTarget = (Target) session.getTarget(procs[i]);
 				currentTarget.setSupended(true);
