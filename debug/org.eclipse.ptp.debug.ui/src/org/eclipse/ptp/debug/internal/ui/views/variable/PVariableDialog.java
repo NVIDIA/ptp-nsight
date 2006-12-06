@@ -20,6 +20,7 @@ package org.eclipse.ptp.debug.internal.ui.views.variable;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
@@ -109,12 +110,15 @@ public class PVariableDialog extends Dialog {
 		layout.marginHeight = 5;
 		layout.marginWidth = 5;
 		aGroup.setLayout(layout);
-		aGroup.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
-
+		aGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
 		new Label(aGroup, SWT.NONE).setText(PVariableMessages.getString("PVariablesDialog.availVar"));
-		varTable = new Table(aGroup, SWT.CHECK | SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION | SWT.V_SCROLL);
-		GridData gd = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL);
-		gd.verticalSpan = 30;
+		
+		varTable = new Table(aGroup, SWT.CHECK | SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+		GridData gd = new GridData(GridData.FILL_BOTH);
+        gd.widthHint = 300;
+        gd.heightHint = 200;
+		//gd.verticalSpan = 30;
 		varTable.setLayoutData(gd);
 		varTable.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -155,11 +159,13 @@ public class PVariableDialog extends Dialog {
 		layout.marginHeight = 5;
 		layout.marginWidth = 5;
 		aGroup.setLayout(layout);
-		aGroup.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
+		aGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-		setTable = new Table(aGroup, SWT.CHECK | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL);
-		GridData gd = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL);
-		gd.verticalSpan = 25;
+		setTable = new Table(aGroup, SWT.CHECK | SWT.BORDER | SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+		GridData gd = new GridData(GridData.FILL_BOTH);
+        gd.widthHint = 300;
+        gd.heightHint = 100;
+		//gd.verticalSpan = 25;
 		setTable.setLayoutData(gd);
 		setTable.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -310,15 +316,7 @@ public class PVariableDialog extends Dialog {
 	 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
 	 */
 	protected Control createDialogArea(Composite parent) {
-		Composite composite = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout(1, false);
-		layout.marginHeight = 2;
-		layout.marginWidth = 2;
-		layout.marginTop = 5;
-		layout.verticalSpacing = 0;
-		composite.setLayout(layout);
-		composite.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
-		applyDialogFont(composite);
+		Composite composite = (Composite)super.createDialogArea(parent);
 
 		createVarSection(composite);
 		createVerticalSpan(composite, 2);
@@ -326,6 +324,7 @@ public class PVariableDialog extends Dialog {
 		createOthersSection(composite);
 
 		initContent();
+		
 		return composite;
 	}
 	protected String[] getSelectedSets() {
