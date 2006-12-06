@@ -28,7 +28,6 @@ import org.eclipse.ptp.core.util.BitList;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIFunctionBreakpoint;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDILineBreakpoint;
-import org.eclipse.ptp.debug.core.cdi.model.IPCDIStackFrame;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIWatchpoint;
 
 
@@ -50,7 +49,6 @@ public interface IDebugger {
 	 */
 	
 	/* Program Information */
-	public void dataEvaluateExpression(BitList tasks, String var) throws PCDIException;
 	
 	public int getDebuggerPort() throws CoreException;
 	
@@ -58,17 +56,20 @@ public interface IDebugger {
 	public void startDebugger(IPJob job) throws CoreException;
 	public void stopDebugger() throws CoreException;
 	
-	public void listStackFrames(BitList tasks) throws PCDIException;
+	public void listStackFrames(BitList tasks, int low, int depth) throws PCDIException;
 	public void setCurrentStackFrame(BitList tasks, int level) throws PCDIException;
 	
 	/* Data Display and Manipulation */
-	public void getAIFValue(BitList tasks, String expr, boolean isGet) throws PCDIException;
-	public void evaluateExpression(BitList tasks, String expression, boolean isGet) throws PCDIException;
+	public void getAIF(BitList tasks, String expr) throws PCDIException;
+	public void evaluateExpression(BitList tasks, String expression) throws PCDIException;
 	public void getVariableType(BitList tasks, String varName) throws PCDIException;	
-	public void listArguments(BitList tasks, IPCDIStackFrame frame, int depth) throws PCDIException;
-	public void listLocalVariables(BitList tasks, IPCDIStackFrame frame) throws PCDIException;
+	public void listArguments(BitList tasks, int low, int high) throws PCDIException;
+	public void listLocalVariables(BitList tasks) throws PCDIException;
 	public void listGlobalVariables(BitList tasks) throws PCDIException;
-	
+	public void dataEvaluateExpression(BitList tasks, String expression) throws PCDIException;
+	public void getPartialAIF(BitList tasks, String expr, boolean listChildren, boolean express) throws PCDIException;	
+	public void variableDelete(BitList tasks, String varname) throws PCDIException;
+
 	/* Execution Control */
 	public void stepInto(BitList tasks, int count) throws PCDIException;
 	public void stepOver(BitList tasks, int count) throws PCDIException;

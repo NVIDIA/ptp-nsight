@@ -23,6 +23,7 @@ import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeEnum;
 import org.eclipse.ptp.debug.core.aif.IAIFValue;
 import org.eclipse.ptp.debug.core.aif.IAIFValueEnum;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
@@ -31,19 +32,19 @@ import org.eclipse.ptp.debug.core.aif.IAIFValueEnum;
 public class AIFValueEnum extends ValueIntegral implements IAIFValueEnum {
 	IAIFValue value;
 	
-	public AIFValueEnum(IAIFTypeEnum type, byte[] data) {
+	public AIFValueEnum(IAIFTypeEnum type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+		parse(buffer);
+	}
+	protected void parse(SimpleByteBuffer buffer) {
+		IAIFTypeEnum pType = (IAIFTypeEnum)type;
+		value = AIFFactory.getAIFValue(null, pType.getBaseType(), buffer);
+		size = value.sizeof();
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {
 			result = value.getValueString();
 		}
 		return result;
-	}
-	protected void parse(byte[] data) {
-		size = data.length;
-		IAIFTypeEnum pType = (IAIFTypeEnum)type;
-		value = AIFFactory.getAIFValue(null, pType.getBaseType(), data);
 	}
 }

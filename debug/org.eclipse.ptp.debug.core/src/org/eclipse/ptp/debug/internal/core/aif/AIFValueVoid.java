@@ -20,20 +20,29 @@ package org.eclipse.ptp.debug.internal.core.aif;
 
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.IAIFType;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
  * 
  */
 public class AIFValueVoid extends AIFValue {
-	public AIFValueVoid(IAIFType type, byte[] data) {
+	public AIFValueVoid(IAIFType type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+		parse(buffer);
 	}
-	protected void parse(byte[] data) {
-		size = data.length;
+	protected void parse(SimpleByteBuffer buffer) {
+		size = type.sizeof();
 	}	
 	public String getValueString() throws AIFException {
-		return "";
+		if (result == null) {
+			if (size == 0) {
+				result = "(No value)";
+			}
+			else  {
+				result = "";
+			}
+		}
+		return result;
 	}
 }

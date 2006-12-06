@@ -18,25 +18,40 @@
  *******************************************************************************/
 package org.eclipse.ptp.debug.internal.core.aif;
 
-import java.nio.ByteBuffer;
 import org.eclipse.ptp.debug.core.aif.AIFException;
-import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeString;
 import org.eclipse.ptp.debug.core.aif.IAIFValueString;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
  * 
  */
 public class AIFValueString extends AIFValue implements IAIFValueString {	
-	public AIFValueString(IAIFTypeString type, byte[] data) {
+	public AIFValueString(IAIFTypeString type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+		parse(buffer);
+		((AIFTypeString)type).size = size;
 	}
-	protected void parse(byte[] data) {
-		parseSize(createByteArray(data, 0, 2));
-		byte[] newByte = createByteArray(data, 2, data.length-2);
-		result = new String(newByte);
+	protected void parse(SimpleByteBuffer buffer) {
+		size = getSize(buffer);
+		byte[] bytes = new byte[size];
+		for (int i=0; i<size; i++) {
+			bytes[i] = buffer.get();
+		}
+		result = new String(bytes);
+	}
+	
+	public int getSize(SimpleByteBuffer buffer) {
+		String hex = "";
+		for (int i=0; i<2; i++) {
+			hex += Integer.toHexString(0x0100 + (buffer.get() & 0x00FF)).substring(1);
+		}
+		try {
+			return Integer.parseInt(hex, 16);
+		} catch (NumberFormatException e) {
+			return 1;
+		}
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {
@@ -44,16 +59,28 @@ public class AIFValueString extends AIFValue implements IAIFValueString {
 		}
 		return result;
 	}
-	private void parseSize(byte[] bytes) {
-		String byteSize = "";
-		for (int i=0; i<bytes.length; i++) {
-			byteSize += Integer.toHexString(0x0100 + (bytes[i] & 0x00FF)).substring(1);
+	public static void main(String[] args) {
+		int length = 30;
+		byte[] bytes = new byte[2];
+		
+		bytes[0] = (byte)((length >> 8) & 0xff);
+		bytes[1] = (byte)(length & 0xff);
+		
+		System.err.println("---- bytes: " + bytes);
+
+		String hex = "";
+		for (int i=0; i<2; i++) {
+			hex += Integer.toHexString(0x0100 + (bytes[i] & 0x00FF));
+			System.err.println("hex: " + hex);
 		}
+
+		int test = 0;
 		try {
-			size = Integer.parseInt(byteSize);
+			test = Integer.parseInt(hex, 16);
 		} catch (NumberFormatException e) {
-			size = 1;
+			test = -1;
 		}
+		System.out.println("---- test: " +  test);
 	}
 		/*
 		int len = data.get();

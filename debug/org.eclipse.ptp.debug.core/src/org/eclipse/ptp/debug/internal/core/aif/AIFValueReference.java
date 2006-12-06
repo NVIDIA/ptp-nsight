@@ -23,6 +23,7 @@ import org.eclipse.ptp.debug.core.aif.IAIFTypeReference;
 import org.eclipse.ptp.debug.core.aif.IAIFValueNamed;
 import org.eclipse.ptp.debug.core.aif.IAIFValueReference;
 import org.eclipse.ptp.debug.core.aif.IValueParent;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
@@ -31,16 +32,16 @@ import org.eclipse.ptp.debug.core.aif.IValueParent;
 public class AIFValueReference extends ValueParent implements IAIFValueReference {
 	private String name = null;
 	
-	public AIFValueReference(IValueParent parent, IAIFTypeReference type, byte[] data) {
+	public AIFValueReference(IValueParent parent, IAIFTypeReference type, SimpleByteBuffer buffer) {
 		super(parent, type);
-		parse(data);
+		parse(buffer);
 		this.name = type.getName();
+	}
+	protected void parse(SimpleByteBuffer buffer) {
+		size = type.sizeof();
 	}
 	public String getName() {
 		return name;
-	}
-	protected void parse(byte[] data) {
-		size = data.length;
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {

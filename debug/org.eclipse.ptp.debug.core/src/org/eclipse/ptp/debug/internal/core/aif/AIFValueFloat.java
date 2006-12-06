@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeFloat;
 import org.eclipse.ptp.debug.core.aif.IAIFValueFloat;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
@@ -31,13 +32,17 @@ import org.eclipse.ptp.debug.core.aif.IAIFValueFloat;
 public class AIFValueFloat extends ValueParent implements IAIFValueFloat {
 	ByteBuffer byteBuffer;
 	
-	public AIFValueFloat(IAIFTypeFloat type, byte[] data) {
+	public AIFValueFloat(IAIFTypeFloat type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+		parse(buffer);
 	}
-	protected void parse(byte[] data) {
-		byteBuffer = byteBuffer(data);
-		size = data.length;
+	protected void parse(SimpleByteBuffer buffer) {
+		byte[] dst = new byte[type.sizeof()]; 
+		for (int i=0; i<dst.length; i++) {
+			dst[i] = buffer.get();
+		}
+		byteBuffer = ByteBuffer.wrap(dst, 0, dst.length);
+		size = type.sizeof();
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {

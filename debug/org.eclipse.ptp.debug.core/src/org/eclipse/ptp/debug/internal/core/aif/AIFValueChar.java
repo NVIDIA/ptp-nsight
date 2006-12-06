@@ -22,13 +22,17 @@ package org.eclipse.ptp.debug.internal.core.aif;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeChar;
 import org.eclipse.ptp.debug.core.aif.IAIFValueChar;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 public class AIFValueChar extends ValueIntegral implements IAIFValueChar {
 	byte byteValue;
-	
-	public AIFValueChar(IAIFTypeChar type, byte[] data) {
+
+	public AIFValueChar(IAIFTypeChar type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+	}
+	protected void parse(SimpleByteBuffer buffer) {
+		byteValue = buffer.get();
+		size = type.sizeof();
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {
@@ -36,16 +40,12 @@ public class AIFValueChar extends ValueIntegral implements IAIFValueChar {
 		}
 		return result;
 	}
-	protected void parse(byte[] data) {
-		byteValue = data[0];
-		size = data.length;
-	}
 	public char charValue() throws AIFException {
 		return (char)byteValue();
 	}
 	public byte byteValue() throws AIFException {
 		return byteValue;
-	}
+	}	
 	public String toString() {
 		try {
 			char charValue = charValue();

@@ -18,10 +18,10 @@
  *******************************************************************************/
 package org.eclipse.ptp.debug.internal.core.aif;
 
-import java.nio.ByteBuffer;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.IAIFType;
 import org.eclipse.ptp.debug.core.aif.IAIFValue;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
@@ -44,18 +44,6 @@ public abstract class AIFValue implements IAIFValue {
 	public boolean hasChildren() throws AIFException {
 		return (getChildrenNumber() > 0);
 	}
-	protected ByteBuffer byteBuffer(byte[] data) {
-		return byteBuffer(data, 0);
-	}
-	protected ByteBuffer byteBuffer(byte[] data, int offset) {
-		return ByteBuffer.wrap(data, offset, data.length);
-	}
-	protected byte[] createByteArray(byte[] data, int from, int size) {
-		System.out.println("---data len: " + data.length  + ", from: " + from + ", size: " + size);
-		byte[] newByte = new byte[size];
-		System.arraycopy(data, from, newByte, 0, size);
-		return newByte;
-	}
 	public String toString() {
 		try {
 			return getValueString();
@@ -64,8 +52,22 @@ public abstract class AIFValue implements IAIFValue {
 		}
 	}
 	
-	protected abstract void parse(byte[] data);
+	protected abstract void parse(SimpleByteBuffer buffer);
 	public int sizeof() {
 		return size;
 	}
+	/*
+	protected ByteBuffer byteBuffer(byte[] data) {
+		return byteBuffer(data, 0);
+	}
+	protected ByteBuffer byteBuffer(byte[] data, int offset) {
+		return ByteBuffer.wrap(data, offset, data.length);
+	}
+	protected byte[] createByteArray(byte[] data, int from, int size) {
+//System.out.println("---data len: " + data.length  + ", from: " + from + ", size: " + size);
+		byte[] newByte = new byte[size];
+		System.arraycopy(data, from, newByte, 0, size);
+		return newByte;
+	}
+	*/
 }

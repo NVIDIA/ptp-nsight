@@ -27,6 +27,7 @@ import org.eclipse.ptp.debug.core.aif.IAIFValue;
 import org.eclipse.ptp.debug.core.aif.ITypeAggregate;
 import org.eclipse.ptp.debug.core.aif.IValueAggregate;
 import org.eclipse.ptp.debug.core.aif.IValueParent;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
@@ -35,26 +36,22 @@ import org.eclipse.ptp.debug.core.aif.IValueParent;
 public abstract class ValueAggregate extends ValueParent implements IValueAggregate {
 	protected List values = new ArrayList();
 	
-	public ValueAggregate(IValueParent parent, ITypeAggregate type, byte[] data) {
+	public ValueAggregate(IValueParent parent, ITypeAggregate type, SimpleByteBuffer buffer) {
 		super(parent, type);
-		parse(data);
+		parse(buffer);
 	}
-	
+	protected void parse(SimpleByteBuffer buffer) {
+		ITypeAggregate typeAggregate = (ITypeAggregate)getType();
+		int num_children = typeAggregate.getNumberOfChildren();
+		for (int i=0; i<num_children; i++) {
+			IAIFType aifType = typeAggregate.getType(i);
+			IAIFValue val = AIFFactory.getAIFValue(getParent(), aifType, buffer);
+			values.add(val);
+			size += val.sizeof();
+		}
+	}	
 	public int getChildrenNumber() throws AIFException {
 		return values.size();
-	}
-	protected void parse(byte[] data) {
-		ITypeAggregate typeAggregate = (ITypeAggregate)getType();
-		int length = typeAggregate.getNumberOfChildren();
-		int from = 0;
-		for (int i=0; i<length; i++) {
-			IAIFType aifType = typeAggregate.getType(i);			
-			byte[] newData = createByteArray(data, from, aifType.sizeof());
-			IAIFValue val = AIFFactory.getAIFValue(getParent(), aifType, newData);
-			values.add(val);
-			from += val.sizeof();
-		}
-		size = from;
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {

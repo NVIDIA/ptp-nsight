@@ -29,6 +29,7 @@ public interface IPCDIExpression extends IPCDIObject {
 	String getExpressionText();
 	boolean equals(IPCDIExpression expr);
 	void dispose() throws PCDIException;
-	IAIF getAIF(IPCDIStackFrame frame) throws PCDIException;
+	IAIF getAIF(IPCDIStackFrame context) throws PCDIException;
+	IPCDIVariable getCDIVariable(IPCDIStackFrame context) throws PCDIException;
 }
 

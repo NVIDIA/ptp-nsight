@@ -24,12 +24,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
 import org.eclipse.cdt.core.IAddress;
 import org.eclipse.cdt.core.IAddressFactory;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.ptp.debug.core.aif.AIFException;
+import org.eclipse.ptp.debug.core.aif.IAIFType;
+import org.eclipse.ptp.debug.core.aif.IAIFTypeChar;
+import org.eclipse.ptp.debug.core.aif.IAIFTypeFloat;
+import org.eclipse.ptp.debug.core.aif.IAIFTypeInt;
+import org.eclipse.ptp.debug.core.aif.IAIFTypePointer;
+import org.eclipse.ptp.debug.core.aif.IAIFTypeReference;
+import org.eclipse.ptp.debug.core.aif.IAIFTypeString;
 import org.eclipse.ptp.debug.core.aif.IAIFValue;
 import org.eclipse.ptp.debug.core.aif.IAIFValueChar;
 import org.eclipse.ptp.debug.core.aif.IAIFValueFloat;
@@ -37,7 +43,8 @@ import org.eclipse.ptp.debug.core.aif.IAIFValueInt;
 import org.eclipse.ptp.debug.core.aif.IAIFValuePointer;
 import org.eclipse.ptp.debug.core.aif.IAIFValueReference;
 import org.eclipse.ptp.debug.core.aif.IAIFValueString;
-import org.eclipse.ptp.debug.core.aif.IValueAggregate;
+import org.eclipse.ptp.debug.core.aif.ITypeAggregate;
+import org.eclipse.ptp.debug.core.aif.ITypeDerived;
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIVariable;
 import org.eclipse.ptp.debug.core.model.IPDebugElementStatus;
@@ -53,9 +60,11 @@ public class PValue extends AbstractPValue {
 	private String fValueString = null;
 	private List fVariables = Collections.EMPTY_LIST;
 	private PType fType;
+	private IPCDIVariable fVariable;
 
-	protected PValue(PVariable parent) {
+	protected PValue(PVariable parent, IPCDIVariable variable) {
 		super(parent);
+		fVariable = variable;		
 	}
 	protected PValue(PVariable parent, String message) {
 		super(parent);
@@ -65,28 +74,23 @@ public class PValue extends AbstractPValue {
 		return (getParentVariable() != null) ? getParentVariable().getReferenceTypeName() : null;
 	}
 	public String getValueString() throws DebugException {
-		if (fValueString == null) {
-			IPCDIVariable cdiVar = getParentVariable().getCDIVariable();
-			try {
-				fValueString = cdiVar.getValueString("");
-			} catch (PCDIException e) {
-				setStatus(IPDebugElementStatus.ERROR, e.getMessage());
-			}
-		}
-		/*
 		if (fValueString == null && getUnderlyingValue() != null) {
 			resetStatus();
-			IPStackFrame cframe = getParentVariable().getStackFrame();
-			boolean isSuspended = (cframe == null) ? getCDITarget().isSuspended() : cframe.isSuspended();
+			IPStackFrame pframe = getParentVariable().getStackFrame();
+			boolean isSuspended = (pframe == null) ? getCDITarget().isSuspended() : pframe.isSuspended();
 			if (isSuspended) {
 				try {
-					fValueString = processUnderlyingValue(getUnderlyingValue());
+					if (fVariable == null) {
+						targetRequestFailed("No variable found", null);
+					}
+					fValueString = processUnderlyingValue(fVariable.getType(), fVariable.getValue());
+				} catch (PCDIException pe) {
+					setStatus(IPDebugElementStatus.ERROR, pe.getMessage());
 				} catch (AIFException e) {
 					setStatus(IPDebugElementStatus.ERROR, e.getMessage());
 				}
 			}
 		}
-		*/
 		return fValueString;
 	}
 	public boolean isAllocated() throws DebugException {
@@ -105,7 +109,7 @@ public class PValue extends AbstractPValue {
 				fVariables = new ArrayList(vars.size());
 				Iterator it = vars.iterator();
 				while (it.hasNext()) {
-					fVariables.add(PVariableFactory.createLocalVariable(this, (IPCDIVariable) it.next()));
+					fVariables.add(PVariableFactory.createLocalVariable(this, (IPCDIVariable)it.next()));
 				}
 				resetStatus();
 			} catch (DebugException e) {
@@ -116,21 +120,40 @@ public class PValue extends AbstractPValue {
 	}
 	public boolean hasVariables() throws DebugException {
 		try {
-			IAIFValue value = getUnderlyingValue();
-			if (value != null)
-				return value.getChildrenNumber() > 0;
-		} catch (AIFException e) {
+			IPCDIVariable var = getCurrentVariable();
+			if (var != null) {
+				//return var.getChildrenNumber()>0;
+				IAIFType type = var.getType();
+				if (type instanceof ITypeAggregate) {
+					return true;
+				}
+				if (type instanceof ITypeDerived) {
+					return true;
+				}
+			}
+		} catch (PCDIException e) {
 			targetRequestFailed(e.getMessage(), null);
 		}
 		return false;
 	}
-	public IAIFValue getUnderlyingValue() throws DebugException {
-		return getAIF().getValue();
+	public IPCDIVariable getCurrentVariable() {
+		return fVariable;
+	}
+	public IAIFValue getUnderlyingValue() {
+		try {
+			return getCurrentVariable().getValue();
+		} catch (PCDIException e) {
+			return null;
+		}
 	}
 	protected List getCDIVariables() throws DebugException {
-		IPCDIVariable[] vars = new IPCDIVariable[0];
+		IPCDIVariable[] vars = null;
 		try {
-			vars = getParentVariable().getCDIVariable().getVariables();
+			IPCDIVariable var = getCurrentVariable();
+			vars = var.getChildren();
+			if (vars == null) {
+				vars = new IPCDIVariable[0];
+			}
 		} catch (PCDIException e) {
 			requestFailed(e.getMessage(), e);
 		}
@@ -140,6 +163,10 @@ public class PValue extends AbstractPValue {
 		if (changed) {
 			fValueString = null;
 			resetStatus();
+		}
+		else {
+			//if (getCDITarget().getConfiguration() instanceof IPCDITargetConfiguration2 && ((IPCDITargetConfiguration2)getCDITarget().getConfiguration()).supportsPassiveVariableUpdate())
+				//fValueString = null;
 		}
 		Iterator it = fVariables.iterator();
 		while (it.hasNext()) {
@@ -152,21 +179,21 @@ public class PValue extends AbstractPValue {
 			((AbstractPVariable) it.next()).dispose();
 		}
 	}
-	protected String processUnderlyingValue(IAIFValue aifValue) throws AIFException {
+	protected String processUnderlyingValue(IAIFType aifType, IAIFValue aifValue) throws AIFException {
 		if (aifValue != null) {
-			if (aifValue instanceof IAIFValueChar)
+			if (aifType instanceof IAIFTypeChar)
 				return getCharValueString((IAIFValueChar) aifValue);
-			else if (aifValue instanceof IAIFValueInt)
+			else if (aifType instanceof IAIFTypeInt)
 				return getIntValueString((IAIFValueInt) aifValue);
-			else if (aifValue instanceof IAIFValueFloat)
+			else if (aifType instanceof IAIFTypeFloat)
 				return getFloatingPointValueString((IAIFValueFloat) aifValue);
-			else if (aifValue instanceof IAIFValuePointer)
+			else if (aifType instanceof IAIFTypePointer)
 				return getPointerValueString((IAIFValuePointer) aifValue);
-			else if (aifValue instanceof IAIFValueReference)
-				return processUnderlyingValue(((IAIFValueReference) aifValue).getParent());
-			else if (aifValue instanceof IAIFValueString)
+			else if (aifType instanceof IAIFTypeReference)
+				return processUnderlyingValue(aifType, ((IAIFValueReference) aifValue).getParent());
+			else if (aifType instanceof IAIFTypeString)
 				return getWCharValueString((IAIFValueString) aifValue);
-			else if (aifValue instanceof IValueAggregate)
+			else if (aifType instanceof ITypeAggregate)
 				return "{...}";
 			else
 				return aifValue.getValueString();
@@ -330,19 +357,17 @@ public class PValue extends AbstractPValue {
 		}
 	}
 	public IPType getType() throws DebugException {
-		IAIFValue cdiValue = getUnderlyingValue();
+		IAIFValue aifValue = getUnderlyingValue();
 		if (fType == null) {
-			if (cdiValue != null) {
+			if (aifValue != null) {
 				synchronized (this) {
 					if (fType == null) {
-						fType = new PType(cdiValue.getType());
+						fType = new PType(aifValue.getType());
 					}
 				}
 			}
 		}
 		return fType;
-		// AbstractCVariable var = getParentVariable();
-		// return ( var instanceof CVariable ) ? ((CVariable)var).getType() : null;
 	}
 	protected void preserve() {
 		setChanged(false);

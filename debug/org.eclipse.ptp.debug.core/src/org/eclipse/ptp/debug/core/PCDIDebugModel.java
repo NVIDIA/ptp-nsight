@@ -80,7 +80,7 @@ public class PCDIDebugModel {
 					job.removeAllProcesses();
 					pSession.getPCDISession().shutdown();
 					try {
-						System.out.println("-----PCDIDebugModel - waiting debugger to stop");
+						PDebugUtils.println("-----PCDIDebugModel - waiting debugger to stop");
 						Thread.sleep(2000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -145,7 +145,7 @@ public class PCDIDebugModel {
 	 * Register / Unregister
 	 **************************************************/
 	public void removeDebugTarget(final IPLaunch launch, final BitList tasks, final boolean refresh) {
-		Job aJob = new Job("Creating new debug targets...") {
+		Job aJob = new Job("Removing the debug targets...") {
 			protected IStatus run(IProgressMonitor monitor) {
 				int[] taskArray = tasks.toArray();
 				for (int i=0; i<taskArray.length; i++) {
@@ -336,7 +336,8 @@ public class PCDIDebugModel {
 		} finally {
 			monitor.done();
 		}
-	}
+	}	
+	
 	/**************************************************
 	 * Debug Job
 	 **************************************************/	
@@ -347,10 +348,10 @@ public class PCDIDebugModel {
 		jobStorage.addValue(job_id, set_id, tasks);
 	}
 	public void addTasks(String job_id, String set_id, BitList tasks) {
-		getTasks(job_id, set_id).or(tasks); // add tasks
+		((BitList)jobStorage.getValue(job_id, set_id)).or(tasks); // add tasks
 	}
 	public void removeTasks(String job_id, String set_id, BitList tasks) {
-		getTasks(job_id, set_id).andNot(tasks); // remove tasks
+		((BitList)jobStorage.getValue(job_id, set_id)).andNot(tasks); // remove tasks
 	}
 	public void deleteSet(String job_id, String set_id) {
 		jobStorage.removeValue(job_id, set_id);

@@ -34,17 +34,19 @@ public class AIFTypePointer extends TypeDerived implements IAIFTypePointer {
 		this.addr = addr;
 	}
 	public String toString() {
-		return AIFFactory.FDS_POINTER + super.toString();
+		return AIFFactory.FDS_POINTER + addr.toString() + super.toString();
 	}
 	public int sizeof() {
-		return super.sizeof() + 1;
+		return super.sizeof() + getAddressType().sizeof() + 1;
 	}
 	public IAIFTypeAddress getAddressType() {
 		return (IAIFTypeAddress)addr;
 	}
 	
 	public static void main(String[] args) {
-		IAIFType testType = AIFFactory.getAIFType("^%1/{s1 *|a=is4,b=^>1/,c=^>1/;;;}");
+		//IAIFType testType = AIFFactory.getAIFType("^%1/{s1 *|a=is4,b=^>1/,c=^>1/;;;}");
+		IAIFType testType = AIFFactory.getAIFType("^a4^a4");
+		System.out.println("----: " + ((IAIFTypePointer)testType).getBaseType());
 		System.out.println("----: " + testType);
 		System.out.println("----: " + testType.sizeof());
 	}

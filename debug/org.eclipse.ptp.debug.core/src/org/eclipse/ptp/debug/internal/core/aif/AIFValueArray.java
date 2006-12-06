@@ -18,43 +18,36 @@
  *******************************************************************************/
 package org.eclipse.ptp.debug.internal.core.aif;
 
-import java.nio.ByteBuffer;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIFType;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeArray;
-import org.eclipse.ptp.debug.core.aif.IAIFTypeRange;
 import org.eclipse.ptp.debug.core.aif.IAIFValue;
 import org.eclipse.ptp.debug.core.aif.IAIFValueArray;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
  * 
  */
 public class AIFValueArray extends ValueDerived implements IAIFValueArray {
-	private Object[] values;
-	private int current_dimension_position = 0;
-	private int current_position = 0;
-
-	public AIFValueArray(IAIFValueArray parentArray, int current_pos) {
-		super((IAIFTypeArray)parentArray.getType());
-		setParent(parentArray);
-		current_dimension_position = parentArray.getCurrentDimensionPosition()+1;
-		current_position = current_pos;
-	}
-	public AIFValueArray(IAIFTypeArray type, byte[] data) {
+	IAIFValue[] values = new IAIFValue[0];
+	
+	public AIFValueArray(IAIFTypeArray type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
-		setParent(this);
+		parse(buffer);
 	}
-	public int getChildrenNumber() throws AIFException {
-		return getCurrentValues().length;
-	}	
-	public int getCurrentDimensionPosition() {
-		return current_dimension_position;
+	protected void parse(SimpleByteBuffer buffer) {
+		IAIFTypeArray arrType = (IAIFTypeArray)type;
+		IAIFType baseType = arrType.getBaseType();
+		this.values = new IAIFValue[arrType.getRange()];
+		for (int i=0; i<values.length; i++) {
+			values[i] = AIFFactory.getAIFValue(this, baseType, buffer);
+			size += values[i].sizeof();
+		}
 	}
-	public int getCurrentPosition() {
-		return current_position;
+	public IAIFValue[] getValues() {
+		return values;
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {
@@ -62,100 +55,15 @@ public class AIFValueArray extends ValueDerived implements IAIFValueArray {
 		}
 		return result;
 	}
-	protected void parse(byte[] data) {
-		IAIFTypeArray arrType = (IAIFTypeArray)type;
-		ByteBuffer buffer = byteBuffer(data);
-		values = parseRange(buffer, 1, arrType.getBaseType(), arrType.getDimension());
-	}
-	private Object[] parseRange(ByteBuffer dataBuf, int dim_pos, IAIFType baseType, int dimension) {
-		IAIFTypeArray arrType = (IAIFTypeArray)type;
-		IAIFTypeRange range = arrType.getRange(dim_pos-1);
-		int lower = range.getLower();
-		int upper = range.getUpper();
-		int inner_length = upper-lower+1;
-		Object[] innerValues = new Object[inner_length];
-		
-		for (int j=0; j<inner_length; j++) {
-			if (dim_pos < dimension) {
-				innerValues[j] = parseRange(dataBuf, dim_pos+1, baseType, dimension);
-			}
-			else {
-				byte[] dst = new byte[baseType.sizeof()];
-				for (int h=0; h<dst.length; h++) {
-					if (!dataBuf.hasRemaining()) {
-						break;
-					}
-					dst[h] = dataBuf.get();
-				}
-				innerValues[j] = AIFFactory.getAIFValue(null, baseType, dst);
-				size += ((IAIFValue)innerValues[j]).sizeof(); 
-			}
-		}
-		return innerValues;
-	}
-	public Object[] getValues() {
-		if (values == null) {
-			IAIFValue tmpValue = getParent();
-			if (tmpValue instanceof IAIFValueArray) {
-				return ((IAIFValueArray)tmpValue).getValues();
-			}
-			return new Object[0];
-		}
-		return values;
-	}
-	private String getString() {
-		return getString("[", getValues()) + "]";
-	}
-	public String getString(String content, Object[] objs) {
-		for (int i=0; i<objs.length; i++) {
-			Object obj = objs[i];
-			if (obj instanceof IAIFValue) {
-				String tmp = obj.toString();
-				if (tmp.length() == 0) {
-					content = content.substring(0, content.length()-1);
-				} else {
-					content += obj.toString();
-				}
-			} else if (obj instanceof Object[]) {
-				content += getString("[", (Object[])obj) + "]";
-			}
-			if (i < objs.length - 1) {
+	private String getString() throws AIFException {
+		String content = "[";
+		for (int i=0; i<values.length; i++) {
+			content += values[i].getValueString();
+			if (i < values.length - 1) {
 				content += ",";
 			}
 		}
+		content += "]";
 		return content;
 	}
-	public Object[] getCurrentValues() throws AIFException {
-		int dimension = ((IAIFTypeArray)type).getDimension();
-		if (current_dimension_position > dimension) {
-			throw new AIFException("Dimension is out of bound");
-		}
-		if (current_dimension_position == 0)
-			return getValues();
-		
-		IAIFValue tmpValue = getParent();
-		if (tmpValue instanceof IAIFValueArray) {
-			Object[] objs = ((IAIFValueArray)tmpValue).getCurrentValues();
-			return (Object[])objs[current_position];
-		}
-		return new Object[0];
-	}
-	public boolean hasMoreDimension(Object[] objs) {
-		if (objs.length == 0)
-			return false;
-		return (objs[0] instanceof Object[]);
-	}
-	/*
-	public String toString() {
-		String output = "[";
-		for (int i=0; i<vals.length; i++) {
-			if (vals[i] != null) {
-				if (i > 0)
-					output += ", ";
-				output += vals[i].toString();
-			}
-		}
-		return output + "]";
-	}
-	*/
 }

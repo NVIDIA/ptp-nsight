@@ -21,13 +21,14 @@ package org.eclipse.ptp.debug.internal.core.aif;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIFType;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 public class AIFValueUnknown extends AIFValue {
 	public AIFValueUnknown(IAIFType type) {
 		super(type);
 		size = AIFFactory.NO_SIZE;
 	}
-	protected void parse(byte[] data) {}
+	protected void parse(SimpleByteBuffer buffer) {}
 	
 	public String getValueString() throws AIFException {
 		if (result == null) {

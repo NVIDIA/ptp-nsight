@@ -21,24 +21,25 @@ package org.eclipse.ptp.debug.internal.core.aif;
 import org.eclipse.ptp.debug.core.aif.AIFException;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeFunction;
 import org.eclipse.ptp.debug.core.aif.IAIFValueFunction;
+import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
 
 /**
  * @author Clement chu
  * 
  */
 public class AIFValueFunction extends ValueDerived implements IAIFValueFunction {
-	public AIFValueFunction(IAIFTypeFunction type, byte[] data) {
+	public AIFValueFunction(IAIFTypeFunction type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(data);
+		parse(buffer);
+	}
+	protected void parse(SimpleByteBuffer buffer) {
+		size = type.sizeof();
 	}
 	public String getValueString() throws AIFException {
 		if (result == null) {
 			result = String.valueOf("");
 		}
 		return null;
-	}
-	protected void parse(byte[] data) {
-		size = data.length;
 	}
 }
 
