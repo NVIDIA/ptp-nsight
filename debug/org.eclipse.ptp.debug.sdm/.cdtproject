@@ -2,20 +2,20 @@
 <?eclipse-cdt version="2.0"?>
 
 <cdtproject id="org.eclipse.cdt.make.core.make">
-<extension point="org.eclipse.cdt.core.BinaryParser" id="org.eclipse.cdt.core.MachO">
+<extension id="org.eclipse.cdt.core.MachO" point="org.eclipse.cdt.core.BinaryParser">
 <attribute key="c++filt" value="c++filt"/>
 </extension>
-<extension point="org.eclipse.cdt.core.CIndexer" id="org.eclipse.cdt.core.domsourceindexer"/>
+<extension id="org.eclipse.cdt.core.domsourceindexer" point="org.eclipse.cdt.core.CIndexer"/>
 <data>
 <item id="scannerConfiguration">
-<autodiscovery enabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile" problemReportingEnabled="true"/>
+<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 <buildOutputProvider>
 <openAction enabled="true" filePath=""/>
 <parser enabled="true"/>
 </buildOutputProvider>
 <scannerInfoProvider id="specsFile">
-<runAction useDefault="true" command="gcc" arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}"/>
+<runAction arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}" command="gcc" useDefault="true"/>
 <parser enabled="true"/>
 </scannerInfoProvider>
 </profile>
@@ -25,7 +25,7 @@
 <parser enabled="true"/>
 </buildOutputProvider>
 <scannerInfoProvider id="makefileGenerator">
-<runAction useDefault="true" command="make" arguments="-f ${project_name}_scd.mk"/>
+<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
 <parser enabled="false"/>
 </scannerInfoProvider>
 </profile>
@@ -35,7 +35,7 @@
 <parser enabled="true"/>
 </buildOutputProvider>
 <scannerInfoProvider id="specsFile">
-<runAction useDefault="true" command="gcc" arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}"/>
+<runAction arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}" command="gcc" useDefault="true"/>
 <parser enabled="false"/>
 </scannerInfoProvider>
 </profile>
@@ -45,39 +45,46 @@
 <parser enabled="true"/>
 </buildOutputProvider>
 <scannerInfoProvider id="specsFile">
-<runAction useDefault="true" command="gcc" arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}"/>
+<runAction arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}" command="gcc" useDefault="true"/>
 <parser enabled="false"/>
 </scannerInfoProvider>
 </profile>
 </item>
 <item id="org.eclipse.cdt.core.pathentry">
-<pathentry kind="inc" path="" include="/usr/local/ompi/include" system="true"/>
-<pathentry kind="inc" path="" include="/usr/local/ompi/include/openmpi/orte" system="true"/>
-<pathentry kind="inc" path="" include="/usr/local/ompi/include/openmpi/opal" system="true"/>
+<pathentry include="/usr/local/ompi/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/local/ompi/include/openmpi/orte" kind="inc" path="" system="true"/>
+<pathentry include="/usr/local/ompi/include/openmpi/opal" kind="inc" path="" system="true"/>
 <pathentry kind="src" path=""/>
 <pathentry kind="out" path=""/>
 <pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 </item>
 <item id="org.eclipse.cdt.make.core.buildtargets">
 <buildTargets>
-<target name="all" targetID="org.eclipse.cdt.make.MakeTargetBuilder" path="">
+<target name="all" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>make</buildCommand>
-<buildArguments/>
+<buildArguments></buildArguments>
 <buildTarget>all</buildTarget>
 <stopOnError>false</stopOnError>
 <useDefaultCommand>true</useDefaultCommand>
 </target>
-<target name="clean" targetID="org.eclipse.cdt.make.MakeTargetBuilder" path="">
+<target name="clean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>make</buildCommand>
-<buildArguments/>
+<buildArguments></buildArguments>
 <buildTarget>clean</buildTarget>
 <stopOnError>false</stopOnError>
 <useDefaultCommand>true</useDefaultCommand>
 </target>
-<target name="install" targetID="org.eclipse.cdt.make.MakeTargetBuilder" path="">
+<target name="install" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>make</buildCommand>
-<buildArguments/>
+<buildArguments></buildArguments>
 <buildTarget>install</buildTarget>
+<stopOnError>false</stopOnError>
+<useDefaultCommand>true</useDefaultCommand>
+</target>
+<target name="distclean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>make</buildCommand>
+<buildArguments></buildArguments>
+<buildTarget>distclean</buildTarget>
 <stopOnError>false</stopOnError>
 <useDefaultCommand>true</useDefaultCommand>
 </target>

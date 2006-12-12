@@ -3,6 +3,8 @@
 # This script is used to build any executable fragments in the workspace
 #
 export KNOWN_FRAGMENTS="\
+	org.eclipse.ptp.utils\
+	org.eclipse.ptp.proxy\
 	org.eclipse.ptp.debug.sdm\
 	org.eclipse.ptp.orte.proxy"
 	

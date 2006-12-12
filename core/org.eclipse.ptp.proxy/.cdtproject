@@ -2,11 +2,11 @@
 <?eclipse-cdt version="2.0"?>
 
 <cdtproject id="org.eclipse.cdt.make.core.make">
-<extension point="org.eclipse.cdt.core.BinaryParser" id="org.eclipse.cdt.core.ELF"/>
-<extension point="org.eclipse.cdt.core.BinaryParser" id="org.eclipse.cdt.core.MachO">
+<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+<extension id="org.eclipse.cdt.core.MachO" point="org.eclipse.cdt.core.BinaryParser">
 <attribute key="c++filt" value="c++filt"/>
 </extension>
-<extension point="org.eclipse.cdt.core.CIndexer" id="org.eclipse.cdt.core.domsourceindexer"/>
+<extension id="org.eclipse.cdt.core.domsourceindexer" point="org.eclipse.cdt.core.CIndexer"/>
 <data>
 <item id="scannerConfiguration">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
@@ -57,5 +57,30 @@
 <pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 </item>
 
+<item id="org.eclipse.cdt.make.core.buildtargets">
+<buildTargets>
+<target name="all" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>make</buildCommand>
+<buildArguments></buildArguments>
+<buildTarget>all</buildTarget>
+<stopOnError>false</stopOnError>
+<useDefaultCommand>true</useDefaultCommand>
+</target>
+<target name="clean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>make</buildCommand>
+<buildArguments></buildArguments>
+<buildTarget>clean</buildTarget>
+<stopOnError>false</stopOnError>
+<useDefaultCommand>true</useDefaultCommand>
+</target>
+<target name="distclean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>make</buildCommand>
+<buildArguments></buildArguments>
+<buildTarget>distclean</buildTarget>
+<stopOnError>false</stopOnError>
+<useDefaultCommand>true</useDefaultCommand>
+</target>
+</buildTargets>
+</item>
 </data>
 </cdtproject>
