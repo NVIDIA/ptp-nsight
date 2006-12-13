@@ -121,9 +121,18 @@ public abstract class RunAnalyseBase implements IObjectActionDelegate, IWorkbenc
 		String whatToRun = "";
 		boolean ranIt = false;
 		boolean haveConfirmedWithUser = false;
+		
+		if(selection==null){
+			if(traceOn)System.out.println("RAB: selection is null.");
+		}
+		else{
+			boolean emp=selection.isEmpty();
+			if(traceOn)System.out.println("RAB: selection is empty.");
+		}
 		if ((selection == null) || selection.isEmpty()) {
 			MessageDialog.openWarning(null, "No files selected for analysis.",
 					"Please select a source file or container (folder or project) to analyze.");
+	
 			return;
 		} else {
 			// get preference for include paths
@@ -188,24 +197,38 @@ public abstract class RunAnalyseBase implements IObjectActionDelegate, IWorkbenc
 		if (traceOn)
 			System.out.println("RunAnalyseBase: retd from run iterator for " + whatToRun + ", ranIt=" + ranIt);
 		if (ranIt) {
-			String pisFound = "\nNumber of " + name + " Artifacts found: " + cumulativeArtifacts;
+			String artsFound = "\nNumber of " + name + " Artifacts found: " + cumulativeArtifacts;
 			if (cancelledByUser) {
 				MessageDialog.openInformation(null, "Partial Analysis Complete.",
-						"Partial Analysis complete.  Cancelled by User." + pisFound);
+						"Partial Analysis complete.  Cancelled by User." + artsFound);
 			} else {
 				String msg = "***Analysis is complete for:  " + whatToRun;
 
 				if (!keepErr) {
-					String sMsg = cumulativeArtifacts + " " + name + " Artifacts found in " + whatToRun;
-					showStatusMessage(sMsg, "RunAnalyseBase.run()");
-					MessageDialog.openInformation(null, "Analysis complete.", msg + pisFound);
-					showStatusMessage(sMsg, "RunAnalyseBase.run()"); // repeat;
+
+					StringBuffer finishMsg= new StringBuffer(msg);
+					finishMsg.append(artsFound);
+					StringBuffer shortMsgB=new StringBuffer();
+					shortMsgB.append(cumulativeArtifacts).append(" ").append(name).append(" Artifacts found in ").append(whatToRun);
+					String shortMsg=shortMsgB.toString();
+					showStatusMessage(shortMsg, "RunAnalyseBase.run()");
+					
+					// provide some explanation of why perhaps no artifacts were found.
+					// Note: should this perhaps be in a "Details" section of the dialog?
+					if(cumulativeArtifacts==0) {
+						finishMsg.append("\n\n").append(name).append(" Artifacts are defined as APIs found in the include path specified in the ");
+						finishMsg.append(name).append(" preferences.  The same include path should be present in the project properties, ");
+						finishMsg.append("regardless of whether or not a build command (e.g. mpicc) implicitly does this for compilation.");
+					}
+					//MessageDialog.openInformation(null, "Analysis complete.", msg + artsFound);
+					MessageDialog.openInformation(null, "Analysis complete.", finishMsg.toString());
+					showStatusMessage(shortMsg, "RunAnalyseBase.run()"); // repeat;
 					activateProblemsView();
 					activateArtifactView();
 				} else {
 					showStatusMessage(msg, "RunAnalyseBase.run() error");
-					msg = "Analysis for: " + whatToRun + " completed with errors. See Tasks View.";
-					MessageDialog.openError(null, "Analysis completed with errors", msg + pisFound);
+					msg = "Analysis for: " + whatToRun + " completed with errors.";
+					MessageDialog.openError(null, "Analysis completed with errors", msg + artsFound);
 				}
 			}
 		}
@@ -354,11 +377,15 @@ public abstract class RunAnalyseBase implements IObjectActionDelegate, IWorkbenc
 	}
 
 	/**
-	 * Remember what the selected object was
+	 * Remember what the selected object was. 
+	 * <br>If selection is empty, it's probably from another view, so don't change
+     * what we consider the current selection from this view.
 	 */
 	public void selectionChanged(IAction action, ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
-			this.selection = (IStructuredSelection) selection;
+			if (!selection.isEmpty()) {
+				this.selection = (IStructuredSelection) selection;
+			}
 		}
 	}
 
