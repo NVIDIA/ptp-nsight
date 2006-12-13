@@ -15,7 +15,7 @@ set the preferences and include paths as described in
 <li>Within the project, create a C file that includes MPI code. A sample is <a href="testMPI.c">testMPI.c</a> 
 
 <p>Note: A sample C++ file with MPI calls 
-is <a href="helloMPI_cpp_style.cpp">helloMPI_cpp_style.cpp</a>.
+is <a href="testMPIcpp.cpp">testMPIcpp.cpp</a>.
 <br>A sample C++ file with MPI calls in ordinary C style 
 is <a href="helloMPI_c_style.cpp">helloMPI_c_style.cpp</a>.
 
@@ -32,6 +32,18 @@ is <a href="helloMPI_c_style.cpp">helloMPI_c_style.cpp</a>.
 It is 
 populated with MPI artifacts found.
 <p><img src="images/mpiView.gif">
+
+<p>If no artifacts are found, check that:
+<ol>
+<li>The MPI preferences page lists the include file for the MPI installation
+that your source code uses.  This list is how the analysis determines what is
+an "MPI artifact."  
+<li>Your project properties have the include path (the same one listed
+in the MPI preferences page) listed.
+Note that the MPI analysis may require this even if 
+the build procedure - such as  a build command like 'mpicc' - 
+implicitly does this include for you during build.
+</ol>
 <p>&nbsp;
 <li>Double click on any line in the MPI Artifact View
 to navigate the editor to that line in the source file.
