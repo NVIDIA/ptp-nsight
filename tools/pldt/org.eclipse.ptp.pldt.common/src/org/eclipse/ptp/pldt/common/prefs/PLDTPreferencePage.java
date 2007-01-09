@@ -49,7 +49,7 @@ public class PLDTPreferencePage
 	 */
 	public void init(IWorkbench workbench) {
     	IPreferenceStore store = CommonPlugin.getDefault().getPreferenceStore();
-    	store.setDefault(IDs.SHOW_ANALYSIS_CONFIRMATION, true);
+    	
 	}
 	
 }
