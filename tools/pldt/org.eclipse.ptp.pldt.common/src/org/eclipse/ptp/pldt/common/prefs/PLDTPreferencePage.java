@@ -48,8 +48,6 @@ public class PLDTPreferencePage
 	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
 	 */
 	public void init(IWorkbench workbench) {
-    	IPreferenceStore store = CommonPlugin.getDefault().getPreferenceStore();
-    	
 	}
 	
 }
