@@ -154,8 +154,14 @@ public class PTPPreferencesPage extends PreferencePage implements IWorkbenchPref
 		comboMS.addSelectionListener(listener);
 	}
 	protected void defaultSetting() {
-		comboMS.select(MonitoringSystemChoices.getMSArrayIndexByID(MSChoiceID));
-		comboCS.select(ControlSystemChoices.getCSArrayIndexByID(CSChoiceID));
+		int index = MonitoringSystemChoices.getMSArrayIndexByID(MSChoiceID);
+		if (index < 0)
+			index = 0;
+		comboMS.select(index);
+		index = ControlSystemChoices.getCSArrayIndexByID(CSChoiceID);
+		if (index < 0)
+			index = 0;
+		comboCS.select(index);
 		outputDirText.setText(outputDIR);
 		storeLineField.setStringValue(String.valueOf(storeLine));
 	}
