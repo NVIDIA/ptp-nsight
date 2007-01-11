@@ -122,9 +122,9 @@ public class ParallelDebugViewEventHandler extends AbstractPDebugEventHandler {
 			case IPDebugEvent.RESUME:
 			case IPDebugEvent.SUSPEND:
 				if (job.getIDString().equals(getPView().getCurrentID())) {
-					BitList ssource = (BitList)job.getAttribute(IAbstractDebugger.SUSPENDED_PROC_KEY);
-					BitList starget = (BitList)job.getAttribute(IAbstractDebugger.TERMINATED_PROC_KEY);
-					getPView().updateSuspendResumeButton(ssource, starget);
+					//BitList ssource = (BitList)job.getAttribute(IAbstractDebugger.SUSPENDED_PROC_KEY);
+					//BitList starget = (BitList)job.getAttribute(IAbstractDebugger.TERMINATED_PROC_KEY);
+					//getPView().updateSuspendResumeButton(ssource, starget);
 
 					((UIDebugManager) getPView().getUIManager()).updateVariableValue(false);
 					if (event.getKind() == IPDebugEvent.SUSPEND) {
