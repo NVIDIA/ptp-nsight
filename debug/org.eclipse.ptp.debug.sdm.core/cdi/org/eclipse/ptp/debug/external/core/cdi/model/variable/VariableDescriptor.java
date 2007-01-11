@@ -151,7 +151,7 @@ public abstract class VariableDescriptor extends PObject implements IPCDIVariabl
 		return fName;
 	}
 	public IAIFType getType() throws PCDIException {
-		if (fType == null) {
+		if (fType == null || fType == AIFFactory.UNKNOWNTYPE) {
 			try {
 				Target target = (Target)getTarget();
 				GetPartialAIFCommand command = new GetPartialAIFCommand(target.getTask(), getQualifiedName());

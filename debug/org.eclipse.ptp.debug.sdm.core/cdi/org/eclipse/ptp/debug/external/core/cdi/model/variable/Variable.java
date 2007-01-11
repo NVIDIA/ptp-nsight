@@ -19,6 +19,7 @@
 package org.eclipse.ptp.debug.external.core.cdi.model.variable;
 
 import org.eclipse.ptp.debug.core.aif.AIFException;
+import org.eclipse.ptp.debug.core.aif.AIFFactory;
 import org.eclipse.ptp.debug.core.aif.IAIF;
 import org.eclipse.ptp.debug.core.aif.IAIFType;
 import org.eclipse.ptp.debug.core.aif.IAIFTypeArray;
@@ -215,7 +216,7 @@ public abstract class Variable extends VariableDescriptor implements IPCDIVariab
 		return 0;
 	}
 	public IAIFValue getValue() throws PCDIException {
-		if (fValue == null) {
+		if (fValue == null || fValue == AIFFactory.UNKNOWNVALUE) {
 			Target target = (Target)getTarget();
 			GetPartialAIFCommand command = new GetPartialAIFCommand(getTarget().getTask(), getKeyName(), false, true);
 			target.getDebugger().postCommand(command);
