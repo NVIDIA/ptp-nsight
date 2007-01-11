@@ -24,6 +24,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.eclipse.ptp.debug.core.cdi.PCDIException;
 import org.eclipse.ptp.debug.core.cdi.event.IPCDIEvent;
 import org.eclipse.ptp.debug.core.cdi.model.IPCDIArgumentDescriptor;
@@ -286,7 +287,13 @@ public class VariableManager extends Manager {
 		}
 		return argument;
 	}
+	
 	public IPCDIArgumentDescriptor[] getArgumentDescriptors(StackFrame frame) throws PCDIException {
+		//FIXME disable argument in MAIN Method
+		String function = frame.getFunction();
+		if (function != null && function.equals("main")) {
+			return new IPCDIArgumentDescriptor[0];
+		}
 		List argObjects = new ArrayList();
 		Target target = (Target)frame.getTarget();
 		Thread currentThread = (Thread)target.getCurrentThread();
