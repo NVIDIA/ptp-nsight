@@ -2098,26 +2098,25 @@ CheckMainFrame(int level)
 	List *		frames;
 	int val = 0;
 	
-	#ifdef __gnu_linux__
-		if (GDB_Version <= 6.3)
-			return val;
-	
-		cmd = MIStackListFrames(level, level);
-		SendCommandWait(DebugSession, cmd);
-		if (!MICommandResultOK(cmd)) {
-			MICommandFree(cmd);
-			return val;
-		}
-		frames = MIGetStackListFramesInfo(cmd);
-	
-		//only one frame
-		SetList(frames);
-		if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
-			if (frame->func != NULL && strncmp(frame->func, "main", 4) == 0) {
-				val = 1;
+	#ifdef __gnu_linux__ &&  __i386__ && __GNUC__ == 4
+		if (GDB_Version > 6.3) {
+			cmd = MIStackListFrames(level, level);
+			SendCommandWait(DebugSession, cmd);
+			if (!MICommandResultOK(cmd)) {
+				MICommandFree(cmd);
+				return val;
 			}
+			frames = MIGetStackListFramesInfo(cmd);
+		
+			//only one frame
+			SetList(frames);
+			if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
+				if (frame->func != NULL && strncmp(frame->func, "main", 4) == 0) {
+					val = 1;
+				}
+			}
+			DestroyList(frames, MIFrameFree);
 		}
-		DestroyList(frames, MIFrameFree);
 	#endif
 		
 	return val;
