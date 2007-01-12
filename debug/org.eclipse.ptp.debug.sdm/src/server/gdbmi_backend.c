@@ -117,7 +117,7 @@ static int	GDBCLISignalInfo(char*);
 static int	GDBCLIHandle(char*);
 static int	GDBMIQuit(void);
 static int	GDBMIDataEvaluateExpression(char*);
-static int	GDBGetPartialAIF(char *, int, int);
+static int	GDBGetPartialAIF(char *, char *, int, int);
 static int	GDBMIVarDelete(char*);
 
 static void SendCommandWait(MISession *, MICommand *);
@@ -2090,6 +2090,39 @@ GDBMIGetLocalVariables(void)
 	return DBGRES_OK;
 }
 
+static int
+CheckMainFrame(int level)
+{
+	MICommand *	cmd;
+	MIFrame *	frame;
+	List *		frames;
+	int val = 0;
+	
+	#ifdef __gnu_linux__
+		if (GDB_Version <= 6.3)
+			return val;
+	
+		cmd = MIStackListFrames(level, level);
+		SendCommandWait(DebugSession, cmd);
+		if (!MICommandResultOK(cmd)) {
+			MICommandFree(cmd);
+			return val;
+		}
+		frames = MIGetStackListFramesInfo(cmd);
+	
+		//only one frame
+		SetList(frames);
+		if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
+			if (frame->func != NULL && strncmp(frame->func, "main", 4) == 0) {
+				val = 1;
+			}
+		}
+		DestroyList(frames, MIFrameFree);
+	#endif
+		
+	return val;
+}
+
 /*
 ** List arguments.
 */
@@ -2128,12 +2161,13 @@ GDBMIListArguments(int low, int high)
  	 */ 
 	SetList(frames);
 	if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
-		for (SetList(frame->args); (arg = (MIArg *)GetListElement(frame->args)) != NULL; )
-			AddToList(e->dbg_event_u.list, (void *)strdup(arg->name));
-	}
-	
+		//check main frame
+		if (CheckMainFrame(frame->level) == 0) {
+			for (SetList(frame->args); (arg = (MIArg *)GetListElement(frame->args)) != NULL; )
+				AddToList(e->dbg_event_u.list, (void *)strdup(arg->name));
+		}
+	}	
 	DestroyList(frames, MIFrameFree);
-	
 	SaveEvent(e);
 	
 	return DBGRES_OK;
@@ -2668,9 +2702,8 @@ GetChildrenMIVar(char *mivar_name, int showParentType)
 		cmd = MIVarInfoType(mivar_name);
 		SendCommandWait(DebugSession, cmd);
 		if (!MICommandResultOK(cmd)) {
-			mivar = CreateMIVar(mivar_name);
 			MICommandFree(cmd);
-			return mivar;
+			return NULL;
 		}
 		mivar = MIGetVarInfoType(cmd);
 		mivar->name = strdup(mivar_name);
@@ -2679,9 +2712,8 @@ GetChildrenMIVar(char *mivar_name, int showParentType)
 	cmd = MIVarListChildren(mivar_name);
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		mivar = CreateMIVar(mivar_name);
 		MICommandFree(cmd);
-		return mivar;
+		return NULL;
 	}
 	MIGetVarListChildrenInfo(mivar, cmd);
 	MICommandFree(cmd);
@@ -2696,9 +2728,8 @@ GetMIVarDetails(char *name)
 	cmd = MIVarInfoType(name);
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		mivar = CreateMIVar(name);
 		MICommandFree(cmd);
-		return mivar;
+		return NULL;
 	}
 	mivar = MIGetVarInfoType(cmd);
 	mivar->name = strdup(name);
@@ -2711,13 +2742,17 @@ GetMIVarDetails(char *name)
 	return mivar;
 }
 static int
-GDBGetPartialAIF(char *var_name, int listChildren, int express)
+GDBGetPartialAIF(char* name, char* key, int listChildren, int express)
 {
 	MIVar *mivar;
 	AIF *a;
 	dbg_event *	e;
+	char* var_name;
 
 	CHECK_SESSION();
+	
+	//key is prefered if it exists 
+	var_name = (key == NULL || strlen(key) == 0)?name:key;
 
 	if (express) {
 		mivar = GetMIVarDetails(var_name);
@@ -2736,8 +2771,12 @@ GDBGetPartialAIF(char *var_name, int listChildren, int express)
 	}
 	
 	if (mivar == NULL) {
-		DbgSetError(DBGERR_UNKNOWN_VARIABLE, var_name);
-		return DBGRES_ERR; 
+		//try again with original variable name
+		var_name = name;
+		if ((mivar = CreateMIVar(var_name)) == NULL) {
+			DbgSetError(DBGERR_UNKNOWN_VARIABLE, var_name);
+			return DBGRES_ERR; 
+		}
 	}
 
 	if ((a = GetPartailAIF(mivar, var_name)) == NULL) {

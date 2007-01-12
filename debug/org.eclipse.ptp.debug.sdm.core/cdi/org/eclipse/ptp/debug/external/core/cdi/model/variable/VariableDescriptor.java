@@ -154,7 +154,7 @@ public abstract class VariableDescriptor extends PObject implements IPCDIVariabl
 		if (fType == null || fType == AIFFactory.UNKNOWNTYPE) {
 			try {
 				Target target = (Target)getTarget();
-				GetPartialAIFCommand command = new GetPartialAIFCommand(target.getTask(), getQualifiedName());
+				GetPartialAIFCommand command = new GetPartialAIFCommand(target.getTask(), getQualifiedName(), "");
 				target.getDebugger().postCommand(command);
 				setAIF(command.getPartialAIF());
 				keyName = command.getName();
