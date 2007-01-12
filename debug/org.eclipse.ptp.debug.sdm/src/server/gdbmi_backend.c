@@ -2090,37 +2090,41 @@ GDBMIGetLocalVariables(void)
 	return DBGRES_OK;
 }
 
+/*
+ * This is needed to check for a bug in the Linux x86 GCC 4.0 compiler
+ * that causes gdb 6.5 to crash under certain conditions.
+ */
+#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
 static int
-CheckMainFrame(int level)
+CurrentFrame(int level, char *name)
 {
 	MICommand *	cmd;
 	MIFrame *	frame;
 	List *		frames;
 	int val = 0;
 	
-	#ifdef __gnu_linux__ &&  __i386__ && __GNUC__ == 4
-		if (GDB_Version > 6.3) {
-			cmd = MIStackListFrames(level, level);
-			SendCommandWait(DebugSession, cmd);
-			if (!MICommandResultOK(cmd)) {
-				MICommandFree(cmd);
-				return val;
-			}
-			frames = MIGetStackListFramesInfo(cmd);
-		
-			//only one frame
-			SetList(frames);
-			if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
-				if (frame->func != NULL && strncmp(frame->func, "main", 4) == 0) {
-					val = 1;
-				}
-			}
-			DestroyList(frames, MIFrameFree);
+	if (GDB_Version > 6.3) {
+		cmd = MIStackListFrames(level, level);
+		SendCommandWait(DebugSession, cmd);
+		if (!MICommandResultOK(cmd)) {
+			MICommandFree(cmd);
+			return val;
 		}
-	#endif
+		frames = MIGetStackListFramesInfo(cmd);
+	
+		//only one frame
+		SetList(frames);
+		if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
+			if (frame->func != NULL && strncmp(frame->func, name, 4) == 0) {
+				val = 1;
+			}
+		}
+		DestroyList(frames, MIFrameFree);
+	}
 		
 	return val;
 }
+#endif
 
 /*
 ** List arguments.
@@ -2160,11 +2164,14 @@ GDBMIListArguments(int low, int high)
  	 */ 
 	SetList(frames);
 	if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
-		//check main frame
-		if (CheckMainFrame(frame->level) == 0) {
+#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
+		if (!CurrentFrame(frame->level, "main")) {
+#endif
 			for (SetList(frame->args); (arg = (MIArg *)GetListElement(frame->args)) != NULL; )
 				AddToList(e->dbg_event_u.list, (void *)strdup(arg->name));
+#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
 		}
+#endif
 	}	
 	DestroyList(frames, MIFrameFree);
 	SaveEvent(e);
