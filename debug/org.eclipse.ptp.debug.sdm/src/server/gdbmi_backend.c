@@ -2626,7 +2626,7 @@ GetPointerAIF(MIVar *var, char *exp)
 {
 	AIF *av;
 	AIF *a;
-	
+
 	if (var->children != NULL) {
 		var->type[strlen(var->type) - 1] = '\0'; //remove pointer
 		while (var->type[strlen(var->type) - 1] == ' ') {//remove whilespace
@@ -2660,7 +2660,12 @@ GetPointerAIF(MIVar *var, char *exp)
 		}
 	}
 	else {
-		if (strncmp(var->type, "char", 4) == 0) { //char pointer
+		if (var->type[strlen(var->type) - 2] == '*') {//pointer pointer
+			av = VoidToAIF(0, 0);
+			a = GetAIFPointer(GetVarValue(var->name), av);
+			AIFFree(av);
+		}
+		else if (strncmp(var->type, "char", 4) == 0) { //char pointer
 			a = GetAIFCharPointer(GetVarValue(var->name));			
 		}
 		else {
