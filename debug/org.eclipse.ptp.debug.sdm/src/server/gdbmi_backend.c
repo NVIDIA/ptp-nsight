@@ -20,8 +20,6 @@
 **
 */
 
-#define DEBUG
-
 #ifdef __gnu_linux__
 #define _GNU_SOURCE
 #endif /* __gnu_linux__ */
@@ -2091,10 +2089,12 @@ GDBMIGetLocalVariables(void)
 }
 
 /*
- * This is needed to check for a bug in the Linux x86 GCC 4.0 compiler
- * that causes gdb 6.5 to crash under certain conditions.
+ * This is needed to check for a bug in the Linux x86 GCC 4.1 compiler
+ * that causes gdb 6.4 and 6.5 to crash under certain conditions.
  */
-#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
+#define GDB_BUG_2188	__gnu_linux__ && __i386__ && __GNUC__ == 4 && __GNUC_MINOR__ == 1
+
+#if GDB_BUG_2188
 static int
 CurrentFrame(int level, char *name)
 {
@@ -2103,7 +2103,7 @@ CurrentFrame(int level, char *name)
 	List *		frames;
 	int val = 0;
 	
-	if (GDB_Version > 6.3) {
+	if (GDB_Version > 6.3 && GDB_Version < 6.6) {
 		cmd = MIStackListFrames(level, level);
 		SendCommandWait(DebugSession, cmd);
 		if (!MICommandResultOK(cmd)) {
@@ -2124,7 +2124,7 @@ CurrentFrame(int level, char *name)
 		
 	return val;
 }
-#endif
+#endif /* GDB_BUG_2188 */
 
 /*
 ** List arguments.
@@ -2164,14 +2164,14 @@ GDBMIListArguments(int low, int high)
  	 */ 
 	SetList(frames);
 	if ((frame = (MIFrame *)GetListElement(frames)) != NULL) {
-#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
+#if GDB_BUG_2188
 		if (!CurrentFrame(frame->level, "main")) {
-#endif
+#endif /* GDB_BUG_2188 */
 			for (SetList(frame->args); (arg = (MIArg *)GetListElement(frame->args)) != NULL; )
 				AddToList(e->dbg_event_u.list, (void *)strdup(arg->name));
-#if __gnu_linux__ &&  __i386__ && __GNUC__ == 4
+#if GDB_BUG_2188
 		}
-#endif
+#endif /* GDB_BUG_2188 */
 	}	
 	DestroyList(frames, MIFrameFree);
 	SaveEvent(e);
