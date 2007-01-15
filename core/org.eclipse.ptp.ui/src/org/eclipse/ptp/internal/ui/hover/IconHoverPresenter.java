@@ -96,8 +96,9 @@ public class IconHoverPresenter implements DefaultInformationControl.IInformatio
 	private void append(StringBuffer buffer, String string, TextPresentation presentation) {
 		int length = string.length();
 		buffer.append(string);
-		if (presentation != null)
+		if (presentation != null) {
 			adaptTextPresentation(presentation, fCounter, length);
+		}
 		fCounter += length;
 	}
 	/**
@@ -133,14 +134,14 @@ public class IconHoverPresenter implements DefaultInformationControl.IInformatio
 					break;
 
 				append(buffer, line, null);
-				append(buffer, LINE_DELIM, presentation);
+				append(buffer, LINE_DELIM, reader.isFormattedLine()?presentation:null);
 				line = reader.readLine();
 				maxNumberOfLines--;
 			}
 			// display "..." if the content is over the shell size
 			if (line != null && buffer.length() > 0) {
-				append(buffer, LINE_DELIM, presentation);
-				append(buffer, "...", presentation);
+				append(buffer, LINE_DELIM, null);
+				append(buffer, "...", null);
 			}
 			return trim(buffer, presentation);
 		} catch (IOException e) {
