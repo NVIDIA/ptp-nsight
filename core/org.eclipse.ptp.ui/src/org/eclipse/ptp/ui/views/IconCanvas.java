@@ -24,6 +24,7 @@ import java.util.BitSet;
 import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.SafeRunnable;
@@ -1471,28 +1472,16 @@ public class IconCanvas extends Canvas {
 	 * @param end_pt
 	 * @return true if element can be selected
 	 */
-	protected boolean canSelectElements(Point start_pt, Point end_pt) {
-		int start_index = start_pt == null ? 0 : findSelectedIndexByLocation(start_pt.x, start_pt.y, false);
-		int end_index = end_pt == null ? -1 : findSelectedIndexByLocation(end_pt.x, end_pt.y, false);
+	protected boolean canSelectElements(int start_index, int end_index) {
+		if (start_index == -1 || end_index == -1)
+			return false;
+
 		int start_count = start_index;
 		int end_count = end_index;
-		
+				
 		if (start_index > end_index) {// swarp
-			if (end_index == -1)
-				return false;
 			start_count = end_count;
 			end_count = start_index;
-		} else if (start_index < end_index) {
-			if (start_pt == null || start_index == -1) {
-				autoSelectUnselectElement(end_index);
-				return true;
-			}
-		} else {// equals
-			if (start_index > -1) {
-				autoSelectUnselectElement(start_index);
-				return true;
-			}
-			return false;
 		}
 		for (int index = start_count; index < end_count + 1; index++) {
 			selectedElements.set(index);
@@ -1884,33 +1873,26 @@ public class IconCanvas extends Canvas {
 		}
 		boolean isCtrl = (event.stateMask & SWT.MOD1) != 0;
 		boolean isShift = (event.stateMask & SWT.MOD2) != 0;
-		/*
-		if (isShift && isCtrl) {
-			isShift = false;
-			isCtrl = false;
-		}
-		*/
-		if (!isShift && !isCtrl) {
+		
+		int end = findSelectedIndexByLocation(event.x, event.y, false);
+		int start = isShift?(selection == null)?-1:findSelectedIndexByLocation(selection.x, actualScrollStart_y - verticalScrollOffset, false):end;
+
+		if (start == -1)
+			start = end;
+
+		if (!isShift && !isCtrl) { //no shift, no ctrl
 			unselectAllElements();
 		}
-		else if (isShift && !isCtrl) {
+		else if (end > -1 && isShift && !isCtrl) { //shift
 			selectedElements.clear();
 			tempSelectedElements.clear();
 		}
-		
-		canSelectElements(isShift ? (selection != null ? new Point(selection.x, actualScrollStart_y - verticalScrollOffset) : null) : null, new Point(event.x, event.y));
-		//int start_x = Math.min(getMaxCol() * getElementWidth() + e_offset_x, Math.max(0 + sel_size, event.x));
-		//int start_y = (Math.min((getMaxRow() - current_top_row) * getElementHeight() + sel_size, Math.max(0 + sel_size, event.y)));
-		if (!isShift || selection == null)
+
+		if (!isShift || start == end) {//get last selection if no shift or start==end
 			selection = new Point(event.x, event.y);
-		
-		actualScrollStart_y = selection.y + verticalScrollOffset;
-		/*
-		int index = findSelectedIndexByLocation(event.x, event.y, false);
-		if (index > -1) {
-			fireAction(IIconCanvasActionListener.SELECTION_ACTION, index);
-		}
-		*/
+			actualScrollStart_y = selection.y + verticalScrollOffset;
+		}		
+		canSelectElements(start, end);
 		redraw();
 	}
 	/** Handle mouse up event
@@ -1948,6 +1930,9 @@ public class IconCanvas extends Canvas {
 		if (!mouseDown || mouseDoubleClick || getTotalElements() == 0)
 			return;
 		if ((event.stateMask & SWT.BUTTON1) == 0) {
+			return;
+		}
+		if ((event.stateMask & SWT.MOD2) != 0) { //shift key
 			return;
 		}
 		update();
