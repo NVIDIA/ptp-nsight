@@ -357,7 +357,10 @@ public class PCDIDebugModel {
 		jobStorage.removeValue(job_id, set_id);
 	}
 	public BitList getTasks(String job_id, String set_id) {
-		return ((BitList)jobStorage.getValue(job_id, set_id)).copy();
+		BitList tasks = ((BitList)jobStorage.getValue(job_id, set_id));
+		if (tasks != null)
+			return tasks.copy();
+		return null;
 	}
 	public void deleteJob(IPJob job) {
 		jobStorage.removeJobStorage(job.getIDString());
