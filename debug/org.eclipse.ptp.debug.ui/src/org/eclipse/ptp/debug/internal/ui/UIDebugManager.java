@@ -803,7 +803,7 @@ public class UIDebugManager extends JobManager implements IBreakpointListener {
 			ISelection selection = viewer.getSelection();
 			if (!selection.isEmpty() && selection instanceof IStructuredSelection) {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
-				if (obj instanceof IStep) {
+				if (obj instanceof IStep && obj instanceof IPDebugElement) {
 					int taskID = ((IPDebugTarget)((IPDebugElement)obj).getDebugTarget()).getTargetID();
 					if (tasks.get(taskID)) {
 						switch (step) {
