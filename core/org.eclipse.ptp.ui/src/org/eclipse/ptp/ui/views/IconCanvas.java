@@ -991,13 +991,22 @@ public class IconCanvas extends Canvas {
 					doPageUp(1);
 				}
 				selection.y = actualScrollStart_y - verticalScrollOffset;
-				if (!isSelect)
-					unselectElement(index);
-				if (!isSelected(index - max_col))
-					autoSelectUnselectElement(index - max_col);
+				boolean redrawAll = !selectedElements.isEmpty();
+				if (!isSelect) {
+					unselectAllElements();
+					selectedElements.set(index - max_col);
+				}
+				else {
+					if (!isSelected(index - max_col))
+						selectElements(index-max_col, index);
+					else
+						unselectElements(index-max_col+1, index);						
+				}
+				
+				if (redrawAll)
+					redraw();
 				else
-					unselectElement(index);
-				redraw(index, index - max_col);
+					redraw(index - max_col, index);
 			}
 		}
 	}
@@ -1014,13 +1023,23 @@ public class IconCanvas extends Canvas {
 					doPageDown(1);
 				}
 				selection.y = actualScrollStart_y - verticalScrollOffset;
-				if (!isSelect)
-					unselectElement(index);
-				if (!isSelected(index + max_col))
-					autoSelectUnselectElement(index + max_col);
+				boolean redrawAll = !selectedElements.isEmpty();
+				if (!isSelect) {
+					unselectAllElements();
+					selectedElements.set(index + max_col);
+				}
+				else {
+					if (!isSelected(index + max_col))
+						selectElements(index, index+max_col);
+					else
+						unselectElements(index, index+max_col-1);						
+				}
+			
+				if (redrawAll)
+					redraw();
 				else
-					unselectElement(index);
-				redraw(index, index + max_col);
+					redraw(index, index + max_col);
+
 			}
 		}
 	}
@@ -1039,13 +1058,19 @@ public class IconCanvas extends Canvas {
 				selection.x = e_offset_x + (getMaxCol() * getElementWidth()) - e_width;
 				selection.y = actualScrollStart_y - verticalScrollOffset;
 			}
-			if (!isSelect)
-				unselectElement(index);
+			boolean redrawAll = !selectedElements.isEmpty();
+			if (!isSelect) {
+				unselectAllElements();
+			}
 			if (!isSelected(index - 1))
 				autoSelectUnselectElement(index - 1);
 			else
-				unselectElement(index);
-			redraw(index - 1, index);
+				selectedElements.clear(index);
+			
+			if (redrawAll)
+				redraw();
+			else
+				redraw(index-1, index);
 		}
 	}
 	/** Go next
@@ -1063,13 +1088,18 @@ public class IconCanvas extends Canvas {
 				selection.x = e_offset_x + e_spacing_x;
 				selection.y = actualScrollStart_y - verticalScrollOffset;
 			}
-			if (!isSelect)
-				unselectElement(index);
+			boolean redrawAll = !selectedElements.isEmpty();
+			if (!isSelect) {
+				unselectAllElements();
+			}
 			if (!isSelected(index + 1))
 				autoSelectUnselectElement(index + 1);
 			else
-				unselectElement(index);
-			redraw(index, index + 1);
+				selectedElements.clear(index);
+			if (redrawAll)
+				redraw();
+			else
+				redraw(index, index+1);
 		}
 	}
 	/** Go to line start
@@ -1484,9 +1514,7 @@ public class IconCanvas extends Canvas {
 			start_count = end_count;
 			end_count = start_index;
 		}
-		for (int index = start_count; index < end_count + 1; index++) {
-			selectedElements.set(index);
-		}
+		selectElements(start_count, end_count);
 		return true;
 	}
 	/** unselect all elements
@@ -1545,6 +1573,11 @@ public class IconCanvas extends Canvas {
 				autoSelectUnselectElement(index);
 			else
 				selectedElements.set(index);
+		}
+	}
+	public void unselectElements(int from_index, int to_index) {
+		for (int index = from_index; index < to_index + 1; index++) {
+			selectedElements.clear(index);
 		}
 	}
 	/** Paint the view
@@ -2159,7 +2192,7 @@ public class IconCanvas extends Canvas {
         final Display display = new Display();
         final Shell shell = new Shell(display);
         shell.setLocation(100, 200);
-        shell.setSize(600, 100);
+        shell.setSize(600, 300);
         shell.setLayout(new FillLayout());
 
 		//File normalFile = new File("D:/eclipse3.1/workspace/org.eclipse.ptp.ui/icons/node/node_running.gif");
