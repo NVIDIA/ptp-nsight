@@ -224,6 +224,7 @@ public class IconCanvas extends Canvas {
 		autoScrollDirection = SWT.NULL;
 		verticalScrollOffset = 0;
 		unselectAllElements();
+		selection = null;
 		resetMargin();
 		resetInfo();
 		getVerticalBar().setSelection(0);
@@ -1251,8 +1252,8 @@ public class IconCanvas extends Canvas {
 	 */
 	protected Point findLocation(int index) {
 		Point section = findSection(index);
-		int x_loc = (section.x * getElementWidth() + e_offset_x);
-		int y_loc = (section.y * getElementHeight() + e_offset_y) - verticalScrollOffset;
+		int x_loc = (section.x * getElementWidth() + e_offset_x + 1); //plus 1 for margin
+		int y_loc = (section.y * getElementHeight() + e_offset_y + 1) - verticalScrollOffset;
 		return new Point(x_loc, y_loc);
 	}
 	/** Get direction 
@@ -1494,7 +1495,6 @@ public class IconCanvas extends Canvas {
 	public void unselectAllElements() {
 		selectedElements.clear();
 		tempSelectedElements.clear();
-		selection = null;
 	}
 	/** Select element
 	 * @param index Element index
@@ -1524,6 +1524,8 @@ public class IconCanvas extends Canvas {
 	 */
 	public void selectElement(int index) {
 		selectedElements.set(index);
+		selection = findLocation(index);
+		actualScrollStart_y = selection.y + verticalScrollOffset;
 	}
 	/** Select elements 
 	 * @param from_index
@@ -1884,8 +1886,7 @@ public class IconCanvas extends Canvas {
 			unselectAllElements();
 		}
 		else if (end > -1 && isShift && !isCtrl) { //shift
-			selectedElements.clear();
-			tempSelectedElements.clear();
+			unselectAllElements();
 		}
 
 		if (!isShift || start == end) {//get last selection if no shift or start==end
@@ -1998,11 +1999,13 @@ public class IconCanvas extends Canvas {
 	 * @param event
 	 */
 	protected void handleResize(Event event) {
+		/*
 		int index = selection == null ? -1 : findSelectedIndexByLocation(selection.x, (actualScrollStart_y - verticalScrollOffset), false);
 		if (index > -1) {
 			selectedElements.clear(index);
 			selection = null;
 		}
+		*/
 		resetInfo();
 		setVerticalScrollBar(getVerticalBar());
 		if (!claimBottomFreeSpace())
@@ -2204,11 +2207,11 @@ public class IconCanvas extends Canvas {
         iconCanvas.setToolTipProvider(new IToolTipProvider() {
         	public String[] toolTipText(Object obj) {
         		//if (obj.toString().indexOf("1") > -1) {
-        		//String t = "<i>12345678901234567890123456789a";
-    			//t += "12345678901234567890</i>1<b>23456789</b>a";
-    			//t += "12345678901234567890123456789a";
-       			//return new String[] { "Object: " + obj, "" };
-        		return new String[] { "" };
+        		String t = "<i>12345678901234567890123456789a<br>";
+	    		t += "12345678901234567890</i>1<b>23456789</b>a";
+	    		t += "12345678901234567890123456789a";
+	       		return new String[] { "Object: " + obj, t };
+        		//return new String[] { "" };
         		//}
         		/*
         		String[] texts = new String[2];
