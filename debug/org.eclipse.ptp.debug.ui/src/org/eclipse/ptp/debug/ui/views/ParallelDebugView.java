@@ -98,7 +98,8 @@ public class ParallelDebugView extends ParallelJobView {
 						Object obj = i.next();
 						if (obj instanceof IPDebugElement) {
 							int taskID = ((IPDebugTarget)((IPDebugElement)obj).getDebugTarget()).getTargetID();
-							canvas.selectElement(taskID);
+							if (!canvas.isSelected(taskID))
+								canvas.selectElement(taskID);
 						}
 					}
 					canvas.redraw();
