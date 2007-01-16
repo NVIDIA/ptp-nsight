@@ -1498,12 +1498,13 @@ public class IconCanvas extends Canvas {
 		int diff = Math.abs(end_row - start_row) + 1;
 		redraw(0, Math.min(start_y_loc, end_y_loc), (max_col * getElementWidth() + e_offset_x), diff * getElementHeight(), false);
 	}
-	/** Can select elements
-	 * @param start_pt
-	 * @param end_pt
+	/** select elements
+	 * @param start_index
+	 * @param end_index
+	 * @param checkStatus
 	 * @return true if element can be selected
 	 */
-	protected boolean canSelectElements(int start_index, int end_index) {
+	protected boolean canSelectElements(int start_index, int end_index, boolean checkStatus) {
 		if (start_index == -1 || end_index == -1)
 			return false;
 
@@ -1514,7 +1515,7 @@ public class IconCanvas extends Canvas {
 			start_count = end_count;
 			end_count = start_index;
 		}
-		selectElements(start_count, end_count);
+		selectElements(start_count, end_count, checkStatus);
 		return true;
 	}
 	/** unselect all elements
@@ -1925,8 +1926,8 @@ public class IconCanvas extends Canvas {
 		if (!isShift || start == end) {//get last selection if no shift or start==end
 			selection = new Point(event.x, event.y);
 			actualScrollStart_y = selection.y + verticalScrollOffset;
-		}		
-		canSelectElements(start, end);
+		}
+		canSelectElements(start, end, isCtrl);
 		redraw();
 	}
 	/** Handle mouse up event
