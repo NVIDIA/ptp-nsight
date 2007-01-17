@@ -1515,7 +1515,8 @@ public class IconCanvas extends Canvas {
 			start_count = end_count;
 			end_count = start_index;
 		}
-		selectElements(start_count, end_count, checkStatus);
+
+		selectElements(start_count, end_count, checkStatus);						
 		return true;
 	}
 	/** unselect all elements
@@ -1927,7 +1928,7 @@ public class IconCanvas extends Canvas {
 			selection = new Point(event.x, event.y);
 			actualScrollStart_y = selection.y + verticalScrollOffset;
 		}
-		canSelectElements(start, end, isCtrl);
+		canSelectElements(start, end, (isCtrl && !isShift));
 		redraw();
 	}
 	/** Handle mouse up event
