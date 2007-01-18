@@ -86,6 +86,8 @@ public class IconCanvas extends Canvas {
 	protected boolean mouseDown = false;
 	protected boolean mouseDoubleClick = false;
 	// scrolling and selection
+	protected int firstSelectedIndex = -1;
+	protected int secondSelectedIndex = -1; //for mac	
 	protected BitSet selectedElements = new BitSet();
 	protected BitSet tempSelectedElements = new BitSet();
 	protected int sel_size = 1;
@@ -118,6 +120,7 @@ public class IconCanvas extends Canvas {
 	protected boolean show_tooltip_allthetime = false;
 	private Timer hoverTimer = null;
 	protected boolean tooltip_wrap = true; 
+	protected boolean show_tooltip = true;
 	
 	// input
 	protected int total_elements = 0;
@@ -224,6 +227,8 @@ public class IconCanvas extends Canvas {
 		autoScrollDirection = SWT.NULL;
 		verticalScrollOffset = 0;
 		unselectAllElements();
+		firstSelectedIndex = -1;
+		secondSelectedIndex = -1;
 		selection = null;
 		resetMargin();
 		resetInfo();
@@ -242,6 +247,9 @@ public class IconCanvas extends Canvas {
 	 */
 	public void setToolTipProvider(IToolTipProvider toolTipProvider) {
 		this.toolTipProvider = toolTipProvider;
+	}
+	public void setShowTooltip(boolean show) {
+		this.show_tooltip = show;
 	}
 	/** Get image provider
 	 * @return
@@ -1386,6 +1394,10 @@ public class IconCanvas extends Canvas {
 		int col_end = Math.min(getSelectedCol(d_ex, true) + 1, getMaxCol());
 		int row_start = Math.max(0, getSelectedRow(d_sy, true));
 		int row_end = Math.min(getSelectedRow(d_ey, true) + 1, getMaxRow());
+		
+		if (firstSelectedIndex == -1)
+			firstSelectedIndex = findSelectedIndex(row_start, col_start);
+		
 		tempSelectedElements.clear();
 		tempSelectedElements.or(selectElements(col_start, col_end, row_start, row_end));
 		if (movingSelectionEnd != null) {
@@ -1508,15 +1520,7 @@ public class IconCanvas extends Canvas {
 		if (start_index == -1 || end_index == -1)
 			return false;
 
-		int start_count = start_index;
-		int end_count = end_index;
-				
-		if (start_index > end_index) {// swarp
-			start_count = end_count;
-			end_count = start_index;
-		}
-
-		selectElements(start_count, end_count, checkStatus);						
+		selectElements(start_index, end_index, checkStatus);						
 		return true;
 	}
 	/** unselect all elements
@@ -1912,22 +1916,57 @@ public class IconCanvas extends Canvas {
 		boolean isShift = (event.stateMask & SWT.MOD2) != 0;
 		
 		int end = findSelectedIndexByLocation(event.x, event.y, false);
-		int start = isShift?(selection == null)?-1:findSelectedIndexByLocation(selection.x, actualScrollStart_y - verticalScrollOffset, false):end;
+		int start = isShift?firstSelectedIndex:end;
 
 		if (start == -1)
 			start = end;
+		
+		if (start > end) {// swarp
+			int tmp = start;
+			start = end;
+			end = tmp;
+		}
 
+		if (IS_CARBON) {// mac
+			if (!isCtrl) {
+				firstSelectedIndex = start;
+				secondSelectedIndex = end;
+			}
+			if (isShift) {
+				if (firstSelectedIndex > -1 && secondSelectedIndex > -1 && firstSelectedIndex < secondSelectedIndex) {
+					end = secondSelectedIndex;
+				}
+			}
+		}
+		else if (IS_GTK || IS_MOTIF) {// linux
+			if (isShift && isCtrl) {//only apply ctrl if both keys pressed
+				isShift = false;
+				start = end;
+			}
+			if (!isShift || start == end) {//get last selection if no shift or start==end
+				firstSelectedIndex = start;
+			}
+		}
+		else {// others eg. windows
+			if (!isShift || start == end) {//get last selection if no shift or start==end
+				firstSelectedIndex = start;
+			}
+		}
+		
 		if (!isShift && !isCtrl) { //no shift, no ctrl
 			unselectAllElements();
 		}
-		else if (end > -1 && isShift && !isCtrl) { //shift
+		if (end > -1 && isShift && !isCtrl) { //shift
 			unselectAllElements();
 		}
-
-		if (!isShift || start == end) {//get last selection if no shift or start==end
-			selection = new Point(event.x, event.y);
-			actualScrollStart_y = selection.y + verticalScrollOffset;
+		if (end == -1) {//clear all elementd if no selected
+			unselectAllElements();
+			firstSelectedIndex = -1;
+			secondSelectedIndex = -1;
 		}
+
+		selection = new Point(event.x, event.y);
+		actualScrollStart_y = selection.y + verticalScrollOffset;
 		canSelectElements(start, end, (isCtrl && !isShift));
 		redraw();
 	}
@@ -2057,7 +2096,7 @@ public class IconCanvas extends Canvas {
 	 * @param event mouse move event
 	 */
 	protected void showToolTip(int index, Event event) {
-		if (index == -1) {
+		if (!show_tooltip || index == -1) {
 			hideToolTip();
 			return;
 		}
@@ -2220,6 +2259,7 @@ public class IconCanvas extends Canvas {
 		final Image selectedImage = new Image(selectedImage1.getDevice(), selectedImage1.getImageData().scaledTo(w, h));		
 
         IconCanvas iconCanvas = new IconCanvas(shell, SWT.NONE);
+        iconCanvas.setShowTooltip(false);
         iconCanvas.setIconSize(w, h);
         iconCanvas.setFontSize(10);
         iconCanvas.setIconSpace(1, 4);
