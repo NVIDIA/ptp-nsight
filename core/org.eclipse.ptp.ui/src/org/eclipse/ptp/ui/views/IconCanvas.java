@@ -1330,6 +1330,10 @@ public class IconCanvas extends Canvas {
 				if (index > -1 && index < total) {
 					newElements.set(index);
 				}
+				//indicate the first selected element when dragging
+				if (firstSelectedIndex == -1 || firstSelectedIndex > index) {
+					firstSelectedIndex = index;
+				}
 			}
 		}
 		return newElements;
@@ -1369,6 +1373,7 @@ public class IconCanvas extends Canvas {
 		int e_x = end_pt.x;
 		int s_y = isInitialPage ? start_pt.y : (actualScrollStart_y - verticalScrollOffset);
 		int e_y = end_pt.y;
+
 		switch (direction) {
 		case SW:
 			s_x = end_pt.x;
@@ -1389,15 +1394,12 @@ public class IconCanvas extends Canvas {
 		int d_ex = e_x - e_offset_x;
 		int d_sy = s_y - e_offset_y + e_spacing_y;
 		int d_ey = e_y - e_offset_y;
-		
+
 		int col_start = Math.max(0, getSelectedCol(d_sx, true));
 		int col_end = Math.min(getSelectedCol(d_ex, true) + 1, getMaxCol());
 		int row_start = Math.max(0, getSelectedRow(d_sy, true));
 		int row_end = Math.min(getSelectedRow(d_ey, true) + 1, getMaxRow());
-		
-		if (firstSelectedIndex == -1)
-			firstSelectedIndex = findSelectedIndex(row_start, col_start);
-		
+
 		tempSelectedElements.clear();
 		tempSelectedElements.or(selectElements(col_start, col_end, row_start, row_end));
 		if (movingSelectionEnd != null) {
@@ -1928,7 +1930,7 @@ public class IconCanvas extends Canvas {
 		}
 
 		if (IS_CARBON) {// mac
-			if (!isCtrl) {
+			if (start > -1 && end > -1 && !isCtrl) {
 				firstSelectedIndex = start;
 				secondSelectedIndex = end;
 			}
@@ -1941,25 +1943,28 @@ public class IconCanvas extends Canvas {
 		else if (IS_GTK || IS_MOTIF) {// linux
 			if (isShift && isCtrl) {//only apply ctrl if both keys pressed
 				isShift = false;
-				start = end;
+				if (start < secondSelectedIndex)
+					end = start;
+				else
+					start = end;
 			}
-			if (!isShift || start == end) {//get last selection if no shift or start==end
+			if (start > -1 && end > -1 && (!isShift || start == end)) {//get last selection if no shift or start==end
 				firstSelectedIndex = start;
+				secondSelectedIndex = end;
 			}
 		}
 		else {// others eg. windows
-			if (!isShift || start == end) {//get last selection if no shift or start==end
+			if (start > -1 && end > -1 && (!isShift || start == end)) {//get last selection if no shift or start==end
 				firstSelectedIndex = start;
 			}
 		}
-		
 		if (!isShift && !isCtrl) { //no shift, no ctrl
 			unselectAllElements();
 		}
-		if (end > -1 && isShift && !isCtrl) { //shift
+		if (start > -1 && end > -1 && isShift && !isCtrl) { //shift
 			unselectAllElements();
 		}
-		if (end == -1) {//clear all elementd if no selected
+		if ((start == -1 || end == -1) && !isShift && !isCtrl) {//clear all elementd if no selected
 			unselectAllElements();
 			firstSelectedIndex = -1;
 			secondSelectedIndex = -1;
@@ -2229,7 +2234,7 @@ public class IconCanvas extends Canvas {
 	 * Self testing
 	 ******************************************************************************************************************************************************************************************************************************************************************************************************/
 	public static void main(String[] args) {
-		final int totalImage = 500;
+		final int totalImage = 200;
         final Display display = new Display();
         final Shell shell = new Shell(display);
         shell.setLocation(100, 200);
