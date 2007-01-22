@@ -195,6 +195,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			
 			monitor.subTask("Starting the job . . .");
 			job = getLaunchManager().run(launch, jrunconfig, new SubProgressMonitor(monitor, 150));
+			launch.setAttribute("JOB_ID", job.getIDString());
 			
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
 				monitor.setTaskName("Starting the debugger . . .");

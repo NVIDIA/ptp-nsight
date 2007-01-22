@@ -19,6 +19,7 @@
 package org.eclipse.ptp.debug.external.core.cdi;
 
 import java.util.Properties;
+
 import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -26,7 +27,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.ptp.core.IPJob;
 import org.eclipse.ptp.core.IPTPLaunchConfigurationConstants;
 import org.eclipse.ptp.core.util.BitList;
@@ -103,7 +103,7 @@ public class Session implements IPCDISession, IPCDISessionObject {
 		} catch (CoreException e) {
 			//e.printStackTrace();
 		}
-		DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
+		//DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
 		variableManager.shutdown();
 		expressionManager.shutdown();
 		breakpointManager.shutdown();
