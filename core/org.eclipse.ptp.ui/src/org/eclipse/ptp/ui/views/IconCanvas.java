@@ -1560,8 +1560,9 @@ public class IconCanvas extends Canvas {
 	 */
 	public void selectElement(int index) {
 		selectedElements.set(index);
-		selection = findLocation(index);
-		actualScrollStart_y = selection.y + verticalScrollOffset;
+		firstSelectedIndex = index;
+		//selection = findLocation(index);
+		//actualScrollStart_y = selection.y + verticalScrollOffset;
 	}
 	/** Select elements 
 	 * @param from_index
