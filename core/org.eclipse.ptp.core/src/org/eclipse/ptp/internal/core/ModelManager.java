@@ -268,7 +268,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				try {
 					int count = 1;
 					while (universe.getMachines().length < 1) {
-						this.wait(500);
+						Thread.sleep(500);
 						count += 1;
 						if (count*500 > MAX_WAIT_DISCOVERY) break;
 					}
