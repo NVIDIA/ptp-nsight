@@ -21,6 +21,7 @@ package org.eclipse.ptp.launch.internal;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
+
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.IBinaryParser;
 import org.eclipse.cdt.core.ICExtensionReference;
@@ -48,7 +49,7 @@ import org.eclipse.ptp.debug.core.IAbstractDebugger;
 import org.eclipse.ptp.debug.core.IPDebugConfiguration;
 import org.eclipse.ptp.debug.core.IPDebugConstants;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
-import org.eclipse.ptp.debug.core.launch.PLaunch;
+import org.eclipse.ptp.debug.core.launch.IPLaunch;
 import org.eclipse.ptp.debug.ui.PTPDebugUIPlugin;
 import org.eclipse.ptp.launch.internal.ui.LaunchMessages;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
@@ -134,7 +135,12 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 	}
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor) throws CoreException {
+		if (!(launch instanceof IPLaunch)) {
+			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_launch_object"), null, 0);
+		}
 		IBinaryObject exeFile = null;
+		IPLaunch pLaunch = (IPLaunch) launch;
+
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
 		}
@@ -192,6 +198,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
 				monitor.setTaskName("Starting the debugger . . .");
+
 				String dbgExe = getDebuggerExePath(configuration);
 				if (dbgExe != null) {
 					IPath dbgExePath = new Path(dbgExe);
@@ -209,8 +216,8 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				}
 				job.setAttribute(PreferenceConstants.JOB_ARGS, jrunconfig.getArguments());
 				job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, exePath.removeLastSegments(1).toOSString());
-				PLaunch pLaunch = (PLaunch) launch;
 				pLaunch.setPJob(job);
+				
 				int timeout = store.getInt(IPDebugConstants.PREF_PTP_DEBUG_COMM_TIMEOUT);
 				PTPDebugCorePlugin.getDebugModel().createDebuggerSession(debugger, pLaunch, exeFile, timeout, new SubProgressMonitor(monitor, 40));
 				monitor.worked(10);
