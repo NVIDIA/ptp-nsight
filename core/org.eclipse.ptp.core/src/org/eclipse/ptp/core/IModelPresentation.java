@@ -40,13 +40,6 @@ public interface IModelPresentation {
 	 */
 	public IPUniverse getUniverse();
 	/**
-	 * @param controlSystemID
-	 * @param monitoringSystemID
-	 * @param monitor
-	 * @throws CoreException
-	 */
-	public void refreshRuntimeSystems(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException;
-	/**
 	 * @param monitor
 	 * @param force
 	 * @throws CoreException

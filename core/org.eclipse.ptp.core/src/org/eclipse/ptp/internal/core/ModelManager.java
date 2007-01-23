@@ -18,6 +18,12 @@
  *******************************************************************************/
 package org.eclipse.ptp.internal.core;
 
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -84,6 +90,11 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	private int currentMonitoringSystem = -1;
 	private final int theMSChoiceID;
 	private final int theCSChoiceID;
+	private final Lock modelManagerLock;
+	private final Condition notInitializing;
+	private final Condition universeNotEmpty;
+	private boolean initializing = false;
+	
 	private int numMachines = 1;
 	private int[] numNodes = new int[]{255};
 	
@@ -97,6 +108,10 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	public ModelManager(int theMSChoiceID, int theCSChoiceID) {
+		modelManagerLock = new ReentrantLock();
+		notInitializing = modelManagerLock.newCondition();
+		universeNotEmpty = modelManagerLock.newCondition();
+		
 		this.theMSChoiceID = theMSChoiceID;
 		String MSChoice = MonitoringSystemChoices.getMSNameByID(theMSChoiceID);
 		this.theCSChoiceID = theCSChoiceID;
@@ -105,8 +120,10 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		System.out.println("Your Control System Choice: '"+CSChoice+"'");
 		System.out.println("Your Monitoring System Choice: '"+MSChoice+"'");
 		
-		if(ControlSystemChoices.getCSArrayIndexByID(theCSChoiceID) == -1 || MonitoringSystemChoices.getMSArrayIndexByID(theMSChoiceID) == -1) {
-			throw new IllegalArgumentException("Illegal Control System and/or Monitoring System choices.");
+		if(ControlSystemChoices.getCSArrayIndexByID(theCSChoiceID) == -1 ||
+				MonitoringSystemChoices.getMSArrayIndexByID(theMSChoiceID) == -1) {
+			throw new IllegalArgumentException(
+					"Illegal Control System and/or Monitoring System choices.");
 		}
 	}
 	
@@ -128,134 +145,121 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	public int getMonitoringSystemID() { 
 		return currentMonitoringSystem; 
 	}
-	public synchronized void refreshRuntimeSystems(IProgressMonitor monitor, boolean force) throws CoreException {
-		int curMSID = getControlSystemID();
-		int curCSID = getMonitoringSystemID();
-		if(force || curMSID != theMSChoiceID || curCSID != theCSChoiceID) {
-			if (monitor == null) {
-				monitor = new NullProgressMonitor();
+	
+	public void refreshRuntimeSystems(IProgressMonitor monitor,
+			boolean force) throws CoreException {
+		
+		modelManagerLock.lock();
+		try {
+			while (isInitializing()) {
+				notInitializing.await();
 			}
-			refreshRuntimeSystems(theCSChoiceID, theMSChoiceID, monitor);
+
+			System.out.println("XXXXXXXXXXX refreshRS(" + force +
+					") isInitialized():" + isInitialized());
+			if (!force && isInitialized())
+				return;
+
+			setInitializing(true);
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+			return;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
+
+		// only one thread can get here
+		// thanks to await() and signal()/signalAll()
+		
+		if (monitor == null) {
+			monitor = new NullProgressMonitor();
+		}
+		
+		System.out.println("XXXXXXXXXXX calling initialize() force:" + force +
+				" isInitialized():" + isInitialized());
+		initialize(theCSChoiceID, theMSChoiceID, monitor);
+
+		modelManagerLock.lock();
+		try {
+			setInitializing(false);
+			notInitializing.signalAll();
+		}
+		finally {
+			modelManagerLock.unlock();
 		}
 	}
-	public synchronized void refreshRuntimeSystems(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
-		System.err.println("refreshRuntimeSystems");
+
+	private void initialize(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
+		modelManagerLock.lock();
 		try {
-			monitor.beginTask("Refreshing runtime system...", 200);
-			/*
-			 * Shutdown runtime if it is already active
-			 */
-			System.out.println("SHUTTING DOWN CONTROL/MONITORING/PROXY systems where appropriate");
-			if (controlSystem != null) {
-				monitor.subTask("Shutting down control system...");
-				controlSystem.shutdown();
-				controlSystem = null;
-				monitor.worked(10);
-			}
-			if (monitoringSystem != null) {
-				monitor.subTask("Shutting down monitor system...");
-				monitoringSystem.shutdown();
-				monitoringSystem = null;
-				monitor.worked(10);
-			}
-			if (runtimeProxy != null) {
-				monitor.subTask("Shutting down runtime proxy...");
-				runtimeProxy.shutdown();
-				runtimeProxy = null;
-				monitor.worked(10);
-			}
-			if (monitor.isCanceled()) {
-				throw new CoreException(Status.CANCEL_STATUS);
-			}
-			monitor.worked(10);
-	
-			if(monitoringSystemID == MonitoringSystemChoices.SIMULATED && controlSystemID == ControlSystemChoices.SIMULATED) {
-				/* load up the control and monitoring systems for the simulation */
-				monitor.subTask("Starting simulation...");
-				monitoringSystem = new SimulationMonitoringSystem(numMachines, numNodes);
-				monitor.worked(10);
-				controlSystem = new SimulationControlSystem();
-				monitor.worked(10);
-				runtimeProxy = null;
-			}
-			else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
-				/* load up the control and monitoring systems for OMPI */
-				monitor.subTask("Starting OMPI proxy runtime...");
-				runtimeProxy = new OMPIProxyRuntimeClient(this);
-				monitor.worked(10);
+			try {
+				System.err.println("refreshRuntimeSystems");
+
+				// this set's isInitialized() to false
+				universe = null;
 				
-				if(!runtimeProxy.startup(monitor)) {
-					System.err.println("Failed to start up the proxy runtime.");
-					runtimeProxy = null;
-					if (monitor.isCanceled()) {
-						throw new CoreException(Status.CANCEL_STATUS);
-					}
-					//PTPCorePlugin.errorDialog("Failed to start OMPI proxy runtime",
-					//	"There was an error starting the OMPI proxy runtime.  The path to 'ptp_orte_proxy' or 'orted' "+
-					//	"may have been incorrect.  The 'orted' binary MUST be in your PATH to be found by 'ptp_orte_proxy'.  "+
-					//	"Try checking the console log or error logs for more detailed information.\n\nDefaulting to "+
-					//	"Simulation mode.  To change this, use the PTP preferences page.", null);
-					
-					/*
-					int MSI = MonitoringSystemChoices.SIMULATED;
-					int CSI = ControlSystemChoices.SIMULATED;
-					Preferences p = PTPCorePlugin.getDefault().getPluginPreferences();
-					p.setValue(PreferenceConstants.MONITORING_SYSTEM_SELECTION, MSI);
-					p.setValue(PreferenceConstants.CONTROL_SYSTEM_SELECTION, CSI);
-					PTPCorePlugin.getDefault().savePluginPreferences();
-					if(!(monitoringSystem instanceof SimulationMonitoringSystem) || 
-					   !(controlSystem instanceof SimulationControlSystem)) {
-						refreshRuntimeSystems(ControlSystemChoices.SIMULATED, MonitoringSystemChoices.SIMULATED, monitor);
-					}
-					*/
-					throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
-							"There was an error starting the OMPI proxy runtime.  The path to 'ptp_orte_proxy' or 'orted' "+
-							"may have been incorrect.  The 'orted' binary MUST be in your PATH to be found by 'ptp_orte_proxy'.  "+
-							"Try checking the console log or error logs for more detailed information.",
-							null));
+				// ... do initializing stuff, sans firing events.
+
+				monitor.beginTask("Refreshing runtime system...", 200);
+				/*
+				 * Shutdown runtime if it is already active
+				 */
+				System.out.println("SHUTTING DOWN CONTROL/MONITORING/PROXY systems where appropriate");
+				if (controlSystem != null) {
+					monitor.subTask("Shutting down control system...");
+					controlSystem.shutdown();
+					controlSystem = null;
+					monitor.worked(10);
 				}
-				monitor.subTask("Starting OMPI monitoring system...");
-				monitoringSystem = new OMPIMonitoringSystem((OMPIProxyRuntimeClient)runtimeProxy);
+				if (monitoringSystem != null) {
+					monitor.subTask("Shutting down monitor system...");
+					monitoringSystem.shutdown();
+					monitoringSystem = null;
+					monitor.worked(10);
+				}
+				if (runtimeProxy != null) {
+					monitor.subTask("Shutting down runtime proxy...");
+					runtimeProxy.shutdown();
+					runtimeProxy = null;
+					monitor.worked(10);
+				}
+				if (monitor.isCanceled()) {
+					throw new CoreException(Status.CANCEL_STATUS);
+				}
 				monitor.worked(10);
-				monitor.subTask("Starting OMPI control system...");
-				controlSystem = new OMPIControlSystem((OMPIProxyRuntimeClient)runtimeProxy);
-				monitor.worked(10);
-			}
-			else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
-				/* load up the control and monitoring systems for OMPI */
-				monitor.subTask("Starting MPICH2 proxy runtime...");
-				runtimeProxy = new MPICH2ProxyRuntimeClient(this);
-				monitor.worked(10);
+
+				if(monitoringSystemID == MonitoringSystemChoices.SIMULATED && controlSystemID == ControlSystemChoices.SIMULATED) {
+					initializeSimulation(monitor);
+				}
+				else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
+					initializeORTE(monitor);
+				}
+				else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
+					initializeMPICH2(monitor);
+				}
+				else {
+					throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
+				}
+
+				currentControlSystem = controlSystemID;
+				currentMonitoringSystem = monitoringSystemID;
+
+				universe = new PUniverse();
 				
-				if(!runtimeProxy.startup(monitor)) {
-					System.err.println("Failed to start up the proxy runtime.");
-					runtimeProxy = null;
-					if (monitor.isCanceled()) {
-						throw new CoreException(Status.CANCEL_STATUS);
-					}
-					throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
-							"There was an error starting the MPICH2 proxy runtime.  The path to 'ptp_mpich2_proxy' "+
-							"may have been incorrect. Try checking the console log or error logs for more detailed information.",
-							null));
-				}
-				monitor.subTask("Starting MPICH2 monitoring system...");
-				monitoringSystem = new MPICH2MonitoringSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+				monitor.subTask("Starting up monitor system...");
+				monitoringSystem.startup();
 				monitor.worked(10);
-				monitor.subTask("Starting MPICH2 control system...");
-				controlSystem = new MPICH2ControlSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+				monitor.subTask("Starting up control system...");
+				controlSystem.startup();
 				monitor.worked(10);
+
 			}
-			else {
-				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
+			finally {
+				modelManagerLock.unlock();
 			}
-	
-			universe = new PUniverse();
-			monitor.subTask("Starting up monitor system...");
-			monitoringSystem.startup();
-			monitor.worked(10);
-			monitor.subTask("Starting up control system...");
-			controlSystem.startup();
-			monitor.worked(10);
+
 			try {
 				monitor.subTask("Setup the monitoring system...");
 				monitor.beginTask("", 1);
@@ -263,31 +267,100 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				controlSystem.addRuntimeListener(this);		
 				monitor.worked(1);
 				monitoringSystem.initiateDiscovery();
-				// Give discovery a chance to complete.  This is a fix to
-				// bug 163289. Hopefully v2.0 design will find a better way.
-				try {
-					int count = 1;
-					while (universe.getMachines().length < 1) {
-						Thread.sleep(500);
-						count += 1;
-						if (count*500 > MAX_WAIT_DISCOVERY) break;
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 				monitor.done();
 			} catch (CoreException e) {
 				universe.removeChildren();
 				throw e;
 			}
 			monitor.worked(10);
+			
+			modelManagerLock.lock();
+			try {
+				
+				// Give discovery a chance to complete.  This is a fix to
+				// bug 163289. Hopefully v2.0 design will find a better way.
+				try {
+					int count = 1;
+					// isInitialized() is the same as universe.getMachines().length < 1
+					while (universe.getMachines().length < 1) {
+						universeNotEmpty.await(500, TimeUnit.MILLISECONDS);
+						count += 1;
+						if (count*500 > MAX_WAIT_DISCOVERY) break;
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+			}
+			finally {
+				modelManagerLock.unlock();
+			}
+
 			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
-			currentControlSystem = controlSystemID;
-			currentMonitoringSystem = monitoringSystemID;
+			
 		} finally {
 			if (!monitor.isCanceled())
 				monitor.done();
 		}
+	}
+	
+	private void initializeMPICH2(IProgressMonitor monitor) throws CoreException {
+		/* load up the control and monitoring systems for OMPI */
+		monitor.subTask("Starting MPICH2 proxy runtime...");
+		runtimeProxy = new MPICH2ProxyRuntimeClient(this);
+		monitor.worked(10);
+		
+		if(!runtimeProxy.startup(monitor)) {
+			System.err.println("Failed to start up the proxy runtime.");
+			runtimeProxy = null;
+			if (monitor.isCanceled()) {
+				throw new CoreException(Status.CANCEL_STATUS);
+			}
+			throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
+					"There was an error starting the MPICH2 proxy runtime.  The path to 'ptp_mpich2_proxy' "+
+					"may have been incorrect. Try checking the console log or error logs for more detailed information.",
+					null));
+		}
+		monitor.subTask("Starting MPICH2 monitoring system...");
+		monitoringSystem = new MPICH2MonitoringSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+		monitor.worked(10);
+		monitor.subTask("Starting MPICH2 control system...");
+		controlSystem = new MPICH2ControlSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+		monitor.worked(10);
+	}
+	private void initializeORTE(IProgressMonitor monitor) throws CoreException {
+		/* load up the control and monitoring systems for OMPI */
+		monitor.subTask("Starting OMPI proxy runtime...");
+		runtimeProxy = new OMPIProxyRuntimeClient(this);
+		monitor.worked(10);
+		
+		if(!runtimeProxy.startup(monitor)) {
+			System.err.println("Failed to start up the proxy runtime.");
+			runtimeProxy = null;
+			if (monitor.isCanceled()) {
+				throw new CoreException(Status.CANCEL_STATUS);
+			}
+			throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
+					"There was an error starting the OMPI proxy runtime.  The path to 'ptp_orte_proxy' or 'orted' "+
+					"may have been incorrect.  The 'orted' binary MUST be in your PATH to be found by 'ptp_orte_proxy'.  "+
+					"Try checking the console log or error logs for more detailed information.",
+					null));
+		}
+		monitor.subTask("Starting OMPI monitoring system...");
+		monitoringSystem = new OMPIMonitoringSystem((OMPIProxyRuntimeClient)runtimeProxy);
+		monitor.worked(10);
+		monitor.subTask("Starting OMPI control system...");
+		controlSystem = new OMPIControlSystem((OMPIProxyRuntimeClient)runtimeProxy);
+		monitor.worked(10);
+	}
+	private void initializeSimulation(IProgressMonitor monitor) {
+		/* load up the control and monitoring systems for the simulation */
+		monitor.subTask("Starting simulation...");
+		monitoringSystem = new SimulationMonitoringSystem(numMachines, numNodes);
+		monitor.worked(10);
+		controlSystem = new SimulationControlSystem();
+		monitor.worked(10);
+		runtimeProxy = null;
 	}
 	
 	public void runtimeNodeGeneralChange(String[] keys, String[] values) {
@@ -298,41 +371,50 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		boolean one_node_changed = false;
 		PNode the_one_changed_node = null;
 		
-		System.out.println("ModelManager.runtimeNodeGeneralName - #keys = "+keys.length+", #values = "+values.length);
-		for(int i=0; i<keys.length; i++) {
-			String key = keys[i];
-			String value = values[i];
-			if (key.equals(AttributeConstants.ATTRIB_MACHINEID)) {
-				/* ok, so we're switching to this new machine.  Let's find it. */
-				curmachine = (PMachine)universe.findMachineById(value);
-				if(curmachine == null) {
-					System.out.println("\t\tUnknown machine ID ("+value+"), adding to the model.");
-					curmachine = new PMachine(universe, AttributeConstants.ATTRIB_MACHINE_NAME_PREFIX + value, value);
-					universe.addChild(curmachine);
-					newEntity = true;
-				}
-			} else if (curmachine != null && key.equals(AttributeConstants.ATTRIB_NODE_NUMBER)) {
-				/* ok so we've got a machine that's not null, and we think we have a node
-				 * number to look for in that machine.  So let's find it!
-				 */
-				curnode = (PNode)curmachine.findNodeByName(AttributeConstants.ATTRIB_NODE_NAME_PREFIX + value);
-				if(curnode == null) {
-					System.out.println("\t\tUnknown node number ("+value+"), adding to the model.");
-					curnode = new PNode(curmachine, AttributeConstants.ATTRIB_NODE_NAME_PREFIX + value, value);
-					curmachine.addChild(curnode);
-					newEntity = true;
-				}
-				if (the_one_changed_node == null) {
-					the_one_changed_node = curnode;
-					one_node_changed = true;
+		modelManagerLock.lock();
+		try {
+			System.out.println("ModelManager.runtimeNodeGeneralName - #keys = "+keys.length+", #values = "+values.length);
+			for(int i=0; i<keys.length; i++) {
+				String key = keys[i];
+				String value = values[i];
+				if (key.equals(AttributeConstants.ATTRIB_MACHINEID)) {
+					/* ok, so we're switching to this new machine.  Let's find it. */
+					curmachine = (PMachine)universe.findMachineById(value);
+					if(curmachine == null) {
+						System.out.println("\t\tUnknown machine ID ("+value+"), adding to the model.");
+						curmachine = new PMachine(universe, AttributeConstants.ATTRIB_MACHINE_NAME_PREFIX + value, value);
+						universe.addChild(curmachine);
+						newEntity = true;
+						// Tell everyone waiting for the universe to explode
+						universeNotEmpty.signalAll();
+					}
+				} else if (curmachine != null && key.equals(AttributeConstants.ATTRIB_NODE_NUMBER)) {
+					/* ok so we've got a machine that's not null, and we think we have a node
+					 * number to look for in that machine.  So let's find it!
+					 */
+					curnode = (PNode)curmachine.findNodeByName(AttributeConstants.ATTRIB_NODE_NAME_PREFIX + value);
+					if(curnode == null) {
+						System.out.println("\t\tUnknown node number ("+value+"), adding to the model.");
+						curnode = new PNode(curmachine, AttributeConstants.ATTRIB_NODE_NAME_PREFIX + value, value);
+						curmachine.addChild(curnode);
+						newEntity = true;
+					}
+					if (the_one_changed_node == null) {
+						the_one_changed_node = curnode;
+						one_node_changed = true;
+					} else {
+						one_node_changed = false;
+					}
+				} else if (curmachine != null && curnode != null) {
+					curnode.setAttribute(key, value);
 				} else {
-					one_node_changed = false;
+					System.err.println("\t!!! ERROR: Received key/value attribute pair but have no associated machine/node to assign it to.");
 				}
-			} else if (curmachine != null && curnode != null) {
-				curnode.setAttribute(key, value);
-			} else {
-				System.err.println("\t!!! ERROR: Received key/value attribute pair but have no associated machine/node to assign it to.");
 			}
+			
+		}
+		finally {
+			modelManagerLock.unlock();
 		}
 		
 		if (newEntity) {
@@ -347,11 +429,20 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	public void runtimeProcessOutput(String ne, String output) {
-		IPProcess p = universe.findProcessByName(ne);
-		if (p != null) {
-			p.addOutput(output);
-			fireEvent(new ProcessEvent(p, IProcessEvent.ADD_OUTPUT_TYPE, output + "\n"));
+		IProcessEvent event = null;
+		modelManagerLock.lock();
+		try {
+			IPProcess p = universe.findProcessByName(ne);
+			if (p != null) {
+				p.addOutput(output);
+				event = new ProcessEvent(p, IProcessEvent.ADD_OUTPUT_TYPE, output + "\n");
+			}
 		}
+		finally {
+			modelManagerLock.unlock();
+		}
+		if (event != null)
+			fireEvent(event);
 	}
 	
 	public void runtimeJobExited(String ne) {
@@ -359,22 +450,48 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	public void runtimeJobStateChanged(String nejob, String state) {
-		System.out.println("*********** JOB STATE CHANGE: "+state+" (job = "+nejob+")");
-		IPJob job = universe.findJobByName(nejob);
+		final IPJob job;
+		modelManagerLock.lock();
+		try {
+			System.out.println("*********** JOB STATE CHANGE: " + state +
+					" (job = "+nejob+")");
+			job = universe.findJobByName(nejob);
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
+		
 		if (job != null) {
-			IPProcess[] procs = job.getProcesses();
-			if (procs != null) {
-				for (int i = 0; i < procs.length; i++) {
-					procs[i].setStatus(state);
-					fireEvent(new ProcessEvent(procs[i], IProcessEvent.STATUS_CHANGE_TYPE, procs[i].getStatus()));
-					if (procs[i].getStatus().equals(IPProcess.EXITED)) {
-						IPNode node = procs[i].getNode();
-						//FIXME why node can be null???
-						if (node != null) {
-							fireEvent(new NodeEvent(node, INodeEvent.STATUS_UPDATE_TYPE, null));
+			ArrayList<IProcessEvent> processEvents = new ArrayList<IProcessEvent>();
+			ArrayList<INodeEvent> nodeEvents = new ArrayList<INodeEvent>();
+			modelManagerLock.lock();
+			try {
+				IPProcess[] procs = job.getProcesses();
+				if (procs != null) {
+					for (int i = 0; i < procs.length; i++) {
+						procs[i].setStatus(state);
+						processEvents.add(new ProcessEvent(procs[i],
+								IProcessEvent.STATUS_CHANGE_TYPE, procs[i].getStatus()));
+						if (procs[i].getStatus().equals(IPProcess.EXITED)) {
+							IPNode node = procs[i].getNode();
+							//FIXME why node can be null???
+							if (node != null) {
+								nodeEvents.add(new NodeEvent(node,
+										INodeEvent.STATUS_UPDATE_TYPE, null));
+							}
 						}
 					}
 				}
+			}
+			finally {
+				modelManagerLock.unlock();
+			}
+			
+			for (IProcessEvent event : processEvents) {
+				fireEvent(event);
+			}
+			for (INodeEvent event : nodeEvents) {
+				fireEvent(event);
 			}
 			if (state.equals("running")) {
 				fireEvent(new ModelRuntimeNotifierEvent(job.getIDString(), IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.RUNNING));
@@ -393,36 +510,50 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	/* 
 	 * Update model when process attributes change
 	 */
-	public void runtimeProcAttrChange(String nejob, BitList cprocs, String kv, int[] dprocs, String[] kvs) {
-		System.out.println("*********** PROC ATTRIBUTE CHANGE: (job = "+nejob+")");
-		IPJob job = universe.findJobByName(nejob);
-		if (job != null) {
-			/* 
-			 * First deal with common processes
-			 */
-			
-			/*
-			 * Now deal with different processes
-			 */
-			for (int i = 0; i < dprocs.length; i++) {
-				IPProcess proc = job.findProcessByName(nejob+"_process"+dprocs[i]);
-				String[] attr = kvs[i].split("=");
-				if (attr.length == 2 && proc != null) {
-					if (attr[0].equals(AttributeConstants.ATTRIB_PROCESS_PID)) {
-						System.err.println("setting pid[" + proc.getName() + "]=" + attr[1]);
-						proc.setPid(attr[1]);
-					} else if (attr[0].equals(AttributeConstants.ATTRIB_PROCESS_NODE_NAME)) {
-						if (attr[1].equals("localhost")) {
-							IPNode node = universe.getMachines()[0].findNodeByName(AttributeConstants.ATTRIB_NODE_NAME_PREFIX + "0");
-							proc.setNode(node);
-						} else {
-							IPNode[] nodes = universe.getMachines()[0].getNodes();
-							for (int j = 0; j < nodes.length; j++) {
-								IPNode node = nodes[j];
-								if (node.getAttribute(AttributeConstants.ATTRIB_NODE_NAME).equals(attr[1])) {
-									System.err.println("setting node[" + proc.getName() + "]=" + attr[1] + "(" + node.getNodeNumber() + ")");
-									proc.setNode(node);
-									break;
+	public void runtimeProcAttrChange(String nejob, BitList cprocs, String kv,
+			int[] dprocs, String[] kvs) {
+
+		modelManagerLock.lock();
+		try {
+			System.out.println("*********** PROC ATTRIBUTE CHANGE: (job = "+nejob+")");
+			IPJob job = universe.findJobByName(nejob);
+			if (job != null) {
+				/* 
+				 * First deal with common processes
+				 */
+
+				/*
+				 * Now deal with different processes
+				 */
+				for (int i = 0; i < dprocs.length; i++) {
+					IPProcess proc = job.findProcessByName(nejob+"_process"+dprocs[i]);
+					String[] attr = kvs[i].split("=");
+					if (attr.length == 2 && proc != null) {
+						if (attr[0].equals(AttributeConstants.ATTRIB_PROCESS_PID)) {
+							System.err.println("setting pid[" + proc.getName() + "]=" +
+									attr[1]);
+							proc.setPid(attr[1]);
+						} else if (attr[0].equals(
+								AttributeConstants.ATTRIB_PROCESS_NODE_NAME)) {
+							if (attr[1].equals("localhost")) {
+								String nodeName0 = 
+									AttributeConstants.ATTRIB_NODE_NAME_PREFIX + "0";
+								IPNode node = 
+									universe.getMachines()[0].findNodeByName(nodeName0);
+								proc.setNode(node);
+							} else {
+								IPNode[] nodes = universe.getMachines()[0].getNodes();
+								for (int j = 0; j < nodes.length; j++) {
+									IPNode node = nodes[j];
+									Object nodeName = node.getAttribute(
+											AttributeConstants.ATTRIB_NODE_NAME);
+									if (nodeName.equals(attr[1])) {
+										System.err.println("setting node[" +
+												proc.getName() + "]=" + attr[1] +
+												"(" + node.getNodeNumber() + ")");
+										proc.setNode(node);
+										break;
+									}
 								}
 							}
 						}
@@ -430,36 +561,47 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				}
 			}
 		}
+		finally {
+			modelManagerLock.unlock();
+		}
 	}
 
 	public void shutdown() {
-		modelListeners.clear();
-		modelListeners = null;
-		if(monitoringSystem != null)
-			monitoringSystem.shutdown();
-		if(controlSystem != null)
-			controlSystem.shutdown();
-		if (runtimeProxy != null)
-			runtimeProxy.shutdown();
-		currentControlSystem = -1;
-		currentMonitoringSystem = -1;
+		modelManagerLock.lock();
+		try {
+			modelListeners.clear();
+			modelListeners = null;
+			if(monitoringSystem != null)
+				monitoringSystem.shutdown();
+			if(controlSystem != null)
+				controlSystem.shutdown();
+			if (runtimeProxy != null)
+				runtimeProxy.shutdown();
+			currentControlSystem = -1;
+			currentMonitoringSystem = -1;
+			universe = null;
+			initializing = false;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
 	}
-	public void addNodeListener(INodeListener listener) {
+	public synchronized void addNodeListener(INodeListener listener) {
 		nodeListeners.add(listener);
 	}
-	public void removeNodeListener(INodeListener listener) {
+	public synchronized void removeNodeListener(INodeListener listener) {
 		nodeListeners.remove(listener);
 	}
-	public void addProcessListener(IProcessListener listener) {
+	public synchronized void addProcessListener(IProcessListener listener) {
 		processListeners.add(listener);
 	}
-	public void removeProcessListener(IProcessListener listener) {
+	public synchronized void removeProcessListener(IProcessListener listener) {
 		processListeners.remove(listener);
 	}
-	public void addModelListener(IModelListener listener) {
+	public synchronized void addModelListener(IModelListener listener) {
 		modelListeners.add(listener);
 	}
-	public void removeModelListener(IModelListener listener) {
+	public synchronized void removeModelListener(IModelListener listener) {
 		modelListeners.remove(listener);
 	}
 	public void fireEvent(final IProcessEvent event) {
@@ -499,12 +641,20 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	public void abortJob(String jobName) throws CoreException {
-		/* we have a job name, so let's find it in the Universe - if it exists */
-		IPJob j = getUniverse().findJobByName(jobName);
-		if(j == null) {
-			System.err.println("ERROR: tried to delete a job that was not found '"+jobName+"'");
-			return;
+		final IPJob j;
+		modelManagerLock.lock();
+		try {
+			/* we have a job name, so let's find it in the Universe - if it exists */
+			j = getUniverse().findJobByName(jobName);
+			if(j == null) {
+				System.err.println("ERROR: tried to delete a job that was not found '"+jobName+"'");
+				return;
+			}
 		}
+		finally {
+			modelManagerLock.unlock();
+		}
+		
 		try {
 			controlSystem.terminateJob(j);
 		} catch(CoreException e) {
@@ -513,13 +663,16 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		}
 
 		System.err.println("aborted");
-		fireEvent(new ModelRuntimeNotifierEvent(j.getIDString(), IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.ABORTED));
+		fireEvent(new ModelRuntimeNotifierEvent(j.getIDString(),
+				IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.ABORTED));
 	}
 	
-	public IPJob run(final ILaunch launch, final JobRunConfiguration jobRunConfig, IProgressMonitor monitor) throws CoreException {
+	public IPJob run(final ILaunch launch, final JobRunConfiguration jobRunConfig,
+			IProgressMonitor monitor) throws CoreException {
 		monitor.setTaskName("Creating the job...");
 		
-		IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(), monitor);
+		IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(),
+				monitor);
 		System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
 
 		controlSystem.run(job.getJobNumberInt(), jobRunConfig);
@@ -543,37 +696,54 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		return universe;
 	}
 	private int newJobID() {
-		return this.jobID++;
+		modelManagerLock.lock();
+		try {
+			return this.jobID++;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
 	}
 	private IPJob newJob(int numProcesses, boolean debug, IProgressMonitor monitor) throws CoreException {
-		int jobID = newJobID();
-		String jobName = "job"+jobID;
-		String jobOwner = "";
-		System.out.println("MODEL MANAGER: newJob("+jobID+")");
-		PJob job = new PJob(universe, jobName, "" + (PJob.BASE_OFFSET + jobID) + "", jobID);		
-		if (debug)
-			job.setDebug();
-		
-		universe.addChild(job);
-		if (monitor == null) {
-			monitor = new NullProgressMonitor();
-		}
-		
-		monitor.beginTask("", numProcesses);
-		monitor.setTaskName("Creating processes....");
-		/* we know that we succeeded, so we can create this many procs in the job.  we just
-		 * need to run getProcsStatusForNewJob() to fill in the status later
-		 */
-		IPNode[] nodes = universe.getMachines()[0].getNodes();
-		if (nodes.length > 0) {
-			jobOwner = (String) nodes[0].getAttribute(AttributeConstants.ATTRIB_NODE_USER);
-		}
-		PProcess.deleteOutputFiles(jobName, jobOwner);
-		for (int i = 0; i < numProcesses; i++) {		
-			IPProcessControl proc = new PProcess(job, jobOwner, jobName+"_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
-			job.addChild(proc);			
-		}
+		final PJob job;
+		modelManagerLock.lock();
+		try {
+			int jobID = newJobID();
+			String jobName = "job"+jobID;
+			String jobOwner = "";
+			System.out.println("MODEL MANAGER: newJob("+jobID+")");
+			job = new PJob(universe, jobName, "" + (PJob.BASE_OFFSET + jobID) + "",
+					jobID);		
+			if (debug)
+				job.setDebug();
 
+			universe.addChild(job);
+			if (monitor == null) {
+				monitor = new NullProgressMonitor();
+			}
+
+			monitor.beginTask("", numProcesses);
+			monitor.setTaskName("Creating processes....");
+			/* we know that we succeeded, so we can create this many procs in the job.  we just
+			 * need to run getProcsStatusForNewJob() to fill in the status later
+			 */
+			IPNode[] nodes = universe.getMachines()[0].getNodes();
+			if (nodes.length > 0) {
+				jobOwner = (String) nodes[0].getAttribute(
+						AttributeConstants.ATTRIB_NODE_USER);
+			}
+			PProcess.deleteOutputFiles(jobName, jobOwner);
+			for (int i = 0; i < numProcesses; i++) {		
+				IPProcessControl proc = new PProcess(job, jobOwner, jobName +
+						"_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
+				job.addChild(proc);			
+			}
+
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
+		
 		/*
 		 * This is needed for debug jobs because the runtimeJobStateChanged event is
 		 * not generated (the debugger manages the process/job state) and as a consequence the
@@ -583,5 +753,37 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			fireEvent(new ModelRuntimeNotifierEvent(job.getIDString(), IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.STARTED));
 		}
 		return job;
+	}
+	
+	protected final boolean isInitialized() {
+		modelManagerLock.lock();
+		try {
+			return universe != null && universe.getMachines().length > 0;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
+	}
+	
+	protected final boolean isInitializing() {
+		// This is for synchronization, not mutual exclusion
+		modelManagerLock.lock();
+		try {
+			return initializing;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
+	}
+
+	protected final void setInitializing(boolean initializing) {
+		// This is for synchronization, not mutual exclusion
+		modelManagerLock.lock();
+		try {
+			this.initializing = initializing;
+		}
+		finally {
+			modelManagerLock.unlock();
+		}
 	}
 }

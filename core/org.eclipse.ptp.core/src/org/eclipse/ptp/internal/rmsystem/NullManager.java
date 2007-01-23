@@ -178,11 +178,6 @@ public class NullManager implements IModelManager {
 		
 	}
 
-	public void refreshRuntimeSystems(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
-		// TODO Auto-generated method stub
-		
-	}
-
 	public void removeModelListener(IModelListener listener) {
 		// TODO Auto-generated method stub
 		
