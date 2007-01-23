@@ -192,8 +192,8 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	private void initialize(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
-		modelManagerLock.lock();
 		try {
+			modelManagerLock.lock();
 			try {
 				System.err.println("refreshRuntimeSystems");
 
