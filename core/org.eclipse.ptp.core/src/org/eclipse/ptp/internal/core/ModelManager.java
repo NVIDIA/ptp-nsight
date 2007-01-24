@@ -19,6 +19,7 @@
 package org.eclipse.ptp.internal.core;
 
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -30,6 +31,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jface.util.SafeRunnable;
@@ -91,10 +93,8 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	private final int theMSChoiceID;
 	private final int theCSChoiceID;
 	private final Lock modelManagerLock;
-	private final Condition notInitializing;
+	private final Semaphore initializing;
 	private final Condition universeNotEmpty;
-	private boolean initializing = false;
-	
 	private int numMachines = 1;
 	private int[] numNodes = new int[]{255};
 	
@@ -109,7 +109,8 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 	public ModelManager(int theMSChoiceID, int theCSChoiceID) {
 		modelManagerLock = new ReentrantLock();
-		notInitializing = modelManagerLock.newCondition();
+		// only one thread may be in the initializing section
+		initializing = new Semaphore(1);
 		universeNotEmpty = modelManagerLock.newCondition();
 		
 		this.theMSChoiceID = theMSChoiceID;
@@ -148,65 +149,64 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	
 	public void refreshRuntimeSystems(IProgressMonitor monitor,
 			boolean force) throws CoreException {
-		
-		modelManagerLock.lock();
-		try {
-			while (isInitializing()) {
-				notInitializing.await();
-			}
 
+		try {
+			// allow only one thread to enter refreshRuntimeSystems
+			initializing.acquire();
+		} 
+		catch (InterruptedException e) {
+			throw makeCoreException("While waiting on initializing Semaphore", e);
+		}
+
+		try {
+
+			final boolean initialized = isInitialized();
 			System.out.println("XXXXXXXXXXX refreshRS(" + force +
-					") isInitialized():" + isInitialized());
-			if (!force && isInitialized())
+						"), isInitialized():" + initialized);
+			if (!force && initialized)
 				return;
 
-			setInitializing(true);
-		}
-		catch (InterruptedException e) {
-			e.printStackTrace();
-			return;
+			// only one thread can get here
+
+			if (monitor == null) {
+				monitor = new NullProgressMonitor();
+			}
+
+			System.out.println("XXXXXXXXXXX calling initialize() force:" + force +
+					" isInitialized():" + initialized);
+			initialize(theCSChoiceID, theMSChoiceID, monitor);
+
 		}
 		finally {
-			modelManagerLock.unlock();
-		}
-
-		// only one thread can get here
-		// thanks to await() and signal()/signalAll()
-		
-		if (monitor == null) {
-			monitor = new NullProgressMonitor();
-		}
-		
-		System.out.println("XXXXXXXXXXX calling initialize() force:" + force +
-				" isInitialized():" + isInitialized());
-		initialize(theCSChoiceID, theMSChoiceID, monitor);
-
-		modelManagerLock.lock();
-		try {
-			setInitializing(false);
-			notInitializing.signalAll();
-		}
-		finally {
-			modelManagerLock.unlock();
+			// The next thread may come in now.
+			initializing.release();
 		}
 	}
 
 	private void initialize(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
 		try {
+			System.err.println("refreshRuntimeSystems");
+
 			modelManagerLock.lock();
 			try {
-				System.err.println("refreshRuntimeSystems");
-
 				// this set's isInitialized() to false
 				universe = null;
-				
-				// ... do initializing stuff, sans firing events.
+			}
+			finally {
+				modelManagerLock.unlock();
+			}
 
-				monitor.beginTask("Refreshing runtime system...", 200);
-				/*
-				 * Shutdown runtime if it is already active
-				 */
-				System.out.println("SHUTTING DOWN CONTROL/MONITORING/PROXY systems where appropriate");
+			// ... do initializing stuff, sans firing events.
+
+			monitor.beginTask("Refreshing runtime system...", 200);
+			/*
+			 * Shutdown runtime if it is already active
+			 */
+			modelManagerLock.lock();
+			try {
+				System.out.println(
+						"SHUTTING DOWN CONTROL/MONITORING/PROXY " +
+						"systems where appropriate");
 				if (controlSystem != null) {
 					monitor.subTask("Shutting down control system...");
 					controlSystem.shutdown();
@@ -228,26 +228,37 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				if (monitor.isCanceled()) {
 					throw new CoreException(Status.CANCEL_STATUS);
 				}
-				monitor.worked(10);
+			}
+			finally {
+				modelManagerLock.unlock();
+			}
+			monitor.worked(10);
 
-				if(monitoringSystemID == MonitoringSystemChoices.SIMULATED && controlSystemID == ControlSystemChoices.SIMULATED) {
-					initializeSimulation(monitor);
-				}
-				else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
-					initializeORTE(monitor);
-				}
-				else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
-					initializeMPICH2(monitor);
-				}
-				else {
-					throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
-				}
+			if(monitoringSystemID == MonitoringSystemChoices.SIMULATED && controlSystemID == ControlSystemChoices.SIMULATED) {
+				initializeSimulation(new SubProgressMonitor(monitor, 10));
+			}
+			else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
+				initializeORTE(new SubProgressMonitor(monitor, 10));
+			}
+			else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
+				initializeMPICH2(new SubProgressMonitor(monitor, 10));
+			}
+			else {
+				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
+			}
 
+			modelManagerLock.lock();
+			try {
 				currentControlSystem = controlSystemID;
 				currentMonitoringSystem = monitoringSystemID;
 
 				universe = new PUniverse();
-				
+			}
+			finally {
+				modelManagerLock.unlock();
+			}
+
+			try {
 				monitor.subTask("Starting up monitor system...");
 				monitoringSystem.startup();
 				monitor.worked(10);
@@ -255,14 +266,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				controlSystem.startup();
 				monitor.worked(10);
 
-			}
-			finally {
-				modelManagerLock.unlock();
-			}
-
-			try {
 				monitor.subTask("Setup the monitoring system...");
-				monitor.beginTask("", 1);
 				monitoringSystem.addRuntimeListener(this);
 				controlSystem.addRuntimeListener(this);		
 				monitor.worked(1);
@@ -273,10 +277,10 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				throw e;
 			}
 			monitor.worked(10);
-			
+
 			modelManagerLock.lock();
 			try {
-				
+
 				// Give discovery a chance to complete.  This is a fix to
 				// bug 163289. Hopefully v2.0 design will find a better way.
 				try {
@@ -290,77 +294,99 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				
+
 			}
 			finally {
 				modelManagerLock.unlock();
 			}
 
 			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
-			
+
 		} finally {
 			if (!monitor.isCanceled())
 				monitor.done();
 		}
 	}
-	
+
 	private void initializeMPICH2(IProgressMonitor monitor) throws CoreException {
 		/* load up the control and monitoring systems for OMPI */
-		monitor.subTask("Starting MPICH2 proxy runtime...");
-		runtimeProxy = new MPICH2ProxyRuntimeClient(this);
-		monitor.worked(10);
-		
-		if(!runtimeProxy.startup(monitor)) {
-			System.err.println("Failed to start up the proxy runtime.");
-			runtimeProxy = null;
-			if (monitor.isCanceled()) {
-				throw new CoreException(Status.CANCEL_STATUS);
+		monitor.beginTask("Initializing MPICH2 system...", 30);
+		try {
+			monitor.subTask("Starting MPICH2 proxy runtime...");
+			runtimeProxy = new MPICH2ProxyRuntimeClient(this);
+			monitor.worked(10);
+
+			if(!runtimeProxy.startup(monitor)) {
+				System.err.println("Failed to start up the proxy runtime.");
+				runtimeProxy = null;
+				if (monitor.isCanceled()) {
+					throw new CoreException(Status.CANCEL_STATUS);
+				}
+				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
+						"There was an error starting the MPICH2 proxy runtime.  The path to 'ptp_mpich2_proxy' "+
+						"may have been incorrect. Try checking the console log or error logs for more detailed information.",
+						null));
 			}
-			throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
-					"There was an error starting the MPICH2 proxy runtime.  The path to 'ptp_mpich2_proxy' "+
-					"may have been incorrect. Try checking the console log or error logs for more detailed information.",
-					null));
+			monitor.subTask("Starting MPICH2 monitoring system...");
+			monitoringSystem = new MPICH2MonitoringSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+			monitor.worked(10);
+			monitor.subTask("Starting MPICH2 control system...");
+			controlSystem = new MPICH2ControlSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
+			monitor.worked(10);
 		}
-		monitor.subTask("Starting MPICH2 monitoring system...");
-		monitoringSystem = new MPICH2MonitoringSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
-		monitor.worked(10);
-		monitor.subTask("Starting MPICH2 control system...");
-		controlSystem = new MPICH2ControlSystem((MPICH2ProxyRuntimeClient)runtimeProxy);
-		monitor.worked(10);
+		finally {
+			monitor.done();
+		}
 	}
+
 	private void initializeORTE(IProgressMonitor monitor) throws CoreException {
 		/* load up the control and monitoring systems for OMPI */
-		monitor.subTask("Starting OMPI proxy runtime...");
-		runtimeProxy = new OMPIProxyRuntimeClient(this);
-		monitor.worked(10);
-		
-		if(!runtimeProxy.startup(monitor)) {
-			System.err.println("Failed to start up the proxy runtime.");
-			runtimeProxy = null;
-			if (monitor.isCanceled()) {
-				throw new CoreException(Status.CANCEL_STATUS);
+		monitor.beginTask("Initializing OMPI system...", 30);
+		try {
+			/* load up the control and monitoring systems for OMPI */
+			monitor.subTask("Starting OMPI proxy runtime...");
+			runtimeProxy = new OMPIProxyRuntimeClient(this);
+			monitor.worked(10);
+
+			if(!runtimeProxy.startup(monitor)) {
+				System.err.println("Failed to start up the proxy runtime.");
+				runtimeProxy = null;
+				if (monitor.isCanceled()) {
+					throw new CoreException(Status.CANCEL_STATUS);
+				}
+				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
+						"There was an error starting the OMPI proxy runtime.  The path to 'ptp_orte_proxy' or 'orted' "+
+						"may have been incorrect.  The 'orted' binary MUST be in your PATH to be found by 'ptp_orte_proxy'.  "+
+						"Try checking the console log or error logs for more detailed information.",
+						null));
 			}
-			throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, 
-					"There was an error starting the OMPI proxy runtime.  The path to 'ptp_orte_proxy' or 'orted' "+
-					"may have been incorrect.  The 'orted' binary MUST be in your PATH to be found by 'ptp_orte_proxy'.  "+
-					"Try checking the console log or error logs for more detailed information.",
-					null));
+			monitor.subTask("Starting OMPI monitoring system...");
+			monitoringSystem = new OMPIMonitoringSystem((OMPIProxyRuntimeClient)runtimeProxy);
+			monitor.worked(10);
+			monitor.subTask("Starting OMPI control system...");
+			controlSystem = new OMPIControlSystem((OMPIProxyRuntimeClient)runtimeProxy);
+			monitor.worked(10);
 		}
-		monitor.subTask("Starting OMPI monitoring system...");
-		monitoringSystem = new OMPIMonitoringSystem((OMPIProxyRuntimeClient)runtimeProxy);
-		monitor.worked(10);
-		monitor.subTask("Starting OMPI control system...");
-		controlSystem = new OMPIControlSystem((OMPIProxyRuntimeClient)runtimeProxy);
-		monitor.worked(10);
+		finally {
+			monitor.done();
+		}
 	}
+
 	private void initializeSimulation(IProgressMonitor monitor) {
-		/* load up the control and monitoring systems for the simulation */
-		monitor.subTask("Starting simulation...");
-		monitoringSystem = new SimulationMonitoringSystem(numMachines, numNodes);
-		monitor.worked(10);
-		controlSystem = new SimulationControlSystem();
-		monitor.worked(10);
-		runtimeProxy = null;
+		/* load up the control and monitoring systems for OMPI */
+		monitor.beginTask("Initializing Simulation system...", 20);
+		try {
+			/* load up the control and monitoring systems for the simulation */
+			monitor.subTask("Starting simulation...");
+			monitoringSystem = new SimulationMonitoringSystem(numMachines, numNodes);
+			monitor.worked(10);
+			controlSystem = new SimulationControlSystem();
+			monitor.worked(10);
+			runtimeProxy = null;
+		}
+		finally {
+			monitor.done();
+		}
 	}
 	
 	public void runtimeNodeGeneralChange(String[] keys, String[] values) {
@@ -580,7 +606,6 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			currentControlSystem = -1;
 			currentMonitoringSystem = -1;
 			universe = null;
-			initializing = false;
 		}
 		finally {
 			modelManagerLock.unlock();
@@ -764,26 +789,11 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			modelManagerLock.unlock();
 		}
 	}
-	
-	protected final boolean isInitializing() {
-		// This is for synchronization, not mutual exclusion
-		modelManagerLock.lock();
-		try {
-			return initializing;
-		}
-		finally {
-			modelManagerLock.unlock();
-		}
+
+	protected CoreException makeCoreException(String string, Throwable e) {
+		IStatus status = new Status(Status.ERROR, PTPCorePlugin.getUniqueIdentifier(),
+				Status.ERROR, string, e);
+		return new CoreException(status);
 	}
 
-	protected final void setInitializing(boolean initializing) {
-		// This is for synchronization, not mutual exclusion
-		modelManagerLock.lock();
-		try {
-			this.initializing = initializing;
-		}
-		finally {
-			modelManagerLock.unlock();
-		}
-	}
 }
