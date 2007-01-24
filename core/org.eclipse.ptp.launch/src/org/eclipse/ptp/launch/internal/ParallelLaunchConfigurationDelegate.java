@@ -50,9 +50,16 @@ import org.eclipse.ptp.debug.core.IPDebugConfiguration;
 import org.eclipse.ptp.debug.core.IPDebugConstants;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
 import org.eclipse.ptp.debug.core.launch.IPLaunch;
+import org.eclipse.ptp.debug.ui.IPTPDebugUIConstants;
 import org.eclipse.ptp.debug.ui.PTPDebugUIPlugin;
+import org.eclipse.ptp.launch.PTPLaunchPlugin;
 import org.eclipse.ptp.launch.internal.ui.LaunchMessages;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
+import org.eclipse.ptp.ui.IPTPUIConstants;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.WorkbenchException;
 
 /**
  * 
@@ -151,16 +158,13 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		PTPCorePlugin.getDefault().getModelManager().refreshRuntimeSystems(new SubProgressMonitor(monitor, 50), false);
 		
-		// Switch the perspective
-		// LaunchUtils.switchPerspectiveTo(LaunchUtils.PPerspectiveFactory_ID);
 		IAbstractDebugger debugger = null;
 		IPJob job = null;
+		IPath exePath = null;
 		
 		// done the verification phase
 		JobRunConfiguration jrunconfig = getJobRunConfiguration(configuration);
 		/* Assuming we have parsed the configuration */
-		
-		IPath exePath = null;
 		
 		try {
 			exePath = verifyProgramPath(configuration);
@@ -198,6 +202,8 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			launch.setAttribute("JOB_ID", job.getIDString());
 			
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+				// Switch the perspective
+				switchPerspectiveTo(IPTPDebugUIConstants.ID_PERSPECTIVE_DEBUG);
 				monitor.setTaskName("Starting the debugger . . .");
 
 				String dbgExe = getDebuggerExePath(configuration);
@@ -227,6 +233,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				}
 			}
 			else {
+				switchPerspectiveTo(IPTPUIConstants.PERSPECTIVE_RUN);
 				monitor.worked(40);
 			}
 		} catch (CoreException e) {
@@ -249,4 +256,29 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			monitor.done();
 		}
 	}
+	
+    private void switchPerspectiveTo(final String perspectiveID) {
+		Display display= Display.getCurrent();
+		if (display == null) {
+			display= Display.getDefault();
+		}
+		if (display != null && !display.isDisposed()) {
+			display.syncExec(new Runnable() {
+				public void run() {
+	    			IWorkbenchWindow window = PTPLaunchPlugin.getActiveWorkbenchWindow();
+	    			if (window != null) {
+		                IWorkbenchPage page = window.getActivePage();
+		                if (!page.getPerspective().getId().equals(perspectiveID)) {
+		                	try {
+		                		window.getWorkbench().showPerspective(perspectiveID, window);
+		                	} catch (WorkbenchException e) {
+		                		e.printStackTrace();
+		                	}
+		                }
+	    			}
+				}
+			});
+		}
+    }
+	
 }
