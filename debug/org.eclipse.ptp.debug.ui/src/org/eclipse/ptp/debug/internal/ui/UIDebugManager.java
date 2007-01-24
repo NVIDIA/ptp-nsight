@@ -708,6 +708,7 @@ public class UIDebugManager extends JobManager implements IBreakpointListener {
 			debugModel.deletePBreakpoint(job.getIDString());
 			debugModel.deleteJob(job);
 			debugModel.shutdownSession(job);
+			annotationMgr.removeAnnotationGroup(job.getIDString());
 			removeConsoleWindows(job);
 		}
 		super.removeJob(job);

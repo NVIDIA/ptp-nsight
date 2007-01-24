@@ -158,7 +158,7 @@ public class IconCanvas extends Canvas {
 	 * @see org.eclipse.swt.widgets.Widget#dispose()
 	 */
 	public void dispose() {
-		if (fInformationControl == null) {
+		if (fInformationControl != null) {
 			fInformationControl.dispose();
 		}
 		super.dispose();
