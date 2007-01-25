@@ -234,6 +234,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			}
 			else {
 				switchPerspectiveTo(IPTPUIConstants.PERSPECTIVE_RUN);
+				new RuntimeProcess(pLaunch, job, null);
 				monitor.worked(40);
 			}
 		} catch (CoreException e) {
