@@ -59,6 +59,7 @@ import org.eclipse.ptp.ui.IPTPUIConstants;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.WorkbenchException;
 
 /**
@@ -90,6 +91,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
 		throw new CoreException(status);
 	}
+
 	private static IPath getProgramPath(ILaunchConfiguration configuration) throws CoreException {
 		String path = getProgramName(configuration);
 		if (path == null) {
@@ -97,6 +99,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		return new Path(path);
 	}
+
 	private IPath verifyProgramPath(ILaunchConfiguration config) throws CoreException {
 		IProject project = verifyProject(config);
 		IPath programPath = getProgramPath(config);
@@ -111,20 +114,23 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		return programPath;
 	}
+
 	public static IProject getProject(ILaunchConfiguration configuration) throws CoreException {
 		String projectName = getProjectName(configuration);
 		if (projectName != null) {
 			projectName = projectName.trim();
 			if (projectName.length() > 0) {
 				return ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-				//ICProject cProject = CCorePlugin.getDefault().getCoreModel().create(project);
-				//if (cProject != null && cProject.exists()) {
-					//return cProject;
-				//}
+				// ICProject cProject =
+				// CCorePlugin.getDefault().getCoreModel().create(project);
+				// if (cProject != null && cProject.exists()) {
+				// return cProject;
+				// }
 			}
 		}
 		return null;
 	}
+
 	private IPDebugConfiguration getDebugConfig(ILaunchConfiguration config) throws CoreException {
 		IPDebugConfiguration dbgCfg = null;
 		try {
@@ -135,12 +141,14 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		return dbgCfg;
 	}
+
 	private void verifyDebuggerPath(String path) throws CoreException {
 		IPath programPath = new Path(path);
 		if (programPath == null || programPath.isEmpty() || !programPath.toFile().exists()) {
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
 		}
 	}
+
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor) throws CoreException {
 		if (!(launch instanceof IPLaunch)) {
 			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_launch_object"), null, 0);
@@ -151,31 +159,31 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
 		}
-		monitor.beginTask("",  250);
+		monitor.beginTask("", 250);
 		monitor.setTaskName(MessageFormat.format("{0} . . .", new String[] { "Launching " + configuration.getName() }));
 		if (monitor.isCanceled()) {
 			return;
 		}
 		PTPCorePlugin.getDefault().getModelManager().refreshRuntimeSystems(new SubProgressMonitor(monitor, 50), false);
-		
+
 		IAbstractDebugger debugger = null;
 		IPJob job = null;
 		IPath exePath = null;
-		
+
 		// done the verification phase
 		JobRunConfiguration jrunconfig = getJobRunConfiguration(configuration);
 		/* Assuming we have parsed the configuration */
-		
+
 		try {
 			exePath = verifyProgramPath(configuration);
 			IProject project = verifyProject(configuration);
 			if (exePath != null) {
 				exeFile = verifyBinary(project, exePath);
 			}
-		} catch(CoreException e) {
+		} catch (CoreException e) {
 			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_binary"), null, 0);
 		}
-		
+
 		try {
 			IPreferenceStore store = PTPDebugUIPlugin.getDefault().getPreferenceStore();
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
@@ -185,7 +193,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				dbgArgs += " --debugger=" + store.getString(IPDebugConstants.PREF_PTP_DEBUGGER_BACKEND);
 				String dbgPath = store.getString(IPDebugConstants.PREF_PTP_DEBUGGER_BACKEND_PATH);
 				if (dbgPath.length() > 0)
-					dbgArgs += " --debugger_path="+dbgPath;
+					dbgArgs += " --debugger_path=" + dbgPath;
 
 				verifyDebuggerPath(dbgFile);
 				IPDebugConfiguration debugConfig = getDebugConfig(configuration);
@@ -196,14 +204,16 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				jrunconfig.setDebug();
 			}
 			monitor.worked(10);
-			
+
 			monitor.subTask("Starting the job . . .");
 			job = getLaunchManager().run(launch, jrunconfig, new SubProgressMonitor(monitor, 150));
 			launch.setAttribute("JOB_ID", job.getIDString());
-			
+
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+				// show ptp debug view
+				showPTPDebugView(IPTPDebugUIConstants.ID_VIEW_PARALLELDEBUG);
 				// Switch the perspective
-				switchPerspectiveTo(IPTPDebugUIConstants.ID_PERSPECTIVE_DEBUG);
+				// switchPerspectiveTo(DebugUITools.getLaunchPerspective(configuration.getType(), mode));
 				monitor.setTaskName("Starting the debugger . . .");
 
 				String dbgExe = getDebuggerExePath(configuration);
@@ -224,24 +234,25 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				job.setAttribute(PreferenceConstants.JOB_ARGS, jrunconfig.getArguments());
 				job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, exePath.removeLastSegments(1).toOSString());
 				pLaunch.setPJob(job);
-				
+
 				int timeout = store.getInt(IPDebugConstants.PREF_PTP_DEBUG_COMM_TIMEOUT);
 				PTPDebugCorePlugin.getDebugModel().createDebuggerSession(debugger, pLaunch, exeFile, timeout, new SubProgressMonitor(monitor, 40));
 				monitor.worked(10);
 				if (monitor.isCanceled()) {
 					PTPDebugCorePlugin.getDebugModel().shutdownSession(job);
 				}
-			}
-			else {
-				switchPerspectiveTo(IPTPUIConstants.PERSPECTIVE_RUN);
+			} else {
+				showPTPDebugView(IPTPUIConstants.VIEW_PARALLELJOB);
 				new RuntimeProcess(pLaunch, job, null);
 				monitor.worked(40);
 			}
 		} catch (CoreException e) {
 			if (e.getStatus().getPlugin().equals(PTPCorePlugin.PLUGIN_ID)) {
 				String msg = e.getMessage();
-				if(msg == null) msg = "";
-				else msg = msg + "\n\n";
+				if (msg == null)
+					msg = "";
+				else
+					msg = msg + "\n\n";
 				abort(msg + LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Control_system_does_not_exist"), null, 0);
 			}
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
@@ -257,29 +268,51 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			monitor.done();
 		}
 	}
-	
-    private void switchPerspectiveTo(final String perspectiveID) {
-		Display display= Display.getCurrent();
+
+	private void switchPerspectiveTo(final String perspectiveID) {
+		Display display = Display.getCurrent();
 		if (display == null) {
-			display= Display.getDefault();
+			display = Display.getDefault();
 		}
 		if (display != null && !display.isDisposed()) {
 			display.syncExec(new Runnable() {
 				public void run() {
-	    			IWorkbenchWindow window = PTPLaunchPlugin.getActiveWorkbenchWindow();
-	    			if (window != null) {
-		                IWorkbenchPage page = window.getActivePage();
-		                if (!page.getPerspective().getId().equals(perspectiveID)) {
-		                	try {
-		                		window.getWorkbench().showPerspective(perspectiveID, window);
-		                	} catch (WorkbenchException e) {
-		                		e.printStackTrace();
-		                	}
-		                }
-	    			}
+					IWorkbenchWindow window = PTPLaunchPlugin.getActiveWorkbenchWindow();
+					if (window != null) {
+						IWorkbenchPage page = window.getActivePage();
+						if (!page.getPerspective().getId().equals(perspectiveID)) {
+							try {
+								window.getWorkbench().showPerspective(perspectiveID, window);
+							} catch (WorkbenchException e) {
+								e.printStackTrace();
+							}
+						}
+					}
 				}
 			});
 		}
-    }
-	
+	}
+
+	private void showPTPDebugView(final String viewID) {
+		Display display = Display.getCurrent();
+		if (display == null) {
+			display = Display.getDefault();
+		}
+		if (display != null && !display.isDisposed()) {
+			display.syncExec(new Runnable() {
+				public void run() {
+					IWorkbenchWindow window = PTPLaunchPlugin.getActiveWorkbenchWindow();
+					if (window != null) {
+						IWorkbenchPage page = window.getActivePage();
+						if (page != null) {
+							try {
+								page.showView(viewID);
+							} catch (PartInitException e) {
+							}
+						}
+					}
+				}
+			});
+		}
+	}
 }
