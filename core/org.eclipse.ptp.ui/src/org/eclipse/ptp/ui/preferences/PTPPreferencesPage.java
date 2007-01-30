@@ -220,7 +220,9 @@ public class PTPPreferencesPage extends PreferencePage implements IWorkbenchPref
 		 * if (manager.isParallelPerspectiveOpen() && (lastMSChoiceID != MSChoiceID || lastCSChoiceID != CSChoiceID)) {
 		 * manager.refreshRuntimeSystems(CSChoiceID, MSChoiceID); }
 		 */
-		PTPUIPlugin.getDefault().refreshRuntimeSystem(true, false);
+		boolean force = lastCSChoiceID != CSChoiceID || lastMSChoiceID != MSChoiceID;
+		
+		PTPUIPlugin.getDefault().refreshRuntimeSystem(true, force);
 		File outputDirPath = new File(outputDIR);
 		if (!outputDirPath.exists())
 			outputDirPath.mkdir();

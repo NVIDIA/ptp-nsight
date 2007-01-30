@@ -262,7 +262,7 @@ public class PTPUIPlugin extends AbstractUIPlugin {
 
 	public void refreshRuntimeSystem(boolean queue, boolean force) {
 		if (queue) {
-			refreshRuntimeSystemInQueue(getShell(), false);
+			refreshRuntimeSystemInQueue(getShell(), force);
 		}
 		else {
 			refreshRuntimeSystemNow(getShell(), force);

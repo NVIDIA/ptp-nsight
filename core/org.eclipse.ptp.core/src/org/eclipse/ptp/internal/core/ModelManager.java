@@ -19,7 +19,6 @@
 package org.eclipse.ptp.internal.core;
 
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -92,14 +91,15 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	private int currentMonitoringSystem = -1;
 	private final int theMSChoiceID;
 	private final int theCSChoiceID;
-	private final Lock modelManagerLock;
-	private final Semaphore initializing;
+	private final Lock stateLock;
+	private final Lock initializingLock;
+	private boolean initialized = false;
 	private final Condition universeNotEmpty;
 	private int numMachines = 1;
 	private int[] numNodes = new int[]{255};
 	
 	private int jobID = 1;
-	
+
 	public void setPTPConfiguration(ILaunchConfiguration config) {
 		this.config = config;
 	}
@@ -108,10 +108,11 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	}
 
 	public ModelManager(int theMSChoiceID, int theCSChoiceID) {
-		modelManagerLock = new ReentrantLock();
 		// only one thread may be in the initializing section
-		initializing = new Semaphore(1);
-		universeNotEmpty = modelManagerLock.newCondition();
+		initializingLock = new ReentrantLock();
+		
+		stateLock = new ReentrantLock();
+		universeNotEmpty = stateLock.newCondition();
 		
 		this.theMSChoiceID = theMSChoiceID;
 		String MSChoice = MonitoringSystemChoices.getMSNameByID(theMSChoiceID);
@@ -150,19 +151,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	public void refreshRuntimeSystems(IProgressMonitor monitor,
 			boolean force) throws CoreException {
 
+		// allow only one thread to enter refreshRuntimeSystems
+		initializingLock.lock();
 		try {
-			// allow only one thread to enter refreshRuntimeSystems
-			initializing.acquire();
-		} 
-		catch (InterruptedException e) {
-			throw makeCoreException("While waiting on initializing Semaphore", e);
-		}
-
-		try {
-
 			final boolean initialized = isInitialized();
-			System.out.println("XXXXXXXXXXX refreshRS(" + force +
-						"), isInitialized():" + initialized);
+			
+			System.out.println("XXXXXXXXXXX refreshRuntimeSystems(" + force +
+					"), isInitialized():" + initialized);
 			if (!force && initialized)
 				return;
 
@@ -172,14 +167,15 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				monitor = new NullProgressMonitor();
 			}
 
-			System.out.println("XXXXXXXXXXX calling initialize() force:" + force +
-					" isInitialized():" + initialized);
+			System.out.println("XXXXXXXXXXX refreshRuntimeSystems calling initialize(), force:" + force +
+					", isInitialized():" + initialized);
 			initialize(theCSChoiceID, theMSChoiceID, monitor);
 
+			setInitialized(true);
 		}
 		finally {
 			// The next thread may come in now.
-			initializing.release();
+			initializingLock.unlock();
 		}
 	}
 
@@ -187,13 +183,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		try {
 			System.err.println("refreshRuntimeSystems");
 
-			modelManagerLock.lock();
+			stateLock.lock();
 			try {
 				// this set's isInitialized() to false
 				universe = null;
 			}
 			finally {
-				modelManagerLock.unlock();
+				stateLock.unlock();
 			}
 
 			// ... do initializing stuff, sans firing events.
@@ -202,19 +198,21 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			/*
 			 * Shutdown runtime if it is already active
 			 */
-			modelManagerLock.lock();
+			stateLock.lock();
 			try {
 				System.out.println(
 						"SHUTTING DOWN CONTROL/MONITORING/PROXY " +
 						"systems where appropriate");
 				if (controlSystem != null) {
 					monitor.subTask("Shutting down control system...");
+					controlSystem.removeRuntimeListener(this);
 					controlSystem.shutdown();
 					controlSystem = null;
 					monitor.worked(10);
 				}
 				if (monitoringSystem != null) {
 					monitor.subTask("Shutting down monitor system...");
+					monitoringSystem.removeRuntimeListener(this);
 					monitoringSystem.shutdown();
 					monitoringSystem = null;
 					monitor.worked(10);
@@ -230,24 +228,27 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				}
 			}
 			finally {
-				modelManagerLock.unlock();
+				stateLock.unlock();
 			}
 			monitor.worked(10);
 
 			if(monitoringSystemID == MonitoringSystemChoices.SIMULATED && controlSystemID == ControlSystemChoices.SIMULATED) {
+				monitor.subTask("Initializing Simulation");
 				initializeSimulation(new SubProgressMonitor(monitor, 10));
 			}
 			else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
+				monitor.subTask("Initializing OMPI");
 				initializeORTE(new SubProgressMonitor(monitor, 10));
 			}
 			else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
+				monitor.subTask("Initializing MPICH2");
 				initializeMPICH2(new SubProgressMonitor(monitor, 10));
 			}
 			else {
 				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
 			}
 
-			modelManagerLock.lock();
+			stateLock.lock();
 			try {
 				currentControlSystem = controlSystemID;
 				currentMonitoringSystem = monitoringSystemID;
@@ -255,7 +256,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				universe = new PUniverse();
 			}
 			finally {
-				modelManagerLock.unlock();
+				stateLock.unlock();
 			}
 
 			try {
@@ -278,33 +279,65 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			}
 			monitor.worked(10);
 
-			modelManagerLock.lock();
-			try {
-
-				// Give discovery a chance to complete.  This is a fix to
-				// bug 163289. Hopefully v2.0 design will find a better way.
-				try {
-					int count = 1;
-					// isInitialized() is the same as universe.getMachines().length < 1
-					while (universe.getMachines().length < 1) {
-						universeNotEmpty.await(500, TimeUnit.MILLISECONDS);
-						count += 1;
-						if (count*500 > MAX_WAIT_DISCOVERY) break;
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
-			}
-			finally {
-				modelManagerLock.unlock();
-			}
+			//waitForPopulatedUniverse();
 
 			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
 
 		} finally {
 			if (!monitor.isCanceled())
 				monitor.done();
+		}
+	}
+	
+	public final boolean isInitialized() {
+		initializingLock.lock();
+		try {
+			return initialized;
+		}
+		finally {
+			initializingLock.unlock();
+		}
+	}
+	
+	protected final void setInitialized(boolean initialized) {
+		initializingLock.lock();
+		try {
+			this.initialized = initialized;
+		}
+		finally {
+			initializingLock.unlock();
+		}
+	}
+	
+	protected final void waitForPopulatedUniverse(IProgressMonitor monitor) throws CoreException {
+		if (monitor == null) {
+			monitor = new NullProgressMonitor();
+		}
+		monitor.beginTask("Waiting for Universe to Populate", MAX_WAIT_DISCOVERY);
+		System.out.println("XXXXXXXXXXXX   Waiting for Universe to Populate");
+		stateLock.lock();
+		try {
+
+			// Give discovery a chance to complete.  This is a fix to
+			// bug 163289. Hopefully v2.0 design will find a better way.
+			try {
+				int count = 1;
+				while (universe.getMachines().length < 1) {
+					universeNotEmpty.await(500, TimeUnit.MILLISECONDS);
+					count += 1;
+					monitor.worked(count*500);
+					if (monitor.isCanceled() || count*500 > MAX_WAIT_DISCOVERY) {
+						throw makeCoreException("Universe never became populated", null);
+					}
+				}
+			} catch (InterruptedException e) {
+				throw makeCoreException("Interrupted before Universe populated", e);
+			}
+
+		}
+		finally {
+			stateLock.unlock();
+			monitor.done();
 		}
 	}
 
@@ -397,7 +430,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		boolean one_node_changed = false;
 		PNode the_one_changed_node = null;
 		
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			System.out.println("ModelManager.runtimeNodeGeneralName - #keys = "+keys.length+", #values = "+values.length);
 			for(int i=0; i<keys.length; i++) {
@@ -440,7 +473,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 		
 		if (newEntity) {
@@ -456,7 +489,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 	public void runtimeProcessOutput(String ne, String output) {
 		IProcessEvent event = null;
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			IPProcess p = universe.findProcessByName(ne);
 			if (p != null) {
@@ -465,7 +498,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			}
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 		if (event != null)
 			fireEvent(event);
@@ -477,20 +510,20 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 	public void runtimeJobStateChanged(String nejob, String state) {
 		final IPJob job;
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			System.out.println("*********** JOB STATE CHANGE: " + state +
 					" (job = "+nejob+")");
 			job = universe.findJobByName(nejob);
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 		
 		if (job != null) {
 			ArrayList<IProcessEvent> processEvents = new ArrayList<IProcessEvent>();
 			ArrayList<INodeEvent> nodeEvents = new ArrayList<INodeEvent>();
-			modelManagerLock.lock();
+			stateLock.lock();
 			try {
 				IPProcess[] procs = job.getProcesses();
 				if (procs != null) {
@@ -510,7 +543,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				}
 			}
 			finally {
-				modelManagerLock.unlock();
+				stateLock.unlock();
 			}
 			
 			for (IProcessEvent event : processEvents) {
@@ -539,7 +572,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	public void runtimeProcAttrChange(String nejob, BitList cprocs, String kv,
 			int[] dprocs, String[] kvs) {
 
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			System.out.println("*********** PROC ATTRIBUTE CHANGE: (job = "+nejob+")");
 			IPJob job = universe.findJobByName(nejob);
@@ -588,12 +621,12 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			}
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 	}
 
 	public void shutdown() {
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			modelListeners.clear();
 			modelListeners = null;
@@ -608,25 +641,25 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			universe = null;
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 	}
-	public synchronized void addNodeListener(INodeListener listener) {
+	public void addNodeListener(INodeListener listener) {
 		nodeListeners.add(listener);
 	}
-	public synchronized void removeNodeListener(INodeListener listener) {
+	public void removeNodeListener(INodeListener listener) {
 		nodeListeners.remove(listener);
 	}
-	public synchronized void addProcessListener(IProcessListener listener) {
+	public void addProcessListener(IProcessListener listener) {
 		processListeners.add(listener);
 	}
-	public synchronized void removeProcessListener(IProcessListener listener) {
+	public void removeProcessListener(IProcessListener listener) {
 		processListeners.remove(listener);
 	}
-	public synchronized void addModelListener(IModelListener listener) {
+	public void addModelListener(IModelListener listener) {
 		modelListeners.add(listener);
 	}
-	public synchronized void removeModelListener(IModelListener listener) {
+	public void removeModelListener(IModelListener listener) {
 		modelListeners.remove(listener);
 	}
 	public void fireEvent(final IProcessEvent event) {
@@ -667,7 +700,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 	public void abortJob(String jobName) throws CoreException {
 		final IPJob j;
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			/* we have a job name, so let's find it in the Universe - if it exists */
 			j = getUniverse().findJobByName(jobName);
@@ -677,7 +710,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			}
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 		
 		try {
@@ -695,14 +728,23 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	public IPJob run(final ILaunch launch, final JobRunConfiguration jobRunConfig,
 			IProgressMonitor monitor) throws CoreException {
 		monitor.setTaskName("Creating the job...");
+		monitor.beginTask("Creating the job...", 200);
 		
-		IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(),
-				monitor);
-		System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
+		try {
+			monitor.subTask("Waiting for Universe to Populate");
+			waitForPopulatedUniverse(new SubProgressMonitor(monitor, 100));
 
-		controlSystem.run(job.getJobNumberInt(), jobRunConfig);
-		
-		return job;
+			IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(),
+					monitor);
+			System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
+
+			controlSystem.run(job.getJobNumberInt(), jobRunConfig);
+			monitor.worked(100);
+			return job;
+		}
+		finally {
+			monitor.done();
+		}
 	}
 	
 	protected void clearUsedMemory() {
@@ -721,17 +763,17 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		return universe;
 	}
 	private int newJobID() {
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			return this.jobID++;
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 	}
 	private IPJob newJob(int numProcesses, boolean debug, IProgressMonitor monitor) throws CoreException {
 		final PJob job;
-		modelManagerLock.lock();
+		stateLock.lock();
 		try {
 			int jobID = newJobID();
 			String jobName = "job"+jobID;
@@ -766,7 +808,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 		
 		/*
@@ -780,13 +822,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		return job;
 	}
 	
-	protected final boolean isInitialized() {
-		modelManagerLock.lock();
+	protected final boolean isUniversePopulated() {
+		stateLock.lock();
 		try {
 			return universe != null && universe.getMachines().length > 0;
 		}
 		finally {
-			modelManagerLock.unlock();
+			stateLock.unlock();
 		}
 	}
 
