@@ -20,7 +20,6 @@ package org.eclipse.ptp.ui.views;
 
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.ptp.core.AttributeConstants;
-import org.eclipse.ptp.core.IModelListener;
 import org.eclipse.ptp.core.INodeListener;
 import org.eclipse.ptp.core.IPJob;
 import org.eclipse.ptp.core.IPMachine;
@@ -56,7 +55,7 @@ import org.eclipse.swt.widgets.TableItem;
  * @author clement chu
  * 
  */
-public class ParallelMachineView extends AbstractParallelSetView implements INodeListener, IModelListener {
+public class ParallelMachineView extends AbstractParallelSetView implements INodeListener {
 	// actions
 	protected ParallelAction changeMachineAction = null;
 	// composite

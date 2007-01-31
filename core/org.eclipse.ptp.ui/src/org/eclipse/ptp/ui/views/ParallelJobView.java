@@ -30,7 +30,6 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.ptp.core.IModelListener;
 import org.eclipse.ptp.core.IPJob;
 import org.eclipse.ptp.core.IPProcess;
 import org.eclipse.ptp.core.IProcessListener;
@@ -63,7 +62,7 @@ import org.eclipse.swt.widgets.TableItem;
  * @author Clement chu
  * 
  */
-public class ParallelJobView extends AbstractParallelSetView implements IProcessListener, IModelListener {
+public class ParallelJobView extends AbstractParallelSetView implements IProcessListener {
 	// selected element
 	protected String cur_selected_element_id = IManager.EMPTY_ID;
 	// composite
