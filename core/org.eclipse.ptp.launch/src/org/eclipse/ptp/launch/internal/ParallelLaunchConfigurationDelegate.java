@@ -18,31 +18,21 @@
  *******************************************************************************/
 package org.eclipse.ptp.launch.internal;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.MessageFormat;
 
-import org.eclipse.cdt.core.CCorePlugin;
-import org.eclipse.cdt.core.IBinaryParser;
-import org.eclipse.cdt.core.ICExtensionReference;
 import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ptp.core.IPJob;
-import org.eclipse.ptp.core.IPTPLaunchConfigurationConstants;
 import org.eclipse.ptp.core.PTPCorePlugin;
 import org.eclipse.ptp.core.PreferenceConstants;
 import org.eclipse.ptp.debug.core.IAbstractDebugger;
@@ -66,41 +56,15 @@ import org.eclipse.ui.WorkbenchException;
  * 
  */
 public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchConfigurationDelegate {
-	private IBinaryObject verifyBinary(IProject project, IPath exePath) throws CoreException {
-		ICExtensionReference[] parserRef = CCorePlugin.getDefault().getBinaryParserExtensions(project);
-		for (int i = 0; i < parserRef.length; i++) {
-			try {
-				IBinaryParser parser = (IBinaryParser) parserRef[i].createExtension();
-				IBinaryObject exe = (IBinaryObject) parser.getBinary(exePath);
-				if (exe != null) {
-					return exe;
-				}
-			} catch (ClassCastException e) {
-			} catch (IOException e) {
-			}
-		}
-		IBinaryParser parser = CCorePlugin.getDefault().getDefaultBinaryParser();
-		try {
-			return (IBinaryObject) parser.getBinary(exePath);
-		} catch (ClassCastException e) {
-		} catch (IOException e) {
-		}
-		Throwable exception = new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Program_is_not_a_recongnized_executable"));
-		int code = IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_BINARY;
-		MultiStatus status = new MultiStatus(PTPCorePlugin.getUniqueIdentifier(), code, LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Program_is_not_a_recongnized_executable"), exception);
-		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
-		throw new CoreException(status);
-	}
-
-	private static IPath getProgramPath(ILaunchConfiguration configuration) throws CoreException {
+	/*
+	protected IPath getProgramPath(ILaunchConfiguration configuration) throws CoreException {
 		String path = getProgramName(configuration);
 		if (path == null) {
 			return null;
 		}
 		return new Path(path);
 	}
-
-	private IPath verifyProgramPath(ILaunchConfiguration config) throws CoreException {
+	protected IPath verifyProgramPath(ILaunchConfiguration config) throws CoreException {
 		IProject project = verifyProject(config);
 		IPath programPath = getProgramPath(config);
 		if (programPath == null || programPath.isEmpty()) {
@@ -114,8 +78,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		return programPath;
 	}
-
-	public static IProject getProject(ILaunchConfiguration configuration) throws CoreException {
+	protected IProject getProject(ILaunchConfiguration configuration) throws CoreException {
 		String projectName = getProjectName(configuration);
 		if (projectName != null) {
 			projectName = projectName.trim();
@@ -130,25 +93,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		}
 		return null;
 	}
-
-	private IPDebugConfiguration getDebugConfig(ILaunchConfiguration config) throws CoreException {
-		IPDebugConfiguration dbgCfg = null;
-		try {
-			dbgCfg = PTPDebugCorePlugin.getDefault().getDebugConfiguration(getDebuggerID(config));
-		} catch (CoreException e) {
-			System.out.println("ParallelLaunchConfigurationDelegate.getDebugConfig() Error");
-			throw e;
-		}
-		return dbgCfg;
-	}
-
-	private void verifyDebuggerPath(String path) throws CoreException {
-		IPath programPath = new Path(path);
-		if (programPath == null || programPath.isEmpty() || !programPath.toFile().exists()) {
-			abort(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
-		}
-	}
-
+	*/
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor) throws CoreException {
 		if (!(launch instanceof IPLaunch)) {
 			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_launch_object"), null, 0);
@@ -168,21 +113,11 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 
 		IAbstractDebugger debugger = null;
 		IPJob job = null;
-		IPath exePath = null;
 
 		// done the verification phase
 		JobRunConfiguration jrunconfig = getJobRunConfiguration(configuration);
+		System.err.println(jrunconfig.toString());
 		/* Assuming we have parsed the configuration */
-
-		try {
-			exePath = verifyProgramPath(configuration);
-			IProject project = verifyProject(configuration);
-			if (exePath != null) {
-				exeFile = verifyBinary(project, exePath);
-			}
-		} catch (CoreException e) {
-			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_binary"), null, 0);
-		}
 
 		try {
 			IPreferenceStore store = PTPDebugUIPlugin.getDefault().getPreferenceStore();
@@ -231,8 +166,10 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				} else {
 					job.setAttribute(PreferenceConstants.JOB_WORK_DIR, jrunconfig.getWorkingDir());
 				}
+
 				job.setAttribute(PreferenceConstants.JOB_ARGS, jrunconfig.getArguments());
-				job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, exePath.removeLastSegments(1).toOSString());
+				//job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, exePath.removeLastSegments(1).toOSString());
+				job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, jrunconfig.getPathToExec());
 				pLaunch.setPJob(job);
 
 				int timeout = store.getInt(IPDebugConstants.PREF_PTP_DEBUG_COMM_TIMEOUT);

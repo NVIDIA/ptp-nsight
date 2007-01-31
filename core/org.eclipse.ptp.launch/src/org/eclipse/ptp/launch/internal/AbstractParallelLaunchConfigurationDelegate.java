@@ -20,10 +20,14 @@ package org.eclipse.ptp.launch.internal;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.IBinaryParser;
+import org.eclipse.cdt.core.ICExtensionReference;
+import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -33,6 +37,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
@@ -42,6 +47,8 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.ptp.core.IModelManager;
 import org.eclipse.ptp.core.IPTPLaunchConfigurationConstants;
 import org.eclipse.ptp.core.PTPCorePlugin;
+import org.eclipse.ptp.debug.core.IPDebugConfiguration;
+import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
 import org.eclipse.ptp.debug.core.launch.PLaunch;
 import org.eclipse.ptp.launch.PTPLaunchPlugin;
 import org.eclipse.ptp.launch.internal.ui.LaunchMessages;
@@ -79,24 +86,29 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
         
         return project;
     }
-
 	protected IFile getProgramFile(ILaunchConfiguration configuration) throws CoreException {
 		IProject project = verifyProject(configuration);
 		String fileName = getProgramName(configuration);
 		if (fileName == null)
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_not_specified"), null, IStatus.INFO);
 
+		/*
+		IPath programPath = new Path(fileName);
+		if (!programPath.isAbsolute()) {
+			programPath = project.getFile(programPath).getLocation();
+		}
+		if (!programPath.toFile().exists()) {
+			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_does_not_exist"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.PROGRAM_PATH_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
+		}
+		verifyBinary(project, programPath);
+		*/
+		// --old
 		IFile programPath = project.getFile(fileName);
 		if (programPath == null || !programPath.exists() || !programPath.getLocation().toFile().exists())
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_does_not_exist"), new FileNotFoundException(LaunchMessages.getFormattedResourceString("AbstractParallelLaunchConfigurationDelegate.Application_path_not_found", programPath.getLocation().toString())), IStatus.INFO);
-
+		
 		return programPath;
 	}
-	
-	protected IPath verifyProgramFile(ILaunchConfiguration configuration) throws CoreException {
-		return getProgramFile(configuration).getLocation();
-	}	
-
 	protected String[] getProgramParameters(ILaunchConfiguration configuration) throws CoreException {
 		List arguments = new ArrayList();
 		String temp = getArgument(configuration);
@@ -104,7 +116,6 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 			arguments.add(temp);
 		return (String[]) arguments.toArray(new String[arguments.size()]);
 	}
-	
 	protected JobRunConfiguration getJobRunConfiguration(ILaunchConfiguration configuration) throws CoreException
 	{
 		IFile programFile = getProgramFile(configuration);
@@ -127,8 +138,14 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		}
 		catch(NumberFormatException e) {}
 
-		return new JobRunConfiguration(programFile.getProjectRelativePath().toOSString(), 
-				dir, machineName, nprocs, nprocpnode, firstnode, args, env, dir);
+		IPath exePath = new Path(getProgramName(configuration));
+		if (!exePath.isAbsolute()) {
+			exePath = verifyProject(configuration).getFile(exePath).getLocation();
+		}
+		int removedCount = exePath.segmentCount() - 2;
+		//return new JobRunConfiguration("Debug/TestMPI", "/home/clement/TEST/TestMPI", machineName, nprocs, nprocpnode, firstnode, args, env, dir);
+		return new JobRunConfiguration(exePath.removeFirstSegments(removedCount).toOSString(), exePath.removeLastSegments(2).toOSString(), machineName, nprocs, nprocpnode, firstnode, args, env, dir);
+		//original - return new JobRunConfiguration(programFile.getProjectRelativePath().toOSString(), dir, machineName, nprocs, nprocpnode, firstnode, args, env, dir);
 	}
 	
    protected String verifyWorkDirectory(ILaunchConfiguration configuration) throws CoreException {
@@ -201,5 +218,49 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 	
 	public ILaunch getLaunch(ILaunchConfiguration configuration, String mode) throws CoreException {
 		return new PLaunch(configuration, mode, null);
+	}
+	/***
+	 * Debug
+	 */
+	protected IPDebugConfiguration getDebugConfig(ILaunchConfiguration config) throws CoreException {
+		IPDebugConfiguration dbgCfg = null;
+		try {
+			dbgCfg = PTPDebugCorePlugin.getDefault().getDebugConfiguration(getDebuggerID(config));
+		} catch (CoreException e) {
+			System.out.println("ParallelLaunchConfigurationDelegate.getDebugConfig() Error");
+			throw e;
+		}
+		return dbgCfg;
+	}
+	protected void verifyDebuggerPath(String path) throws CoreException {
+		IPath programPath = new Path(path);
+		if (programPath == null || programPath.isEmpty() || !programPath.toFile().exists()) {
+			abort(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
+		}
+	}	
+	protected IBinaryObject verifyBinary(IProject project, IPath exePath) throws CoreException {
+		ICExtensionReference[] parserRef = CCorePlugin.getDefault().getBinaryParserExtensions(project);
+		for (int i = 0; i < parserRef.length; i++) {
+			try {
+				IBinaryParser parser = (IBinaryParser) parserRef[i].createExtension();
+				IBinaryObject exe = (IBinaryObject) parser.getBinary(exePath);
+				if (exe != null) {
+					return exe;
+				}
+			} catch (ClassCastException e) {
+			} catch (IOException e) {
+			}
+		}
+		IBinaryParser parser = CCorePlugin.getDefault().getDefaultBinaryParser();
+		try {
+			return (IBinaryObject) parser.getBinary(exePath);
+		} catch (ClassCastException e) {
+		} catch (IOException e) {
+		}
+		Throwable exception = new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Program_is_not_a_recongnized_executable"));
+		int code = IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_BINARY;
+		MultiStatus status = new MultiStatus(PTPCorePlugin.getUniqueIdentifier(), code, LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Program_is_not_a_recongnized_executable"), exception);
+		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
+		throw new CoreException(status);
 	}
 }
