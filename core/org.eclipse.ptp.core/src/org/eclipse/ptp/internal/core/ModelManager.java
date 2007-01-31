@@ -51,6 +51,7 @@ import org.eclipse.ptp.core.events.IModelRuntimeNotifierEvent;
 import org.eclipse.ptp.core.events.IModelSysChangedEvent;
 import org.eclipse.ptp.core.events.INodeEvent;
 import org.eclipse.ptp.core.events.IProcessEvent;
+import org.eclipse.ptp.core.events.ModelErrorEvent;
 import org.eclipse.ptp.core.events.ModelRuntimeNotifierEvent;
 import org.eclipse.ptp.core.events.ModelSysChangedEvent;
 import org.eclipse.ptp.core.events.NodeEvent;
@@ -63,6 +64,14 @@ import org.eclipse.ptp.rtsystem.IMonitoringSystem;
 import org.eclipse.ptp.rtsystem.IRuntimeListener;
 import org.eclipse.ptp.rtsystem.IRuntimeProxy;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
+import org.eclipse.ptp.rtsystem.event.IRuntimeErrorEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeJobExitedEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeJobStateChangedEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeNewJobEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeNodeGeneralChangedEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeProcessAttrChangedEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeProcessOutputEvent;
 import org.eclipse.ptp.rtsystem.mpich2.MPICH2ControlSystem;
 import org.eclipse.ptp.rtsystem.mpich2.MPICH2MonitoringSystem;
 import org.eclipse.ptp.rtsystem.mpich2.MPICH2ProxyRuntimeClient;
@@ -421,7 +430,60 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			monitor.done();
 		}
 	}
-	
+	/********************
+	 * IRuntimeListener
+	 *******************/
+	public void performRuntimeEvent(IRuntimeEvent event) {
+		if (event instanceof IRuntimeNodeGeneralChangedEvent) {
+			IRuntimeNodeGeneralChangedEvent e = (IRuntimeNodeGeneralChangedEvent)event;
+			runtimeNodeGeneralChange(e.getKeys(), e.getValues());
+		}
+		else if (event instanceof IRuntimeProcessOutputEvent){
+			IRuntimeProcessOutputEvent e = (IRuntimeProcessOutputEvent)event;
+			runtimeProcessOutput(e.getJobID(), e.getOutput());
+		}
+		else if (event instanceof IRuntimeJobExitedEvent){
+			IRuntimeJobExitedEvent e = (IRuntimeJobExitedEvent)event;
+			runtimeJobExited(e.getJobID());
+		}
+		else if (event instanceof IRuntimeJobStateChangedEvent){
+			IRuntimeJobStateChangedEvent e = (IRuntimeJobStateChangedEvent)event;
+			runtimeJobStateChanged(e.getJobID(), e.getState());
+		}
+		else if (event instanceof IRuntimeNewJobEvent){
+			IRuntimeNewJobEvent e = (IRuntimeNewJobEvent)event;
+			runtimeNewJob(e.getJobID());
+		}
+		else if (event instanceof IRuntimeProcessAttrChangedEvent){
+			IRuntimeProcessAttrChangedEvent e = (IRuntimeProcessAttrChangedEvent)event;
+			runtimeProcAttrChange(e.getJobID(), e.getProcesses(), e.getState(), e.getProcArray(), e.getAttributeValues());
+		}
+		else if (event instanceof IRuntimeErrorEvent){
+			IRuntimeErrorEvent e = (IRuntimeErrorEvent)event;
+			fireEvent(new ModelErrorEvent(e.getCode(), e.getMessage()));
+			//FIXME what should we do when got runtime error
+			//terminate all jobs??
+			IPJob[] jobs = universe.getJobs();
+			for (int i=0; i<jobs.length; i++) {
+				stateLock.lock();
+				try {
+					IPProcess[] procs = jobs[i].getProcesses();
+					if (procs != null) {
+						for (int j=0; j<procs.length; j++) {
+							procs[j].setStatus(IPProcess.ERROR);
+						}
+					}
+				}
+				finally {
+					stateLock.unlock();
+				}
+			}
+			PTPCorePlugin.errorDialog("Fatal PTP Control System Error",
+					"There was a fatal PTP Control System error (ERROR CODE: "+e.getCode()+").\n"+
+					"Error message: \""+e.getMessage()+"\"\n\n"+
+					"System is now disabled.", null);
+		}
+	}
 	public void runtimeNodeGeneralChange(String[] keys, String[] values) {
 		boolean newEntity = false;
 		PMachine curmachine = null;
@@ -486,7 +548,6 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.SYS_STATUS_CHANGED, null));
 		}
 	}
-
 	public void runtimeProcessOutput(String ne, String output) {
 		IProcessEvent event = null;
 		stateLock.lock();
@@ -503,11 +564,9 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		if (event != null)
 			fireEvent(event);
 	}
-	
 	public void runtimeJobExited(String ne) {
 		// not used
 	}
-
 	public void runtimeJobStateChanged(String nejob, String state) {
 		final IPJob job;
 		stateLock.lock();
@@ -561,17 +620,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			}
 		}
 	}
-
 	public void runtimeNewJob(String ne) {
 		// not used
 	}
-
 	/* 
 	 * Update model when process attributes change
 	 */
-	public void runtimeProcAttrChange(String nejob, BitList cprocs, String kv,
-			int[] dprocs, String[] kvs) {
-
+	public void runtimeProcAttrChange(String nejob, BitList cprocs, String kv, int[] dprocs, String[] kvs) {
 		stateLock.lock();
 		try {
 			System.out.println("*********** PROC ATTRIBUTE CHANGE: (job = "+nejob+")");
@@ -624,7 +679,6 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			stateLock.unlock();
 		}
 	}
-
 	public void shutdown() {
 		stateLock.lock();
 		try {
@@ -725,17 +779,14 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.ABORTED));
 	}
 	
-	public IPJob run(final ILaunch launch, final JobRunConfiguration jobRunConfig,
-			IProgressMonitor monitor) throws CoreException {
+	public IPJob run(final ILaunch launch, final JobRunConfiguration jobRunConfig, IProgressMonitor monitor) throws CoreException {
 		monitor.setTaskName("Creating the job...");
 		monitor.beginTask("Creating the job...", 200);
-		
 		try {
 			monitor.subTask("Waiting for Universe to Populate");
 			waitForPopulatedUniverse(new SubProgressMonitor(monitor, 100));
 
-			IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(),
-					monitor);
+			IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(), monitor);
 			System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
 
 			controlSystem.run(job.getJobNumberInt(), jobRunConfig);
@@ -779,8 +830,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			String jobName = "job"+jobID;
 			String jobOwner = "";
 			System.out.println("MODEL MANAGER: newJob("+jobID+")");
-			job = new PJob(universe, jobName, "" + (PJob.BASE_OFFSET + jobID) + "",
-					jobID);		
+			job = new PJob(universe, jobName, "" + (PJob.BASE_OFFSET + jobID) + "", jobID);
 			if (debug)
 				job.setDebug();
 
@@ -796,16 +846,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			 */
 			IPNode[] nodes = universe.getMachines()[0].getNodes();
 			if (nodes.length > 0) {
-				jobOwner = (String) nodes[0].getAttribute(
-						AttributeConstants.ATTRIB_NODE_USER);
+				jobOwner = (String) nodes[0].getAttribute(AttributeConstants.ATTRIB_NODE_USER);
 			}
 			PProcess.deleteOutputFiles(jobName, jobOwner);
 			for (int i = 0; i < numProcesses; i++) {		
-				IPProcessControl proc = new PProcess(job, jobOwner, jobName +
-						"_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
+				IPProcessControl proc = new PProcess(job, jobOwner, jobName + "_process"+i, "" + i + "", "0", i, IPProcess.STARTING, "", "");
 				job.addChild(proc);			
 			}
-
 		}
 		finally {
 			stateLock.unlock();

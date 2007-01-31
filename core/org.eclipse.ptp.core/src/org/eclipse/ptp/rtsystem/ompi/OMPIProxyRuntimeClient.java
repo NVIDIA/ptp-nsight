@@ -32,6 +32,13 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 	
 	public void runJob(String[] args) throws IOException {
 		run(args);
+		/*
+		//FIXME added - wait this job is starting properly
+		setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_OK);
+		if (waitForRuntimeEvent().getEventID() == IProxyRuntimeEvent.EVENT_RUNTIME_ERROR) {
+			throw new IOException("Cannot get connection");
+		}
+		*/
 	}
 	
 	public boolean startup(final IProgressMonitor monitor) {
@@ -123,7 +130,6 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 			
 			System.out.println("Waiting on accept.");
 			waitForRuntimeEvent(monitor);
-
 			setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_OK);
 			sendCommand("STARTDAEMON");
 			waitForRuntimeEvent();

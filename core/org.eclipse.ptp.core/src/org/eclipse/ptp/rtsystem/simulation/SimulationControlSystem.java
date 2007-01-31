@@ -35,6 +35,7 @@ import org.eclipse.ptp.rtsystem.IControlSystem;
 import org.eclipse.ptp.rtsystem.IRuntimeListener;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
 import org.eclipse.ptp.rtsystem.RuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeEvent;
 
 public class SimulationControlSystem implements IControlSystem {
 
@@ -307,7 +308,15 @@ public class SimulationControlSystem implements IControlSystem {
 	public void removeRuntimeListener(IRuntimeListener listener) {
 		listeners.remove(listener);
 	}
-
+	protected synchronized void fireEvent(IRuntimeEvent event) {
+		if (listeners == null)
+			return;
+		Iterator i = listeners.iterator();
+		while (i.hasNext()) {
+			((IRuntimeListener) i.next()).performRuntimeEvent(event);
+		}
+	}
+	/*
 	protected synchronized void fireEvent(String ne, RuntimeEvent event) {
 		if (listeners == null)
 			return;
@@ -330,7 +339,7 @@ public class SimulationControlSystem implements IControlSystem {
 			}
 		}
 	}
-
+	*/
 	public void shutdown() {
 		listeners.clear();
 		listeners = null;

@@ -27,21 +27,16 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.ptp.core.AttributeConstants;
-import org.eclipse.ptp.core.IPMachine;
-import org.eclipse.ptp.core.IPNode;
-import org.eclipse.ptp.core.IPProcess;
 import org.eclipse.ptp.core.PTPCorePlugin;
 import org.eclipse.ptp.rtsystem.IMonitoringSystem;
 import org.eclipse.ptp.rtsystem.IRuntimeListener;
-import org.eclipse.ptp.rtsystem.RuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeErrorEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeNodeGeneralChangedEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEventListener;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeErrorEvent;
-import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeJobStateEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeNodeAttributeEvent;
-import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeNodeChangeEvent;
-import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeProcessOutputEvent;
 
 public class OMPIMonitoringSystem implements IMonitoringSystem, IProxyRuntimeEventListener {
 
@@ -99,23 +94,38 @@ public class OMPIMonitoringSystem implements IMonitoringSystem, IProxyRuntimeEve
     			System.out.println(i+": "+keys[i]+" = "+vals[i]);
     		}
     		*/
+    		/*
     		RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_NODE_GENERAL_CHANGE);
     		re.setAttributeKeys(keys);
     		re.setAttributeValues(vals);
     		fireEvent(re);
+    		*/
+			fireEvent(new RuntimeNodeGeneralChangedEvent(keys, vals));
     	}
         else if(e instanceof ProxyRuntimeErrorEvent) {
 			System.err.println("Fatal error from proxy: '"+((ProxyRuntimeErrorEvent)e).getErrorMessage()+"'");
 			int errorCode = ((ProxyRuntimeErrorEvent)e).getErrorCode();
 			String errorMsg = ((ProxyRuntimeErrorEvent)e).getErrorMessage();
+			/*
 			PTPCorePlugin.errorDialog("Fatal PTP Monitoring System Error",
 					"There was a fatal PTP Monitoring System error (ERROR CODE: "+errorCode+").\n"+
 					"Error message: \""+errorMsg+"\"\n\n"+
 					"Monitoring System is now disabled.", null);
+			*/
 			proxyDead = true;
+			//FIXME I dun think we need this error again becuase control system will get it too
+			//fireEvent(new RuntimeErrorEvent(errorMsg, errorCode));
 		}
     }
-    
+	protected synchronized void fireEvent(IRuntimeEvent event) {
+		if (listeners == null)
+			return;
+		Iterator i = listeners.iterator();
+		while (i.hasNext()) {
+			((IRuntimeListener) i.next()).performRuntimeEvent(event);
+		}
+	}
+    /*
 	protected synchronized void fireEvent(RuntimeEvent event) {
 		if (listeners == null)
 			return;
@@ -129,5 +139,6 @@ public class OMPIMonitoringSystem implements IMonitoringSystem, IProxyRuntimeEve
 			}
 		}
 	}
+	*/
 }
 

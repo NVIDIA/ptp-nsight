@@ -36,6 +36,10 @@ import org.eclipse.ptp.rtsystem.IControlSystem;
 import org.eclipse.ptp.rtsystem.IRuntimeListener;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
 import org.eclipse.ptp.rtsystem.RuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeErrorEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeJobStateChangedEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeProcessOutputEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEventListener;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeDisconnectedEvent;
@@ -184,7 +188,15 @@ public class MPICH2ControlSystem implements IControlSystem, IProxyRuntimeEventLi
 	public void removeRuntimeListener(IRuntimeListener listener) {
 		listeners.remove(listener);
 	}
-
+	protected synchronized void fireEvent(IRuntimeEvent event) {
+		if (listeners == null)
+			return;
+		Iterator i = listeners.iterator();
+		while (i.hasNext()) {
+			((IRuntimeListener) i.next()).performRuntimeEvent(event);
+		}
+	}
+	/*
 	protected synchronized void fireEvent(String ID, RuntimeEvent event) {
 		if (listeners == null)
 			return;
@@ -207,7 +219,7 @@ public class MPICH2ControlSystem implements IControlSystem, IProxyRuntimeEventLi
 			}
 		}
 	}
-
+	*/
 	public void shutdown() {
 		System.out.println("MPICH2ControlSystem: shutdown() called");
 		listeners.clear();
@@ -216,57 +228,55 @@ public class MPICH2ControlSystem implements IControlSystem, IProxyRuntimeEventLi
 
     public synchronized void handleEvent(IProxyRuntimeEvent e) {
         if(e instanceof ProxyRuntimeJobStateEvent) {
-        		RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_JOB_STATE_CHANGED);
-        		int state = ((ProxyRuntimeJobStateEvent)e).getJobState();
-        		String stateStr = IPProcess.ERROR;
-        		
-        		switch(state) {
-        			case 1: case 3:
-        				stateStr = IPProcess.STARTING;
-        				break;
-        			case 4:
-        				stateStr = IPProcess.RUNNING;
-        				break;
-        			case 8: case 9:
-        				stateStr = IPProcess.EXITED;
-        		}
-        		
-        		re.setText(stateStr);
-        		fireEvent("job"+((ProxyRuntimeJobStateEvent)e).getJobID(), re);
+    		int state = ((ProxyRuntimeJobStateEvent)e).getJobState();
+    		String stateStr = IPProcess.ERROR;
+    		switch(state) {
+    			case 1: case 3:
+    				stateStr = IPProcess.STARTING;
+    				break;
+    			case 4:
+    				stateStr = IPProcess.RUNNING;
+    				break;
+    			case 8: case 9:
+    				stateStr = IPProcess.EXITED;
+    		}
+    		//RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_JOB_STATE_CHANGED);
+    		//re.setText(stateStr);
+    		//fireEvent("job"+((ProxyRuntimeJobStateEvent)e).getJobID(), re);
+    		fireEvent(new RuntimeJobStateChangedEvent("job"+((ProxyRuntimeJobStateEvent)e).getJobID(), stateStr));
         }
         else if(e instanceof ProxyRuntimeProcessOutputEvent) {
-        		RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_PROCESS_OUTPUT);
-        		int jobID = ((ProxyRuntimeProcessOutputEvent)e).getJobID();
-        		int procID = ((ProxyRuntimeProcessOutputEvent)e).getProcessID();
-        		String text = ((ProxyRuntimeProcessOutputEvent)e).getText();
-        		
-        		re.setText(text);
-        		fireEvent("job"+jobID+"_process"+procID, re);
+    		int jobID = ((ProxyRuntimeProcessOutputEvent)e).getJobID();
+    		int procID = ((ProxyRuntimeProcessOutputEvent)e).getProcessID();
+    		String text = ((ProxyRuntimeProcessOutputEvent)e).getText();
+    		//RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_PROCESS_OUTPUT);
+    		//re.setText(text);
+    		//fireEvent("job"+jobID+"_process"+procID, re);
+			fireEvent(new RuntimeProcessOutputEvent("job"+jobID+"_process"+procID, text));
         }
-		
         else if(e instanceof ProxyRuntimeErrorEvent) {
 			System.err.println("Fatal error from proxy: '"+((ProxyRuntimeErrorEvent)e).getErrorMessage()+"'");
 			int errorCode = ((ProxyRuntimeErrorEvent)e).getErrorCode();
 			String errorMsg = ((ProxyRuntimeErrorEvent)e).getErrorMessage();
+			/*
 			PTPCorePlugin.errorDialog("Fatal PTP Control System Error",
 					"There was a fatal PTP Control System error (ERROR CODE: "+errorCode+").\n"+
 					"Error message: \""+errorMsg+"\"\n\n"+
 					"Control System is now disabled.", null);
+			*/
 			proxyDead = true;
+			fireEvent(new RuntimeErrorEvent(errorMsg, errorCode));
 		}
-        
-        	else if(e instanceof ProxyRuntimeDisconnectedEvent) {
-        		boolean is_error = ((ProxyRuntimeDisconnectedEvent)e).wasError();
-        		System.out.println("Proxy Disconnected.");
-        		proxyDead = true;
-        		if(is_error) {
-        			PTPCorePlugin.errorDialog("Fatal PTP Control System Error",
-        					"There was a fatal PTP Control System error.  The proxy "+
-        					"server disconnected with an error.\n\n"+
-        					"Control System is now disabled.", null);
-        		}
-       		
-        	}
-        	
+    	else if(e instanceof ProxyRuntimeDisconnectedEvent) {
+    		boolean is_error = ((ProxyRuntimeDisconnectedEvent)e).wasError();
+    		System.out.println("Proxy Disconnected.");
+    		proxyDead = true;
+    		if(is_error) {
+    			PTPCorePlugin.errorDialog("Fatal PTP Control System Error",
+    					"There was a fatal PTP Control System error.  The proxy "+
+    					"server disconnected with an error.\n\n"+
+    					"Control System is now disabled.", null);
+    		}
+    	}
     }
 }
