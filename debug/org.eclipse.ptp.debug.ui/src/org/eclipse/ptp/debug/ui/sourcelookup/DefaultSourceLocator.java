@@ -1,6 +1,6 @@
 package org.eclipse.ptp.debug.ui.sourcelookup;
 
-import org.eclipse.ptp.debug.internal.core.sourcelookup.PSourceLookupDirector;
+import org.eclipse.ptp.debug.core.sourcelookup.PSourceLookupDirector;
 
 public class DefaultSourceLocator extends PSourceLookupDirector {
 	/*
