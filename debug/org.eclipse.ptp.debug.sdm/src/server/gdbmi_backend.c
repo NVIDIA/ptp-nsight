@@ -123,7 +123,7 @@ static int	SetAndCheckBreak(int, int, int, char *, char *, int, int);
 static int	GetStackframes(int, int, int, List **);
 static int	GetAIFVar(char *, AIF **, char **);
 static AIF * ConvertVarToAIF(char *, MIVar *, int);
-static AIF * GetPartailAIF(MIVar *, char *);
+static AIF * GetPartialAIF(MIVar *, char *);
 static void RemoveAllMaps();
 
 dbg_backend_funcs	GDBMIBackend =
@@ -2557,7 +2557,7 @@ GetArrayAIF(MIVar *var, char *exp)
 	}
 	else {
 		for (i=0; i<var->numchild; i++) {
-			av = GetPartailAIF(var->children[i], NULL);
+			av = GetPartialAIF(var->children[i], NULL);
 			if (a == NULL) {
 				a = EmptyArrayToAIF(0, var->numchild-1, av);
 			}
@@ -2587,7 +2587,7 @@ GetStructAIF(MIVar *var, char *exp)
 
 	if (var->children != NULL) {
 		for (i=0; i<var->numchild; i++) {
-			ac = GetPartailAIF(var->children[i], var->children[i]->exp);
+			ac = GetPartialAIF(var->children[i], var->children[i]->exp);
 			AIFAddFieldToStruct(a, var->children[i]->exp, ac);
 			AIFFree(ac);
 		}
@@ -2611,7 +2611,7 @@ GetUnionAIF(MIVar *var, char *exp)
 
 	if (var->children != NULL) {
 		for (i=0; i<var->numchild; i++) {
-			ac = GetPartailAIF(var->children[i], var->children[i]->exp);
+			ac = GetPartialAIF(var->children[i], var->children[i]->exp);
 			AIFAddFieldToUnion(a, var->children[i]->exp, AIF_FORMAT(ac));
 			if (i == var->numchild - 1) {
 				AIFSetUnion(a, var->children[i]->exp, ac);
@@ -2652,7 +2652,7 @@ GetPointerAIF(MIVar *var, char *exp)
 			if (var->numchild == 1) {
 				//replace miname
 				var->name = strdup(var->children[0]->exp);
-				a = GetPartailAIF(var->children[0], var->children[0]->exp);
+				a = GetPartialAIF(var->children[0], var->children[0]->exp);
 			}
 			else {
 				a = GetStructAIF(var, exp);
@@ -2692,7 +2692,7 @@ GetComplexAIF(MIVar *var, char *exp)
 	}
 }
 static AIF *
-GetPartailAIF(MIVar *var, char *exp)
+GetPartialAIF(MIVar *var, char *exp)
 {
 	if (strcmp(var->type, "<text variable, no debug info>") == 0) {
 		DbgSetError(DBGERR_NOSYMS, "");
@@ -2790,7 +2790,7 @@ GDBGetPartialAIF(char* name, char* key, int listChildren, int express)
 		}
 	}
 
-	if ((a = GetPartailAIF(mivar, var_name)) == NULL) {
+	if ((a = GetPartialAIF(mivar, var_name)) == NULL) {
 		DbgSetError(DBGERR_UNKNOWN_TYPE, mivar->type);
 		MIVarFree(mivar);
 		return DBGRES_ERR; 
