@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import org.eclipse.ptp.core.proxy.AbstractProxyClient;
 import org.eclipse.ptp.core.proxy.event.IProxyEvent;
 import org.eclipse.ptp.core.proxy.event.IProxyEventListener;
 import org.eclipse.ptp.core.proxy.event.ProxyErrorEvent;
 import org.eclipse.ptp.core.proxy.event.ProxyOKEvent;
 import org.eclipse.ptp.core.util.BitList;
-import org.eclipse.ptp.debug.core.PDebugUtils;
 import org.eclipse.ptp.debug.external.core.proxy.event.IProxyDebugEvent;
 import org.eclipse.ptp.debug.external.core.proxy.event.IProxyDebugEventListener;
 import org.eclipse.ptp.debug.external.core.proxy.event.ProxyDebugErrorEvent;
@@ -39,12 +39,24 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 	protected List		listeners = new ArrayList(2);
 	private boolean		waiting = false;
 	private boolean		connected = false;
-
-	public AbstractProxyDebugClient() {
-		super();
-		super.addEventListener(this);
-	}
+	private final long WAIT_CONNECTION = 10000;
 	
+	public AbstractProxyDebugClient() {
+		addEventListener(this);
+	}
+	public synchronized void checkConnection() throws IOException {
+		if (!connected) {
+			try {
+				wait(WAIT_CONNECTION);
+			} catch (InterruptedException e) {
+				throw new IOException(e.getMessage());
+			}
+		}
+		if (!connected) {
+			removeEventListener(this);
+			throw new IOException("Cannot connect to proxy server.");
+		}
+	}
 	public synchronized void waitForConnect() throws IOException {
 		try {
 			while (!connected) {
@@ -52,6 +64,7 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 				wait();
 			}
 		} catch (InterruptedException e) {
+			throw new IOException(e.getMessage());
 		}
 	}
 	
@@ -59,13 +72,10 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 		String setStr = encodeBitSet(set);
 		this.sendCommand(cmd, setStr);
 	}
-	
 	protected void sendCommand(String cmd, BitList set, String arg1) throws IOException {
 		String setStr = encodeBitSet(set);
 		this.sendCommand(cmd, setStr, arg1);
 	}
-
-
 	protected void sendCommand(String cmd, BitList set, String arg1, String arg2) throws IOException {
 		String setStr = encodeBitSet(set);
 		this.sendCommand(cmd, setStr, arg1, arg2);
@@ -115,5 +125,8 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 				listener.handleEvent(e);
 			}
 		}
+		//if (query_have_shut_down()) {
+			//removeEventListener(this);
+		//}
 	}
 }

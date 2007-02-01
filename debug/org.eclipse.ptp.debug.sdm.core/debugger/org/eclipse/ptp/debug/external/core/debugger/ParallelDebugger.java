@@ -84,6 +84,19 @@ public class ParallelDebugger extends AbstractDebugger implements IDebugger, IPr
 	}
 	
 	public void connection() throws CoreException {
+		try {
+			//using checkConnection() instead of waitForConnect()
+			proxy.checkConnection();
+			//proxy.waitForConnect();
+			proxy.addEventListener(this);
+		} catch (IOException e) {
+			try {
+				stopDebugger();
+			} catch (CoreException ex) {
+				//ex.printStackTrace();
+			}
+			throw new CoreException(new Status(IStatus.ERROR, PTPDebugCorePlugin.getUniqueIdentifier(), IStatus.ERROR, e.getMessage(), null));
+		}
 	}
 	
 	public void startDebugger(IPJob job) throws CoreException {
@@ -92,20 +105,20 @@ public class ParallelDebugger extends AbstractDebugger implements IDebugger, IPr
 			String path = (String) job.getAttribute(PreferenceConstants.JOB_APP_PATH);
 			String dir = (String) job.getAttribute(PreferenceConstants.JOB_WORK_DIR);
 			String[] args = (String[]) job.getAttribute(PreferenceConstants.JOB_ARGS);
-			proxy.waitForConnect();
-			proxy.addEventListener(this);
 			proxy.debugStartSession(app, path, dir, args);
 		} catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, PTPDebugCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Cannot start debugger", e));
+			throw new CoreException(new Status(IStatus.ERROR, PTPDebugCorePlugin.getUniqueIdentifier(), IStatus.ERROR, e.getMessage(), null));
 		}
 	}
 	public void stopDebugger() throws CoreException {
 		if (proxy != null) {
 			try {
 				proxy.sessionFinish();
-				proxy = null;
 			} catch (IOException e) {
-				throw new CoreException(new Status(IStatus.ERROR, PTPDebugCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Cannot stop debugger", e));
+				throw new CoreException(new Status(IStatus.ERROR, PTPDebugCorePlugin.getUniqueIdentifier(), IStatus.ERROR, e.getMessage(), null));
+			} finally {
+				//proxy.removeEventListener(this);
+				proxy = null;
 			}
 		}
 	}
