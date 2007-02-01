@@ -20,9 +20,31 @@
 			class="org.eclipse.ptp.debug.internal.ui.preferences.PDebugPreferencePage"
 			id="org.eclipse.ptp.debug.ui.PDebugPreferencePage">
 		</page>
-	</extension>   
-
-	<!-- perspective //-->
+	</extension>
+	<extension
+		point="org.eclipse.debug.core.sourceLocators">
+		<sourceLocator
+			name="%DefaultSourceLocator.name"
+			class="org.eclipse.ptp.debug.ui.sourcelookup.DefaultSourceLocator"
+			id="org.eclipse.ptp.debug.ui.DefaultSourceLocator">
+		</sourceLocator>
+	</extension>
+	<!-- 
+	Not yet develop Source Map UI
+	<extension
+		point="org.eclipse.debug.ui.sourceContainerPresentations">
+		<sourceContainerPresentation
+			browserClass="org.eclipse.ptp.debug.internal.ui.sourcelookup.MappingSourceContainerBrowser"
+			containerTypeID="org.eclipse.ptp.debug.core.containerType.mapping"
+			icon="icons/obj16/mapping_obj.gif"
+			id="org.eclipse.ptp.debug.ui.sourceContainerPresentation.mapping"/>
+		<sourceContainerPresentation
+			containerTypeID="org.eclipse.ptp.debug.core.containerType.mapEntry"
+			icon="icons/obj16/mapentry_obj.gif"
+			id="org.eclipse.ppt.debug.ui.sourceContainerPresentation.mapEntry"/>
+	</extension>
+	//-->
+   	<!-- perspective //-->
 	<extension
 		point="org.eclipse.ui.perspectives">
 		<perspective

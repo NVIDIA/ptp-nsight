@@ -29,7 +29,6 @@ import org.eclipse.cdt.core.IBinaryParser;
 import org.eclipse.cdt.core.ICExtensionReference;
 import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -43,6 +42,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.model.IPersistableSourceLocator;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.ptp.core.IModelManager;
 import org.eclipse.ptp.core.IPTPLaunchConfigurationConstants;
@@ -50,6 +50,7 @@ import org.eclipse.ptp.core.PTPCorePlugin;
 import org.eclipse.ptp.debug.core.IPDebugConfiguration;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
 import org.eclipse.ptp.debug.core.launch.PLaunch;
+import org.eclipse.ptp.debug.ui.PTPDebugUIPlugin;
 import org.eclipse.ptp.launch.PTPLaunchPlugin;
 import org.eclipse.ptp.launch.internal.ui.LaunchMessages;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
@@ -74,7 +75,6 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
     protected IProject getProject(String proName) {
         return getWorkspaceRoot().getProject(proName);
     }
-    
     protected IProject verifyProject(ILaunchConfiguration configuration) throws CoreException {
         String proName = getProjectName(configuration);
         if (proName == null)
@@ -86,13 +86,12 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
         
         return project;
     }
-	protected IFile getProgramFile(ILaunchConfiguration configuration) throws CoreException {
+	protected IPath getProgramFile(ILaunchConfiguration configuration) throws CoreException {
 		IProject project = verifyProject(configuration);
 		String fileName = getProgramName(configuration);
 		if (fileName == null)
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_not_specified"), null, IStatus.INFO);
 
-		/*
 		IPath programPath = new Path(fileName);
 		if (!programPath.isAbsolute()) {
 			programPath = project.getFile(programPath).getLocation();
@@ -100,13 +99,11 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		if (!programPath.toFile().exists()) {
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_does_not_exist"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.PROGRAM_PATH_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
 		}
-		verifyBinary(project, programPath);
-		*/
-		// --old
+		/* --old
 		IFile programPath = project.getFile(fileName);
 		if (programPath == null || !programPath.exists() || !programPath.getLocation().toFile().exists())
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Application_file_does_not_exist"), new FileNotFoundException(LaunchMessages.getFormattedResourceString("AbstractParallelLaunchConfigurationDelegate.Application_path_not_found", programPath.getLocation().toString())), IStatus.INFO);
-		
+		*/
 		return programPath;
 	}
 	protected String[] getProgramParameters(ILaunchConfiguration configuration) throws CoreException {
@@ -118,7 +115,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 	}
 	protected JobRunConfiguration getJobRunConfiguration(ILaunchConfiguration configuration) throws CoreException
 	{
-		IFile programFile = getProgramFile(configuration);
+		IPath programFile = getProgramFile(configuration);
 		String nprocs_str = getNumberOfProcesses(configuration);
 		String nprocpnode_str = getNumberOfProcessesPerNode(configuration);
 		String firstnode_str = getFirstNodeNumber(configuration);
@@ -138,13 +135,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		}
 		catch(NumberFormatException e) {}
 
-		IPath exePath = new Path(getProgramName(configuration));
-		if (!exePath.isAbsolute()) {
-			exePath = verifyProject(configuration).getFile(exePath).getLocation();
-		}
-		int removedCount = exePath.segmentCount() - 2;
-		//return new JobRunConfiguration("Debug/TestMPI", "/home/clement/TEST/TestMPI", machineName, nprocs, nprocpnode, firstnode, args, env, dir);
-		return new JobRunConfiguration(exePath.removeFirstSegments(removedCount).toOSString(), exePath.removeLastSegments(2).toOSString(), machineName, nprocs, nprocpnode, firstnode, args, env, dir);
+		return new JobRunConfiguration(programFile.lastSegment(), programFile.removeLastSegments(1).toOSString(), machineName, nprocs, nprocpnode, firstnode, args, env, dir);
 		//original - return new JobRunConfiguration(programFile.getProjectRelativePath().toOSString(), dir, machineName, nprocs, nprocpnode, firstnode, args, env, dir);
 	}
 	
@@ -233,11 +224,26 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		return dbgCfg;
 	}
 	protected void verifyDebuggerPath(String path) throws CoreException {
-		IPath programPath = new Path(path);
-		if (programPath == null || programPath.isEmpty() || !programPath.toFile().exists()) {
+		if (!verifyPath(path)) {
 			abort(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found"), new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Debugger_path_not_found")), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_EXIST);
 		}
-	}	
+	}
+	protected boolean verifyPath(String path) {
+		IPath programPath = new Path(path);
+		if (programPath == null || programPath.isEmpty() || !programPath.toFile().exists()) {
+			return false;
+		}
+		return true;
+	}
+	protected IBinaryObject verifyBinary(ILaunchConfiguration configuration) throws CoreException {
+		IProject project = verifyProject(configuration);
+		String fileName = getProgramName(configuration);
+		IPath programPath = new Path(fileName);
+		if (!programPath.isAbsolute()) {
+			programPath = project.getFile(programPath).getLocation();
+		}
+		return verifyBinary(project, programPath);
+	}
 	protected IBinaryObject verifyBinary(IProject project, IPath exePath) throws CoreException {
 		ICExtensionReference[] parserRef = CCorePlugin.getDefault().getBinaryParserExtensions(project);
 		for (int i = 0; i < parserRef.length; i++) {
@@ -262,5 +268,31 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		MultiStatus status = new MultiStatus(PTPCorePlugin.getUniqueIdentifier(), code, LaunchMessages.getResourceString("AbstractParallelLaunchDelegate.Program_is_not_a_recongnized_executable"), exception);
 		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
 		throw new CoreException(status);
+	}
+	/****
+	 * Source
+	 ****/
+	protected void setSourceLocator(ILaunch launch, ILaunchConfiguration config) throws CoreException {
+		setDefaultSourceLocator(launch, config);
+	}
+	protected void setDefaultSourceLocator(ILaunch launch, ILaunchConfiguration configuration) throws CoreException {
+		//  set default source locator if none specified
+		if (launch.getSourceLocator() == null) {
+			IPersistableSourceLocator sourceLocator;
+			String id = configuration.getAttribute(ILaunchConfiguration.ATTR_SOURCE_LOCATOR_ID, (String)null);
+			if (id == null) {
+				sourceLocator = PTPDebugUIPlugin.createDefaultSourceLocator();
+				sourceLocator.initializeDefaults(configuration);
+			} else {
+				sourceLocator = DebugPlugin.getDefault().getLaunchManager().newSourceLocator(id);
+				String memento = configuration.getAttribute(ILaunchConfiguration.ATTR_SOURCE_LOCATOR_MEMENTO, (String)null);
+				if (memento == null) {
+					sourceLocator.initializeDefaults(configuration);
+				} else {
+					sourceLocator.initializeFromMemento(memento);
+				}
+			}
+			launch.setSourceLocator(sourceLocator);
+		}
 	}
 }

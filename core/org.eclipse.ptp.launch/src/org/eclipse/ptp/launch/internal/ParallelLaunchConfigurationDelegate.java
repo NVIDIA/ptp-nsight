@@ -98,7 +98,6 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 		if (!(launch instanceof IPLaunch)) {
 			abort(LaunchMessages.getResourceString("ParallelLaunchConfigurationDelegate.Invalid_launch_object"), null, 0);
 		}
-		IBinaryObject exeFile = null;
 		IPLaunch pLaunch = (IPLaunch) launch;
 
 		if (monitor == null) {
@@ -116,7 +115,6 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 
 		// done the verification phase
 		JobRunConfiguration jrunconfig = getJobRunConfiguration(configuration);
-		System.err.println(jrunconfig.toString());
 		/* Assuming we have parsed the configuration */
 
 		try {
@@ -153,10 +151,12 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 
 				String dbgExe = getDebuggerExePath(configuration);
 				if (dbgExe != null) {
+					//remote setting
 					IPath dbgExePath = new Path(dbgExe);
 					job.setAttribute(PreferenceConstants.JOB_APP_NAME, dbgExePath.lastSegment());
 					job.setAttribute(PreferenceConstants.JOB_APP_PATH, dbgExePath.removeLastSegments(1).toOSString());
-				} else {
+				}
+				else {
 					job.setAttribute(PreferenceConstants.JOB_APP_NAME, jrunconfig.getExecName());
 					job.setAttribute(PreferenceConstants.JOB_APP_PATH, jrunconfig.getPathToExec());
 				}
@@ -172,6 +172,9 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				job.setAttribute(PreferenceConstants.JOB_DEBUG_DIR, jrunconfig.getPathToExec());
 				pLaunch.setPJob(job);
 
+				IBinaryObject exeFile = verifyBinary(configuration);
+				setDefaultSourceLocator(launch, configuration);
+				
 				int timeout = store.getInt(IPDebugConstants.PREF_PTP_DEBUG_COMM_TIMEOUT);
 				PTPDebugCorePlugin.getDebugModel().createDebuggerSession(debugger, pLaunch, exeFile, timeout, new SubProgressMonitor(monitor, 40));
 				monitor.worked(10);
