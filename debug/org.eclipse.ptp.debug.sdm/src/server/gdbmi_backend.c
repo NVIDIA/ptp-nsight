@@ -357,6 +357,7 @@ get_current_frame(stackframe **frame)
 	return 0;
 }
 
+#if 0
 static void
 AddVARMap(char *name, MIVar *mivar)
 {
@@ -393,6 +394,8 @@ AddVARMap(char *name, MIVar *mivar)
 		}
 	}
 }
+#endif
+
 static varinfo *
 FindVARByName(char *name) 
 {
@@ -406,6 +409,7 @@ FindVARByName(char *name)
 	}
 	return NULL;
 }
+
 static varinfo *
 FindVARByMIName(char *mi_name) 
 {
@@ -419,6 +423,7 @@ FindVARByMIName(char *mi_name)
 	}
 	return NULL;
 }
+
 static void
 RemoveVARMap(varinfo *map)
 {
@@ -435,6 +440,8 @@ RemoveVARMap(varinfo *map)
 		VARMap.nels--;
 	}
 }
+
+#if 0
 static void
 RemoveVARMapByName(char *name)
 {
@@ -442,6 +449,7 @@ RemoveVARMapByName(char *name)
 	map = FindVARByName(name);
 	RemoveVARMap(map);
 }
+
 static void
 RemoveVARMapByMIName(char *mi_name)
 {
@@ -449,6 +457,8 @@ RemoveVARMapByMIName(char *mi_name)
 	map = FindVARByMIName(mi_name);
 	RemoveVARMap(map);
 }
+#endif
+
 static void
 RemoveAllVARMap()
 {
@@ -463,12 +473,14 @@ RemoveAllVARMap()
 		RemoveVARMap(map);
 	}	
 }
+
 static void
 RemoveAllMaps()
 {
 	RemoveAllBPMap();
 	RemoveAllVARMap();
 }
+
 static List * 
 GetChangedVariables()
 {
