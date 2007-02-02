@@ -17,6 +17,7 @@ import org.eclipse.ptp.rtsystem.IRuntimeProxy;
 import org.eclipse.ptp.rtsystem.proxy.ProxyRuntimeClient;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEventListener;
+import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeDisconnectedEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeErrorEvent;
 
 public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRuntimeProxy, IProxyRuntimeEventListener {
@@ -131,10 +132,11 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 			System.out.println("Waiting on accept.");
 			waitForRuntimeEvent(monitor);
 			setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_OK);
+            setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_DISCONNECTED);
 			sendCommand("STARTDAEMON");
-			waitForRuntimeEvent();
+			waitForRuntimeEvent(monitor);
 		} catch (IOException e) {
-			System.err.println("Exception starting up proxy. :(");
+			System.err.println("Exception starting up proxy. " + e.getMessage());
 			try {
 				sessionFinish();
 			} catch (IOException e1) {
@@ -187,11 +189,15 @@ public class OMPIProxyRuntimeClient extends ProxyRuntimeClient implements IRunti
 			waitEvents.clear();
 			throw new IOException(e.getMessage());
 		}
+		waitEvents.clear();
    		if (event instanceof ProxyRuntimeErrorEvent) {
-   	   		waitEvents.clear();
    			throw new IOException(((ProxyRuntimeErrorEvent)event).getErrorMessage());
-   		}
-   		waitEvents.clear();
+    	} else if (event instanceof ProxyRuntimeDisconnectedEvent) {
+    		if (((ProxyRuntimeDisconnectedEvent)event).wasError()) {
+                throw new IOException("Connection to proxy server unexpectedly broken.");
+    		}
+    	}
+
    		return event;
 	}
 
