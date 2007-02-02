@@ -39,7 +39,7 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 	protected List		listeners = new ArrayList(2);
 	private boolean		waiting = false;
 	private boolean		connected = false;
-	private final long WAIT_CONNECTION = 10000;
+	private final long WAIT_CONNECTION = 60000;
 	
 	public AbstractProxyDebugClient() {
 		addEventListener(this);
@@ -47,6 +47,7 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 	public synchronized void checkConnection() throws IOException {
 		if (!connected) {
 			try {
+				waiting = true;
 				wait(WAIT_CONNECTION);
 			} catch (InterruptedException e) {
 				throw new IOException(e.getMessage());
