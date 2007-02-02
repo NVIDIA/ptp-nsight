@@ -237,7 +237,7 @@ public abstract class AbstractProxyClient {
 					System.out.println("event thread IOException . . .");
 				} 
 				System.out.println("event thread exiting...");
-				//fireProxyEvent(new ProxyDisconnectedEvent(!query_have_shut_down()));
+				fireProxyEvent(new ProxyDisconnectedEvent(!query_have_shut_down()));
 			}
 		};
 		eventThread.start();
