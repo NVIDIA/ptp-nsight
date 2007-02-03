@@ -394,7 +394,6 @@ AddVARMap(char *name, MIVar *mivar)
 		}
 	}
 }
-#endif
 
 static varinfo *
 FindVARByName(char *name) 
@@ -423,6 +422,7 @@ FindVARByMIName(char *mi_name)
 	}
 	return NULL;
 }
+#endif
 
 static void
 RemoveVARMap(varinfo *map)
@@ -492,7 +492,7 @@ GetChangedVariables()
 	cmd = MIVarUpdate("*");
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		DEBUG_PRINTS("------------------- GetChangedVariables error\n");
+		DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- GetChangedVariables error\n");
 		DbgSetError(DBGERR_INPROGRESS, GetLastErrorStr());
 		MICommandFree(cmd);
 		return NULL;
@@ -669,7 +669,7 @@ SendCommandWait(MISession *sess, MICommand *cmd)
 	do {
 		MISessionProgress(sess, output);
 		if (sess->out_fd == -1) {
-			DEBUG_PRINTS("------------------- SendCommandWait sess->out_fd = -1\n");
+			DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- SendCommandWait sess->out_fd = -1\n");
 			break;
 		}
 	} while (!MISessionCommandCompleted(sess));
@@ -719,6 +719,10 @@ GDBMIStartSession(char *gdb_path, char *prog, char *path, char *work_dir, char *
 	}
 	
 	sess = MISessionNew();
+	
+#ifdef DEBUG
+	MISessionSetDebug(TEST_DEBUG_LEVEL(DEBUG_LEVEL_BACKEND));
+#endif /* DEBUG */
 	
 	MISessionSetTimeout(sess, 0, timeout);
 	
@@ -1340,7 +1344,7 @@ GetStackframes(int current, int low, int high, List **flist)
 	SendCommandWait(DebugSession, cmd);
 	
 	if (!MICommandResultOK(cmd)) {
-		DEBUG_PRINTS("------------------- GetStackframes error\n");
+		DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- GetStackframes error\n");
 		DbgSetError(DBGERR_INPROGRESS, GetLastErrorStr());
 		MICommandFree(cmd);
 		return DBGRES_ERR;
@@ -2236,7 +2240,7 @@ GDBMIGetInfoThread(void)
 	cmd = CLIInfoThreads();
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		DEBUG_PRINTS("------------------- GDBMIGetInfoThread error\n");		
+		DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- GDBMIGetInfoThread error\n");		
 		DbgSetError(DBGERR_INPROGRESS, GetLastErrorStr());
 		MICommandFree(cmd);
 		return DBGRES_ERR;
@@ -2317,7 +2321,7 @@ GDBMIStackInfoDepth()
 	cmd = MIStackInfoDepth();
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		DEBUG_PRINTS("------------------- GDBMIStackInfoDepth error\n");		
+		DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- GDBMIStackInfoDepth error\n");		
 		DbgSetError(DBGERR_INPROGRESS, GetLastErrorStr());
 		MICommandFree(cmd);
 		return DBGRES_ERR;
@@ -2401,7 +2405,7 @@ GDBMIDataWriteMemory(long offset, char* address, char* format, int wordSize, cha
 	
 	CHECK_SESSION();
 	
-	//DEBUG_PRINTS("----- gdbmi_sevrer: GDBMIDataWriteMemory called ---------\n");	
+	//DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "----- gdbmi_sevrer: GDBMIDataWriteMemory called ---------\n");	
 	cmd = MIDataWriteMemory(offset, address, format, wordSize, value);
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {

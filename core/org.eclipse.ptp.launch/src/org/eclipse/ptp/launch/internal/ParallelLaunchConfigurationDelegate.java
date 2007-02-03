@@ -127,6 +127,9 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 				String dbgPath = store.getString(IPDebugConstants.PREF_PTP_DEBUGGER_BACKEND_PATH);
 				if (dbgPath.length() > 0)
 					dbgArgs += " --debugger_path=" + dbgPath;
+				String dbgExtraArgs = store.getString(IPDebugConstants.PREF_PTP_DEBUGGER_ARGS);
+				if (dbgExtraArgs.length() > 0)
+					dbgArgs += " " + dbgExtraArgs;
 
 				verifyDebuggerPath(dbgFile);
 				IPDebugConfiguration debugConfig = getDebugConfig(configuration);
