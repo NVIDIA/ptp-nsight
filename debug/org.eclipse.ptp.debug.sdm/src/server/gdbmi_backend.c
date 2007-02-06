@@ -1583,7 +1583,7 @@ GetAddressLength()
 	res = MIGetDataEvaluateExpressionInfo(cmd);	
 	MICommandFree(cmd);
 	
-	ADDRESS_LENGTH = atoi(res);
+	ADDRESS_LENGTH = (int)strtol(res, NULL, 10);
 	return ADDRESS_LENGTH;
 }
 static char * 
@@ -1647,57 +1647,57 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 			if (*p == '\'') { //character
 				p--;
 				*p = '\0';
-				a = CharToAIF((char)atoi(res));
+				a = CharToAIF((char)strtol(res, NULL, 10));
 			}
 			else { //string
 				a = StringToAIF(p);			
 			}
 		}
 		else {
-			a = CharToAIF((char)atoi(res));
+			a = CharToAIF((char)strtol(res, NULL, 10));
 		}
 		break;
 				
 	case SHORT:
-		a = ShortToAIF((short)atoi(res));
+		a = ShortToAIF((short)strtol(res, NULL, 10));
 		break;
 				
 	case USHORT:
-		a = UnsignedShortToAIF((unsigned short)atoi(res));
+		a = UnsignedShortToAIF((unsigned short)strtol(res, NULL, 10));
 		break;
 		
 	case INT:
-		a = IntToAIF(atoi(res));
+		a = IntToAIF(strtol(res, NULL, 10));
 		break;
 		
 	case UINT:
-		a = UnsignedIntToAIF((unsigned int)atoi(res));
+		a = UnsignedIntToAIF((unsigned int)strtol(res, NULL, 10));
 		break;
 				
 	case LONG:
-		a = LongToAIF(atol(res));
+		a = LongToAIF(strtol(res, NULL, 10));
 		break;
 		
 	case ULONG:
-		a = UnsignedLongToAIF((unsigned long)atol(res));
+		a = UnsignedLongToAIF((unsigned long)strtol(res, NULL, 10));
 		break;
 				
 #ifdef CC_HAS_LONG_LONG					
 	case LONGLONG:
-		a = LongLongToAIF(atoll(res));
+		a = LongLongToAIF(strtoll(res, NULL));
 		break;
 		
 	case ULONGLONG:
-		a = UnsignedLongLongToAIF((unsigned long long)atoll(res));
+		a = UnsignedLongLongToAIF((unsigned long long)strtoll(res, NULL));
 		break;
 #endif /* CC_HAS_LONG_LONG */
 	
 	case FLOAT:
-		a = FloatToAIF((float)atof(res));
+		a = FloatToAIF((float)strtod(res, NULL));
 		break;
 		
 	case DOUBLE:
-		a = DoubleToAIF(atof(res));
+		a = DoubleToAIF(strtod(res, NULL));
 		break;
 		
 	default://other type
@@ -2497,38 +2497,38 @@ GetPrimitiveAIF(char *type, char *res)
 				if (*pch == '\'') { //character
 					pch--;
 					*pch = '\0';
-					return CharToAIF((char)atoi(res));
+					return CharToAIF((char)strtol(res, NULL, 10));
 				}
 				else { //string
 					return StringToAIF(pch);			
 				}
 			}
 			else {
-				return CharToAIF((char)atoi(res));
+				return CharToAIF((char)strtol(res, NULL, 10));
 			}
 			break;
 		case SHORT:
-			return ShortToAIF((short)atoi(res));
+			return ShortToAIF((short)strtol(res, NULL, 10));
 		case USHORT:
-			return UnsignedShortToAIF((unsigned short)atoi(res));
+			return UnsignedShortToAIF((unsigned short)strtol(res, NULL, 10));
 		case INT:
-			return IntToAIF(atoi(res));
+			return IntToAIF((int)strtol(res, NULL, 10));
 		case UINT:
-			return UnsignedIntToAIF((unsigned int)atoi(res));
+			return UnsignedIntToAIF((unsigned int)strtol(res, NULL, 10));
 		case LONG:
-			return LongToAIF(atol(res));
+			return LongToAIF(strtol(res, NULL, 10));
 		case ULONG:
-			return UnsignedLongToAIF((unsigned long)atol(res));
+			return UnsignedLongToAIF((unsigned long)strtol(res, NULL, 10));
 		#ifdef CC_HAS_LONG_LONG				
 			case LONGLONG:
-				return LongLongToAIF(atoll(res));
+				return LongLongToAIF(strtoll(res, NULL));
 			case ULONGLONG:
-				return UnsignedLongLongToAIF((unsigned long long)atoll(res));
+				return UnsignedLongLongToAIF((unsigned long long)strtoll(res, NULL));
 		#endif /* CC_HAS_LONG_LONG */
 		case FLOAT:
-			return FloatToAIF((float)atof(res));
+			return FloatToAIF((float)strtod(res, NULL));
 		case DOUBLE:
-			return DoubleToAIF(atof(res));
+			return DoubleToAIF(strtod(res, NULL));
 		default://other type
 			return VoidToAIF(0, 0);
 	}
