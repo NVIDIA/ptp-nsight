@@ -1663,7 +1663,7 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 		break;
 				
 	case USHORT:
-		a = UnsignedShortToAIF((unsigned short)strtol(res, NULL, 10));
+		a = UnsignedShortToAIF((unsigned short)strtoul(res, NULL, 10));
 		break;
 		
 	case INT:
@@ -1671,7 +1671,7 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 		break;
 		
 	case UINT:
-		a = UnsignedIntToAIF((unsigned int)strtol(res, NULL, 10));
+		a = UnsignedIntToAIF((unsigned int)strtoul(res, NULL, 10));
 		break;
 				
 	case LONG:
@@ -1679,7 +1679,7 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 		break;
 		
 	case ULONG:
-		a = UnsignedLongToAIF((unsigned long)strtol(res, NULL, 10));
+		a = UnsignedLongToAIF((unsigned long)strtoul(res, NULL, 10));
 		break;
 				
 #ifdef CC_HAS_LONG_LONG					
@@ -1688,7 +1688,7 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 		break;
 		
 	case ULONGLONG:
-		a = UnsignedLongLongToAIF((unsigned long long)strtoll(res, NULL));
+		a = UnsignedLongLongToAIF((unsigned long long)strtoull(res, NULL));
 		break;
 #endif /* CC_HAS_LONG_LONG */
 	
@@ -2510,20 +2510,20 @@ GetPrimitiveAIF(char *type, char *res)
 		case SHORT:
 			return ShortToAIF((short)strtol(res, NULL, 10));
 		case USHORT:
-			return UnsignedShortToAIF((unsigned short)strtol(res, NULL, 10));
+			return UnsignedShortToAIF((unsigned short)strtoul(res, NULL, 10));
 		case INT:
 			return IntToAIF((int)strtol(res, NULL, 10));
 		case UINT:
-			return UnsignedIntToAIF((unsigned int)strtol(res, NULL, 10));
+			return UnsignedIntToAIF((unsigned int)strtoul(res, NULL, 10));
 		case LONG:
 			return LongToAIF(strtol(res, NULL, 10));
 		case ULONG:
-			return UnsignedLongToAIF((unsigned long)strtol(res, NULL, 10));
+			return UnsignedLongToAIF((unsigned long)strtoul(res, NULL, 10));
 		#ifdef CC_HAS_LONG_LONG				
 			case LONGLONG:
 				return LongLongToAIF(strtoll(res, NULL));
 			case ULONGLONG:
-				return UnsignedLongLongToAIF((unsigned long long)strtoll(res, NULL));
+				return UnsignedLongLongToAIF((unsigned long long)strtoull(res, NULL));
 		#endif /* CC_HAS_LONG_LONG */
 		case FLOAT:
 			return FloatToAIF((float)strtod(res, NULL));
