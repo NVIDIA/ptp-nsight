@@ -721,7 +721,6 @@ public class PAnnotationManager implements IJobChangedListener, IPDebugEventList
 		}
 	}
 	protected void register(String job_id, BitList tasks) {
-		//System.err.println("-----reg: " + BitList.showBitList(tasks));
 		synchronized (LOCK) {
 			AnnotationGroup annotationGroup = getAnnotationGroup(job_id);
 			if (annotationGroup != null) {
@@ -732,7 +731,6 @@ public class PAnnotationManager implements IJobChangedListener, IPDebugEventList
 					if (cpTasks.isEmpty())
 						continue;
 					
-					//System.err.println("-----filter reg: " + BitList.showBitList(cpTasks));
 					boolean isRegister = isRegisterType(annotations[i].getType());
 					if (!isRegister)// register annotation
 						updateExistedAnnotation(annotationGroup, annotations[i], cpTasks, isRegister);
@@ -741,7 +739,6 @@ public class PAnnotationManager implements IJobChangedListener, IPDebugEventList
 		}
 	}
 	protected void unregister(String job_id, BitList tasks) {
-		//System.err.println("-----unreg: " + BitList.showBitList(tasks));
 		synchronized (LOCK) {
 			AnnotationGroup annotationGroup = getAnnotationGroup(job_id);
 			if (annotationGroup != null) {
@@ -752,7 +749,6 @@ public class PAnnotationManager implements IJobChangedListener, IPDebugEventList
 					if (cpTasks.isEmpty())
 						continue;
 					
-					//System.err.println("-----filter unreg: " + BitList.showBitList(cpTasks));
 					boolean isRegister = isRegisterType(annotations[i].getType());
 					if (isRegister)// register annotation
 						updateExistedAnnotation(annotationGroup, annotations[i], cpTasks, isRegister);
@@ -769,7 +765,6 @@ public class PAnnotationManager implements IJobChangedListener, IPDebugEventList
 	 */
 	protected void updateExistedAnnotation(AnnotationGroup annotationGroup, PInstructionPointerAnnotation2 annotation, BitList tasks, boolean isRegister) {
 		synchronized (LOCK) {
-			//System.err.println("-----remove existed: " + BitList.showBitList(tasks)+", " + isRegister);
 			IResource file = annotation.getMakerResource();
 			Position position = annotation.getPosition();
 			annotation.removeTasks(tasks);
