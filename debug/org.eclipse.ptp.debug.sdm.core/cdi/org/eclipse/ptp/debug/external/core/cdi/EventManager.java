@@ -23,12 +23,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+
 import org.eclipse.cdt.debug.core.cdi.ICDILocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.ptp.core.PreferenceConstants;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
 import org.eclipse.ptp.debug.core.cdi.IPCDIBreakpointHit;
 import org.eclipse.ptp.debug.core.cdi.IPCDIEndSteppingRange;
@@ -275,7 +275,7 @@ public class EventManager extends SessionObject implements IPCDIEventManager, Ob
 		int detail = IPDebugEvent.UNSPECIFIED;
 		
 		int lineNumber = 0;
-		String fileName = (String) baseInfo.getJob().getAttribute(PreferenceConstants.JOB_DEBUG_DIR) + "/";
+		String fileName = "";//(String) baseInfo.getJob().getAttribute(PreferenceConstants.JOB_DEBUG_DIR) + "/";
 		if (event instanceof BreakpointHitEvent) {
 			IPCDIBreakpoint bpt = ((IPCDIBreakpointHit) ((IPCDISuspendedEvent) event).getReason()).getBreakpoint();
 			if (bpt instanceof IPCDILocationBreakpoint) {

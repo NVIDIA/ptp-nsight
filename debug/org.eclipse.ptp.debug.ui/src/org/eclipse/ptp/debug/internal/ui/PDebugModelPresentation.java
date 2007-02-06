@@ -47,6 +47,7 @@ import org.eclipse.debug.core.model.IWatchExpression;
 import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.debug.ui.IDebugEditorPresentation;
 import org.eclipse.debug.ui.IDebugModelPresentation;
+import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IValueDetailListener;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -143,10 +144,8 @@ public class PDebugModelPresentation extends LabelProvider implements IDebugMode
 		if (input != null) {
 			IEditorRegistry registry = PlatformUI.getWorkbench().getEditorRegistry();
 			IEditorDescriptor descriptor = registry.getDefaultEditor(input.getName());
-			if (descriptor != null)
-				return descriptor.getId();
-			// TODO return CEditor id hardcode, CUIPlugin.EDITOR_ID
-			return (descriptor != null) ? descriptor.getId() : "org.eclipse.cdt.ui.editor.CEditor";
+			//IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR | CUIPlugin.EDITOR_ID
+			return (descriptor != null) ? descriptor.getId() : IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
 		}
 		return null;
 	}
