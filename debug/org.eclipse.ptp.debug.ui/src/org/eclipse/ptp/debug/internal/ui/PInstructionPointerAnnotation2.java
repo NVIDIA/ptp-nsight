@@ -89,7 +89,6 @@ public class PInstructionPointerAnnotation2 {
 				marker = null;
 			} catch (CoreException e) {}
 		}
-		System.err.println("--------- REMOVE: " + type);
 		annotation.setText("");
 		annotation.markDeleted(true);
 		annotationModel.removeAnnotation(annotation);
@@ -108,7 +107,6 @@ public class PInstructionPointerAnnotation2 {
 		else {
 			annotation = new Annotation(type, false, "");
 		}
-		System.err.println("--------- NEW: " + type);
 		annotation.markDeleted(false);
 		annotationModel.addAnnotation(annotation, position);
 	}
@@ -122,7 +120,6 @@ public class PInstructionPointerAnnotation2 {
 			} catch (CoreException e) {}
 		}
 		annotation.setText(message);
-		System.err.println("-------------- Msg: " + message);
 	}
 	/** Set Message 
 	 * @param isRegister
