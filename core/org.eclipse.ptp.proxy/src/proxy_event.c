@@ -221,7 +221,7 @@ proxy_str_to_event(char *str, proxy_event **ev)
 
 	*rest++ = '\0';
 	
-	event = (int)strtol(str, NULL, 10)
+	event = (int)strtol(str, NULL, 10);
 	
 	switch (event)
 	{
