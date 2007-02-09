@@ -1782,9 +1782,9 @@ AsciiToAIF(char *format, char *data)
 	while ( *dp )
 	{
 		buf[0] = *dp++;
-		acc = strtol(buf, 0, 16) << 4;
+		acc = (int)strtol(buf, 0, 16) << 4;
 		buf[0] = *dp++;
-		acc += strtol(buf, 0, 16);
+		acc += (int)strtol(buf, 0, 16);
 		*bdp++ = (char) (acc & 0xff);
 	}
 
@@ -2422,7 +2422,7 @@ _aif_reference_to_str(int depth, char **fds, char **data)
 	char *	effectiveFds;
 
 	(*fds)++; /* past ">" */
-	index = atoi(*fds);
+	index = (int)strtol(*fds, NULL, 10);
 	*fds = _fds_skipnum(*fds); /* past name */
 	(*fds)++; /* past "/" */
 	effectiveFds = _aif_types_seen[index];
@@ -2737,7 +2737,7 @@ _aif_name_to_str(int depth, char **fds, char **data)
 	int	index;
 
 	(*fds)++; /* past "%" */
-	index = atoi(*fds);
+	index = (int)strtol(*fds, NULL, 10);
 	*fds = _fds_skipnum(*fds); /* past name */
 	(*fds)++; /* past "/" */
 	_aif_types_seen[index] = *fds;

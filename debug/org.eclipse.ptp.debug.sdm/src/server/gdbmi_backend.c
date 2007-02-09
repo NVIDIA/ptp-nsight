@@ -1667,7 +1667,7 @@ GetPrimitiveTypeToAIF(int type_id, char* res)
 		break;
 		
 	case INT:
-		a = IntToAIF(strtol(res, NULL, 10));
+		a = IntToAIF((int)strtol(res, NULL, 10));
 		break;
 		
 	case UINT:
