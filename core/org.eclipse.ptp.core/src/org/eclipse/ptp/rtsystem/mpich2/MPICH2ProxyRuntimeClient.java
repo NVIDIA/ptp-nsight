@@ -17,6 +17,7 @@ import org.eclipse.ptp.rtsystem.IRuntimeProxy;
 import org.eclipse.ptp.rtsystem.proxy.ProxyRuntimeClient;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.IProxyRuntimeEventListener;
+import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeDisconnectedEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeErrorEvent;
 import org.eclipse.ptp.rtsystem.proxy.event.ProxyRuntimeNewJobEvent;
 
@@ -31,11 +32,8 @@ public class MPICH2ProxyRuntimeClient extends ProxyRuntimeClient implements IRun
 		this.modelManager = modelManager;
 	}
 	
-	public int runJob(String[] args) throws IOException {
-		setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_NEWJOB);
+	public void runJob(String[] args) throws IOException {
 		run(args);
-		IProxyRuntimeEvent event = waitForRuntimeEvent();
-		return ((ProxyRuntimeNewJobEvent)event).getJobID();
 	}
 	
 	public boolean startup(final IProgressMonitor monitor) {
@@ -124,8 +122,8 @@ public class MPICH2ProxyRuntimeClient extends ProxyRuntimeClient implements IRun
 			
 			System.out.println("Waiting on accept.");
 			waitForRuntimeEvent(monitor);
-
 			setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_OK);
+			setWaitEvent(IProxyRuntimeEvent.EVENT_RUNTIME_DISCONNECTED);
 			sendCommand("STARTDAEMON");
 			waitForRuntimeEvent();
 		} catch (IOException e) {
@@ -182,11 +180,15 @@ public class MPICH2ProxyRuntimeClient extends ProxyRuntimeClient implements IRun
 			waitEvents.clear();
 			throw new IOException(e.getMessage());
 		}
+		waitEvents.clear();
    		if (event instanceof ProxyRuntimeErrorEvent) {
-   	   		waitEvents.clear();
    			throw new IOException(((ProxyRuntimeErrorEvent)event).getErrorMessage());
-   		}
-   		waitEvents.clear();
+    	} else if (event instanceof ProxyRuntimeDisconnectedEvent) {
+    		if (((ProxyRuntimeDisconnectedEvent)event).wasError()) {
+                throw new IOException("Connection to proxy server unexpectedly broken.");
+    		}
+    	}
+
    		return event;
 	}
 

@@ -231,14 +231,21 @@ public class MPICH2ControlSystem implements IControlSystem, IProxyRuntimeEventLi
     		int state = ((ProxyRuntimeJobStateEvent)e).getJobState();
     		String stateStr = IPProcess.ERROR;
     		switch(state) {
-    			case 1: case 3:
-    				stateStr = IPProcess.STARTING;
-    				break;
-    			case 4:
-    				stateStr = IPProcess.RUNNING;
-    				break;
-    			case 8: case 9:
-    				stateStr = IPProcess.EXITED;
+				case 1:
+					stateStr = IPProcess.STARTING;
+					break;
+				case 2:
+					stateStr = IPProcess.RUNNING;
+					break;
+				case 3:
+					stateStr = IPProcess.EXITED;
+					break;
+				case 4:
+					stateStr = IPProcess.ERROR;
+					break;
+				default:
+	   				stateStr = IPProcess.ERROR;
+					break;
     		}
     		//RuntimeEvent re = new RuntimeEvent(RuntimeEvent.EVENT_JOB_STATE_CHANGED);
     		//re.setText(stateStr);
