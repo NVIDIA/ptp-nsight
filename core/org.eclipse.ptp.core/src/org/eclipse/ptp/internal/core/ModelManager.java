@@ -783,8 +783,9 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		monitor.setTaskName("Creating the job...");
 		monitor.beginTask("Creating the job...", 200);
 		try {
-			monitor.subTask("Waiting for Universe to Populate");
 			waitForPopulatedUniverse(new SubProgressMonitor(monitor, 100));
+			if (monitor.isCanceled())
+				return null;
 
 			IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(), monitor);
 			System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
