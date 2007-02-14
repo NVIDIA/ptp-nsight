@@ -45,7 +45,6 @@ import org.eclipse.ptp.debug.ui.PTPDebugUIPlugin;
 import org.eclipse.ptp.launch.PTPLaunchPlugin;
 import org.eclipse.ptp.launch.internal.ui.LaunchMessages;
 import org.eclipse.ptp.rtsystem.JobRunConfiguration;
-import org.eclipse.ptp.ui.IPTPUIConstants;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -185,7 +184,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 					PTPDebugCorePlugin.getDebugModel().shutdownSession(job);
 				}
 			} else {
-				showPTPDebugView(IPTPUIConstants.VIEW_PARALLELJOB);
+				//showPTPDebugView(IPTPUIConstants.VIEW_PARALLELJOB);
 				new RuntimeProcess(pLaunch, job, null);
 				monitor.worked(40);
 			}
@@ -249,7 +248,7 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 						IWorkbenchPage page = window.getActivePage();
 						if (page != null) {
 							try {
-								page.showView(viewID);
+								page.showView(viewID, null, IWorkbenchPage.VIEW_CREATE);
 							} catch (PartInitException e) {
 							}
 						}
