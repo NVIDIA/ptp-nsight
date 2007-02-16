@@ -72,7 +72,7 @@ public abstract class AbstractDebugger extends Observable implements IAbstractDe
 	public IPCDISession createDebuggerSession(IPLaunch launch, IBinaryObject exe, int timeout, IProgressMonitor monitor) throws CoreException {
 		IPJob job = launch.getPJob();
 		session = new Session(this, job, launch, exe);
-		initialize(job, timeout);
+		initialize(job, timeout, monitor);
 		this.job = job;
 		return session;
 	}
@@ -92,18 +92,19 @@ public abstract class AbstractDebugger extends Observable implements IAbstractDe
 	public void completeCommand(BitList tasks, Object result) {
 		commandQueue.setCommandReturn(tasks, result);
 	}
-	public final void initialize(IPJob job, int timeout) throws CoreException {
-		connection();
+	public final void initialize(IPJob job, int timeout, IProgressMonitor monitor) throws CoreException {
+		monitor.subTask("Connecting to proxy server...");
+		connection(monitor);
+		if (monitor.isCanceled())
+			throw new CoreException(Status.CANCEL_STATUS);
 		
 		job.setAttribute(TERMINATED_PROC_KEY, new BitList(job.totalProcesses()));
 		job.setAttribute(SUSPENDED_PROC_KEY, new BitList(job.totalProcesses()));
 		commandQueue = new DebugCommandQueue(this);
-		
 		isExited = false;
 		eventThread = new EventThread(this);
 		procs = job.getSortedProcesses();
 		// Initialize state variables
-		
 		IDebugCommand command = new StartDebuggerCommand(session.createBitList(), job);
 		postCommand(command);
 		try {
@@ -129,6 +130,7 @@ public abstract class AbstractDebugger extends Observable implements IAbstractDe
 			commandQueue.setTerminated();
 			stopDebugger();
 		}
+		disconnection(null);
 	}
 	public final IPCDISession getSession() {
 		return session;

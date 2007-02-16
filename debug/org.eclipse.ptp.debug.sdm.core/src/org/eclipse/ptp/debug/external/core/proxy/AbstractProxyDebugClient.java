@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ptp.core.proxy.AbstractProxyClient;
 import org.eclipse.ptp.core.proxy.event.IProxyEvent;
 import org.eclipse.ptp.core.proxy.event.IProxyEventListener;
@@ -44,6 +45,11 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 	public AbstractProxyDebugClient() {
 		addEventListener(this);
 	}
+	public void closeConnection() throws IOException {
+		removeEventListener(this);
+		sessionFinish();
+		//sessionDestroy();
+	}
 	public synchronized void checkConnection() throws IOException {
 		if (!connected) {
 			try {
@@ -54,19 +60,25 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 			}
 		}
 		if (!connected) {
-			removeEventListener(this);
+			closeConnection();
 			throw new IOException("Cannot connect to proxy server.");
 		}
 	}
-	public synchronized void waitForConnect() throws IOException {
+	public synchronized boolean waitForConnect(IProgressMonitor monitor) throws IOException {
 		try {
 			while (!connected) {
 				waiting = true;
-				wait();
+				if (monitor.isCanceled()) {
+					closeConnection();
+					return false;
+				}
+				wait(1000);
 			}
 		} catch (InterruptedException e) {
+			closeConnection();
 			throw new IOException(e.getMessage());
 		}
+		return true;
 	}
 	
 	protected void sendCommand(String cmd, BitList set) throws IOException {
