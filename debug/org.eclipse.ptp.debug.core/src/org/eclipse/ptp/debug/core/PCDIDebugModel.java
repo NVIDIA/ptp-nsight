@@ -108,12 +108,14 @@ public class PCDIDebugModel {
 	}
 	public IPSession createDebuggerSession(IAbstractDebugger debugger, IPLaunch launch, IBinaryObject exe, int timeout, IProgressMonitor monitor) throws CoreException {
 		IPSession pSession = new PSession(debugger.createDebuggerSession(launch, exe, timeout, monitor));
-		IPJob job = launch.getPJob();
-		sessionStorage.addValue(job.getIDString(), SESSION_KEY, pSession);
+		if (!monitor.isCanceled()) {
+			IPJob job = launch.getPJob();
+			sessionStorage.addValue(job.getIDString(), SESSION_KEY, pSession);
 		
-		newJob(job, pSession.getPCDISession().createBitList());
-		fireSessionEvent(job, pSession.getPCDISession());
-		pSession.getPCDISession().start(monitor);
+			newJob(job, pSession.getPCDISession().createBitList());
+			fireSessionEvent(job, pSession.getPCDISession());
+			pSession.getPCDISession().start(monitor);
+		}
 		return pSession;
 	}	
 	public static String getPluginIdentifier() {
