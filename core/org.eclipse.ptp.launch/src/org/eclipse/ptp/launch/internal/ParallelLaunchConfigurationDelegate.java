@@ -199,9 +199,11 @@ public class ParallelLaunchConfigurationDelegate extends AbstractParallelLaunchC
 			}
 			if (mode.equals(ILaunchManager.DEBUG_MODE)) {
 				PTPDebugCorePlugin.getDebugModel().shutdownSession(job);
+				/*
 				if (debugger != null) {
 					debugger.stopDebugger();
 				}
+				*/
 			}
 			if (e.getStatus().getCode() != IStatus.CANCEL) {
 				throw e;

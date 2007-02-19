@@ -72,7 +72,7 @@ public abstract class AbstractProxyDebugClient extends AbstractProxyClient imple
 					closeConnection();
 					return false;
 				}
-				wait(1000);
+				wait(500);
 			}
 		} catch (InterruptedException e) {
 			closeConnection();

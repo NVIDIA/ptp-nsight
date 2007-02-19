@@ -124,11 +124,15 @@ public abstract class AbstractDebugger extends Observable implements IAbstractDe
 			if (session != null && !isJobFinished()) {
 				setJobFinished(session.createBitList(), IPProcess.EXITED);
 			}
-			isExited = true;
-			deleteObservers();
-			eventThread.cancelJob();
-			commandQueue.setTerminated();
-			stopDebugger();
+			try {
+				stopDebugger();
+			} finally {
+				isExited = true;
+				deleteObservers();
+				eventThread.cancelJob();
+				commandQueue.setTerminated();
+				disconnection(null);
+			}
 		}
 		disconnection(null);
 	}
