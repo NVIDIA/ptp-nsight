@@ -264,7 +264,8 @@ public class MachineManager extends AbstractUIManager {
 	 * @return
 	 */
 	public IPMachine findMachineById(String machine_id) {
-		return modelPresentation.getUniverse().findMachineByGlobalId(machine_id);
+		final IPUniverse universe = modelPresentation.getUniverse();
+		return universe.findMachineByGlobalId(machine_id);
 	}
 	
 	/* (non-Javadoc)

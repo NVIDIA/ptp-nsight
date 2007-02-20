@@ -48,9 +48,11 @@ import org.eclipse.ptp.internal.rmsystem.ResourceManagerPersistence;
 import org.eclipse.ptp.rmsystem.AbstractResourceManagerFactory;
 import org.eclipse.ptp.rmsystem.IResourceManager;
 import org.eclipse.ptp.rmsystem.IResourceManagerChangedListener;
+import org.eclipse.ptp.rmsystem.IResourceManagerConfiguration;
 import org.eclipse.ptp.rmsystem.IResourceManagerFactory;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -408,8 +410,41 @@ public class PTPCorePlugin extends AbstractUIPlugin {
 				System.out.println("Your Default Control System Choice: '"+CSChoice+"'");
 				System.out.println("Your Default Monitoring System Choice: '"+MSChoice+"'");
 			}
+			final ModelManager modelManager = new ModelManager(MSChoiceID, CSChoiceID);
 			setCurrentResourceManager(new ModelManagerResourceManager(
-					new ModelManager(MSChoiceID, CSChoiceID), null));
+					modelManager, new IResourceManagerConfiguration(){
+
+						public String getDescription() {
+							return Integer.toString(modelManager.getMonitoringSystemID());
+						}
+
+						public String getName() {
+							return Integer.toString(modelManager.getMonitoringSystemID());
+						}
+
+						public String getResourceManagerId() {
+							return Integer.toString(modelManager.getMonitoringSystemID());
+						}
+
+						public void save(IMemento memento) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						public void setDefaultNameAndDesc() {
+							// TODO Auto-generated method stub
+							
+						}
+
+						public void setDescription(String description) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						public void setName(String name) {
+							// TODO Auto-generated method stub
+							
+						}}));
 			//currentResourceManager.start();
 		}
 		else {

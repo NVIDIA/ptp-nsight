@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
@@ -46,6 +47,7 @@ import org.eclipse.ptp.core.IPUniverse;
 import org.eclipse.ptp.core.IProcessListener;
 import org.eclipse.ptp.core.MonitoringSystemChoices;
 import org.eclipse.ptp.core.PTPCorePlugin;
+import org.eclipse.ptp.core.PreferenceConstants;
 import org.eclipse.ptp.core.events.IModelEvent;
 import org.eclipse.ptp.core.events.IModelRuntimeNotifierEvent;
 import org.eclipse.ptp.core.events.IModelSysChangedEvent;
@@ -101,7 +103,11 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	private final int theMSChoiceID;
 	private final int theCSChoiceID;
 	private final Lock stateLock;
+
 	private final Lock initializingLock;
+	private final Condition notInitializing;
+	private boolean initializing = false;
+	
 	private boolean initialized = false;
 	private final Condition universeNotEmpty;
 	private int numMachines = 1;
@@ -119,23 +125,13 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 	public ModelManager(int theMSChoiceID, int theCSChoiceID) {
 		// only one thread may be in the initializing section
 		initializingLock = new ReentrantLock();
+		notInitializing = initializingLock.newCondition();
 		
 		stateLock = new ReentrantLock();
 		universeNotEmpty = stateLock.newCondition();
 		
 		this.theMSChoiceID = theMSChoiceID;
-		String MSChoice = MonitoringSystemChoices.getMSNameByID(theMSChoiceID);
 		this.theCSChoiceID = theCSChoiceID;
-		String CSChoice = ControlSystemChoices.getCSNameByID(theCSChoiceID);
-
-		System.out.println("Your Control System Choice: '"+CSChoice+"'");
-		System.out.println("Your Monitoring System Choice: '"+MSChoice+"'");
-		
-		if(ControlSystemChoices.getCSArrayIndexByID(theCSChoiceID) == -1 ||
-				MonitoringSystemChoices.getMSArrayIndexByID(theMSChoiceID) == -1) {
-			throw new IllegalArgumentException(
-					"Illegal Control System and/or Monitoring System choices.");
-		}
 	}
 	
 	public ModelManager(int numMachines, int numNodes[]) {
@@ -170,22 +166,36 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			if (!force && initialized)
 				return;
 
-			// only one thread can get here
-
-			if (monitor == null) {
-				monitor = new NullProgressMonitor();
+			while (isInitializing()) {
+				try {
+					notInitializing.await();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
 			}
-
-			System.out.println("XXXXXXXXXXX refreshRuntimeSystems calling initialize(), force:" + force +
-					", isInitialized():" + initialized);
-			initialize(theCSChoiceID, theMSChoiceID, monitor);
-
-			setInitialized(true);
+			setInitializing(true);
 		}
 		finally {
 			// The next thread may come in now.
 			initializingLock.unlock();
 		}
+		
+		// only one thread can get here
+
+		if (monitor == null) {
+			monitor = new NullProgressMonitor();
+		}
+
+		System.out.println("XXXXXXXXXXX refreshRuntimeSystems calling initialize(), force:" + force +
+				", isInitialized():" + initialized);
+
+		Preferences preferences = PTPCorePlugin.getDefault().getPluginPreferences();
+		int MSChoiceID = preferences.getInt(PreferenceConstants.MONITORING_SYSTEM_SELECTION);
+		int CSChoiceID = preferences.getInt(PreferenceConstants.CONTROL_SYSTEM_SELECTION);
+
+		initialize(CSChoiceID, MSChoiceID, monitor);
+
+		setInitialized(true);
 	}
 
 	private void initialize(int controlSystemID, int monitoringSystemID, IProgressMonitor monitor) throws CoreException {
@@ -280,6 +290,10 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				monitoringSystem.addRuntimeListener(this);
 				controlSystem.addRuntimeListener(this);		
 				monitor.worked(1);
+
+				// We are ready to take and send events
+				setInitializing(false);
+				
 				monitoringSystem.initiateDiscovery();
 				monitor.done();
 			} catch (CoreException e) {
@@ -293,6 +307,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
 
 		} finally {
+			setInitializing(false);
 			if (!monitor.isCanceled())
 				monitor.done();
 		}
@@ -420,7 +435,21 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		try {
 			/* load up the control and monitoring systems for the simulation */
 			monitor.subTask("Starting simulation...");
-			monitoringSystem = new SimulationMonitoringSystem(numMachines, numNodes);
+			
+			Preferences p = PTPCorePlugin.getDefault().getPluginPreferences();
+			int numMachines = p.getInt(PreferenceConstants.SIMULATION_NUM_MACHINES);
+			if (numMachines < 1) numMachines = 1;
+			
+			int[] nodes = new int[numMachines];
+			
+			for(int i=0; i<numMachines; i++) {
+				/* look for a #nodes for each machine */
+				int nnodes = p.getInt(PreferenceConstants.SIMULATION_MACHINE_NODE_PREFIX + ""+i+""); //$NON-NLS-1$ //$NON-NLS-2$
+				if(nnodes < 1) nnodes = 1;
+				nodes[i] = nnodes;
+			}
+			
+			monitoringSystem = new SimulationMonitoringSystem(numMachines, nodes);
 			monitor.worked(10);
 			controlSystem = new SimulationControlSystem();
 			monitor.worked(10);
@@ -757,7 +786,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		stateLock.lock();
 		try {
 			/* we have a job name, so let's find it in the Universe - if it exists */
-			j = getUniverse().findJobByName(jobName);
+			j = universe.findJobByName(jobName);
 			if(j == null) {
 				System.err.println("ERROR: tried to delete a job that was not found '"+jobName+"'");
 				return;
@@ -811,9 +840,24 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		} while (isFree > wasFree);
 		rt.runFinalization();
 	}
+
 	public IPUniverse getUniverse() {
-		return universe;
+		initializingLock.lock();
+		try {
+			while (isInitializing()) {
+				try {
+					notInitializing.await();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+			return universe;
+		}
+		finally {
+			initializingLock.unlock();
+		}
 	}
+	
 	private int newJobID() {
 		stateLock.lock();
 		try {
@@ -884,6 +928,23 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		IStatus status = new Status(Status.ERROR, PTPCorePlugin.getUniqueIdentifier(),
 				Status.ERROR, string, e);
 		return new CoreException(status);
+	}
+
+	private final boolean isInitializing() {
+		return initializing;
+	}
+	
+	private final void setInitializing(boolean initializing) {
+		initializingLock.lock();
+		try {
+			this.initializing = initializing;
+			if (initializing == false) {
+				notInitializing.signalAll();
+			}
+		}
+		finally {
+			initializingLock.unlock();
+		}
 	}
 
 }

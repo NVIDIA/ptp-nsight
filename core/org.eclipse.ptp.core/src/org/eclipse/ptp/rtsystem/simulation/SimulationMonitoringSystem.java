@@ -31,18 +31,21 @@ import org.eclipse.ptp.core.IPMachine;
 import org.eclipse.ptp.core.IPNode;
 import org.eclipse.ptp.rtsystem.IMonitoringSystem;
 import org.eclipse.ptp.rtsystem.IRuntimeListener;
+import org.eclipse.ptp.rtsystem.event.IRuntimeEvent;
+import org.eclipse.ptp.rtsystem.event.IRuntimeNodeGeneralChangedEvent;
+import org.eclipse.ptp.rtsystem.event.RuntimeNodeGeneralChangedEvent;
 
 public class SimulationMonitoringSystem implements IMonitoringSystem {
-	protected List listeners = new ArrayList(2);
-	protected HashMap nodeMap;
+	protected List<IRuntimeListener> listeners = new ArrayList<IRuntimeListener>(2);
+	protected HashMap<String, Integer> nodeMap;
 
-	protected HashMap nodeUserMap;
+	protected HashMap<String,String> nodeUserMap;
 
-	protected HashMap nodeGroupMap;
+	protected HashMap <String,String>nodeGroupMap;
 
-	protected HashMap nodeModeMap;
+	protected HashMap<String,String> nodeModeMap;
 
-	protected HashMap nodeStateMap;
+	protected HashMap<String,String> nodeStateMap;
 
 	protected int numMachines = 1;
 	protected int[] numNodes;
@@ -69,7 +72,7 @@ public class SimulationMonitoringSystem implements IMonitoringSystem {
 	}
 	
 	public void startup() {
-		nodeMap = new HashMap();
+		nodeMap = new HashMap<String, Integer>();
 		for (int i = 0; i < numMachines; i++) {
 			String s = new String("machine" + (i));
 			nodeMap.put(s, new Integer(numNodes[i]));
@@ -79,10 +82,10 @@ public class SimulationMonitoringSystem implements IMonitoringSystem {
 		for (int i = 0; i < numMachines; i++) {
 			totnodes += numNodes[i];
 		}
-		nodeUserMap = new HashMap();
-		nodeGroupMap = new HashMap();
-		nodeModeMap = new HashMap();
-		nodeStateMap = new HashMap();
+		nodeUserMap = new HashMap<String, String>();
+		nodeGroupMap = new HashMap<String, String>();
+		nodeModeMap = new HashMap<String, String>();
+		nodeStateMap = new HashMap<String, String>();
 
 		/* machine 3 has a bunch of nodes w/ different states */
 		if(numMachines >= 4) {
@@ -310,7 +313,25 @@ public class SimulationMonitoringSystem implements IMonitoringSystem {
 	}
 
 	public void initiateDiscovery() throws CoreException {
-		// TODO Auto-generated method stub
-		
+		String[] machines = getMachines();
+		List<String> keys = new ArrayList<String>();
+		List<String> values = new ArrayList<String>();
+		for (int im = 0; im < machines.length; ++im) {
+			keys.add(AttributeConstants.ATTRIB_MACHINEID);
+			values.add(machines[im]);
+			for (int in = 0; in < numNodes[im]; ++in) {
+				keys.add(AttributeConstants.ATTRIB_NODE_NUMBER);
+				values.add(Integer.toString(in));
+			}
+		}
+		fireEvent(keys.toArray(new String[0]), values.toArray(new String[0]));
+	}
+
+	private void fireEvent(String[] keys, String[] values) {
+		List<IRuntimeListener> listeners2 = new ArrayList<IRuntimeListener>(listeners);
+		final IRuntimeEvent event = new RuntimeNodeGeneralChangedEvent(keys, values);
+		for (IRuntimeListener l : listeners2) {
+			l.performRuntimeEvent(event);
+		}
 	}
 }
