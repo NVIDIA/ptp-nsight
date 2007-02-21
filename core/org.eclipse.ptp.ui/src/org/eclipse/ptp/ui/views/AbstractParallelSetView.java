@@ -172,7 +172,6 @@ public abstract class AbstractParallelSetView extends AbstractParallelElementVie
 	 * @see org.eclipse.ptp.ui.views.AbstractParallelElementView#update()
 	 */
 	public void update() {
-		updateAction();
 		updateTitle();
 	}
 	/* (non-Javadoc)
@@ -187,7 +186,7 @@ public abstract class AbstractParallelSetView extends AbstractParallelElementVie
 	/** Update action
 	 * 
 	 */
-	protected void updateAction() {
+	public void updateAction() {
 		boolean deleteActionEnable = (manager.getCurrentSetId().length() == 0 || manager.getCurrentSetId().equals(IElementHandler.SET_ROOT_ID));
 		deleteSetAction.setEnabled(!deleteActionEnable);
 		deleteProcessAction.setEnabled(!deleteActionEnable);
@@ -287,6 +286,7 @@ public abstract class AbstractParallelSetView extends AbstractParallelElementVie
 	public void zoomOut() {
 		if (zoom_depth < Zoom.max_depth) {
 			zoom_depth++;
+			updateAction();
 			update();
 			if (!canvas.isDisposed()) {
 				canvas.setIconSize(zoom.scaled(IPTPUIConstants.DEFAULT_VIEW_ICON_WIDTH, zoom_depth), zoom.scaled(IPTPUIConstants.DEFAULT_VIEW_ICON_HEIGHT, zoom_depth));
@@ -299,6 +299,7 @@ public abstract class AbstractParallelSetView extends AbstractParallelElementVie
 	public void zoomIn() {
 		if (zoom_depth > 0) {
 			zoom_depth--;
+			updateAction();
 			update();
 			if (!canvas.isDisposed()) {
 				canvas.setIconSize(zoom.scaled(IPTPUIConstants.DEFAULT_VIEW_ICON_WIDTH, zoom_depth), zoom.scaled(IPTPUIConstants.DEFAULT_VIEW_ICON_HEIGHT, zoom_depth));

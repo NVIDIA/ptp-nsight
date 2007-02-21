@@ -307,7 +307,7 @@ public class ParallelMachineView extends AbstractParallelSetView implements INod
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.ui.views.AbstractParallelSetView#updateAction()
 	 */
-	protected void updateAction() {
+	public void updateAction() {
 		super.updateAction();
 		changeMachineAction.setEnabled(((MachineManager) manager).getMachines().length > 0);
 	}

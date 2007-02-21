@@ -331,6 +331,7 @@ public class ParallelJobView extends AbstractParallelSetView implements IProcess
 		//if (cur_id != null && job != null && cur_id.equals(job.getIDString()))
 			//return;
 		selectJob((job == null ? IManager.EMPTY_ID : job.getIDString()));
+		updateAction();
 		update();
 	}
 	/** Update Job
@@ -343,7 +344,7 @@ public class ParallelJobView extends AbstractParallelSetView implements IProcess
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.ui.views.AbstractParallelSetView#updateAction()
 	 */
-	protected void updateAction() {
+	public void updateAction() {
 		super.updateAction();
 		if (terminateAllAction != null) {
 			ISelection selection = jobTableViewer.getSelection();
