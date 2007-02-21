@@ -250,24 +250,17 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 			try {
 				IBinaryParser parser = (IBinaryParser) parserRef[i].createExtension();
 				IBinaryObject exe = (IBinaryObject) parser.getBinary(exePath);
-				if (exe != null) {
+				if (exe != null)
 					return exe;
-				}
-			} catch (ClassCastException e) {
-			} catch (IOException e) {
-			}
+			} catch (IOException e) {}
 		}
 		IBinaryParser parser = CCorePlugin.getDefault().getDefaultBinaryParser();
 		try {
-			return (IBinaryObject) parser.getBinary(exePath);
-		} catch (ClassCastException e) {
-		} catch (IOException e) {
-		}
-		Throwable exception = new FileNotFoundException(LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Program_is_not_a_recongnized_executable"));
-		int code = IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_BINARY;
-		MultiStatus status = new MultiStatus(PTPCorePlugin.getUniqueIdentifier(), code, LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Program_is_not_a_recongnized_executable"), exception);
-		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
-		throw new CoreException(status);
+			IBinaryObject exe = (IBinaryObject) parser.getBinary(exePath);
+			if (exe != null)
+				return exe;
+		} catch (IOException e) {}
+		throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IPTPLaunchConfigurationConstants.ERR_PROGRAM_NOT_BINARY, LaunchMessages.getResourceString("AbstractParallelLaunchConfigurationDelegate.Program_is_not_a_recongnized_executable"), null));
 	}
 	/****
 	 * Source
