@@ -204,8 +204,12 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 
 			stateLock.lock();
 			try {
-				// this set's isInitialized() to false
-				universe = null;
+				if (universe == null) {
+					universe = new PUniverse();
+				}
+				else {
+					universe.removeChildren();
+				}
 			}
 			finally {
 				stateLock.unlock();
@@ -271,8 +275,6 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			try {
 				currentControlSystem = controlSystemID;
 				currentMonitoringSystem = monitoringSystemID;
-
-				universe = new PUniverse();
 			}
 			finally {
 				stateLock.unlock();
@@ -297,17 +299,16 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				monitoringSystem.initiateDiscovery();
 				monitor.done();
 			} catch (CoreException e) {
-				universe.removeChildren();
 				throw e;
 			}
 			monitor.worked(10);
 
 			//waitForPopulatedUniverse();
 
-			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
 
 		} finally {
 			setInitializing(false);
+			fireEvent(new ModelSysChangedEvent(IModelSysChangedEvent.MONITORING_SYS_CHANGED, null));
 			if (!monitor.isCanceled())
 				monitor.done();
 		}
