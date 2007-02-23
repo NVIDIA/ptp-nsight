@@ -77,6 +77,7 @@ public class MachineManager extends AbstractUIManager {
 	 */
 	public void clear() {
 		if (machineList != null) {
+			cur_machine_id = EMPTY_ID;
 			machineList.clear();
 		}
 	}
@@ -300,6 +301,7 @@ public class MachineManager extends AbstractUIManager {
 	 * @see org.eclipse.ptp.ui.IManager#initial()
 	 */
 	public String initial() {
+		clear();
 		IPMachine[] macs = getMachines();
 		if (macs.length > 0) {
 			cur_machine_id = macs[0].getIDString();

@@ -300,9 +300,7 @@ public class ParallelMachineView extends AbstractParallelSetView implements INod
 	 */
 	public void updateMachine() {
 		IElementHandler setManager = getCurrentElementHandler();
-		if (setManager != null) {
-			selectSet(setManager.getSetRoot());
-		}
+		selectSet(setManager == null ? null : setManager.getSetRoot());
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.ui.views.AbstractParallelSetView#updateAction()
