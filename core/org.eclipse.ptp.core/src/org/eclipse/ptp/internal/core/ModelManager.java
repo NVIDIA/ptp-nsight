@@ -611,7 +611,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 		
 		if (job != null) {
 			ArrayList<IProcessEvent> processEvents = new ArrayList<IProcessEvent>();
-			ArrayList<INodeEvent> nodeEvents = new ArrayList<INodeEvent>();
+			//ArrayList<INodeEvent> nodeEvents = new ArrayList<INodeEvent>();
 			stateLock.lock();
 			try {
 				IPProcess[] procs = job.getProcesses();
@@ -620,6 +620,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 						procs[i].setStatus(state);
 						processEvents.add(new ProcessEvent(procs[i],
 								IProcessEvent.STATUS_CHANGE_TYPE, procs[i].getStatus()));
+						/*
 						if (procs[i].getStatus().equals(IPProcess.EXITED)) {
 							IPNode node = procs[i].getNode();
 							//FIXME why node can be null???
@@ -628,6 +629,7 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 										INodeEvent.STATUS_UPDATE_TYPE, null));
 							}
 						}
+						*/
 					}
 				}
 			}
@@ -638,9 +640,9 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			for (IProcessEvent event : processEvents) {
 				fireEvent(event);
 			}
-			for (INodeEvent event : nodeEvents) {
-				fireEvent(event);
-			}
+			//for (INodeEvent event : nodeEvents) {
+				//fireEvent(event);
+			//}
 			if (state.equals("running")) {
 				fireEvent(new ModelRuntimeNotifierEvent(job.getIDString(), IModelRuntimeNotifierEvent.TYPE_JOB, IModelRuntimeNotifierEvent.RUNNING));
 			} else if (state.equals("exited")) {
