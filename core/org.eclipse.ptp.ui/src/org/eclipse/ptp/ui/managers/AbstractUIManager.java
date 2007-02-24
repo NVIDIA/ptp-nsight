@@ -51,7 +51,7 @@ public abstract class AbstractUIManager implements IManager {
 	protected IModelPresentation modelPresentation = null;
 	protected String cur_set_id = EMPTY_ID;
 	protected ListenerList setListeners = new ListenerList();
-	protected ListenerList jListeners = new ListenerList();
+	protected static ListenerList jListeners = new ListenerList();
 
 	/** Constructor 
 	 * 

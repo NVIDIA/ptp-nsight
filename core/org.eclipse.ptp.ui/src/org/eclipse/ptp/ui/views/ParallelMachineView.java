@@ -33,6 +33,7 @@ import org.eclipse.ptp.ui.IManager;
 import org.eclipse.ptp.ui.IPTPUIConstants;
 import org.eclipse.ptp.ui.PTPUIPlugin;
 import org.eclipse.ptp.ui.actions.ParallelAction;
+import org.eclipse.ptp.ui.listeners.IJobChangedListener;
 import org.eclipse.ptp.ui.managers.MachineManager;
 import org.eclipse.ptp.ui.model.IElement;
 import org.eclipse.ptp.ui.model.IElementHandler;
@@ -55,7 +56,7 @@ import org.eclipse.swt.widgets.TableItem;
  * @author clement chu
  * 
  */
-public class ParallelMachineView extends AbstractParallelSetView implements INodeListener {
+public class ParallelMachineView extends AbstractParallelSetView implements INodeListener, IJobChangedListener {
 	// actions
 	protected ParallelAction changeMachineAction = null;
 	// composite
@@ -76,13 +77,15 @@ public class ParallelMachineView extends AbstractParallelSetView implements INod
 	public ParallelMachineView(IManager manager) {
 		super(manager);
 		PTPCorePlugin.getDefault().getModelPresentation().addNodeListener(this);
+		manager.addJobChangedListener(this);
 	}
 	public ParallelMachineView() {
 		this(PTPUIPlugin.getDefault().getMachineManager());
 	}
 	public void dispose() {
-		super.dispose();
+		manager.removeJobChangedListener(this);
 		PTPCorePlugin.getDefault().getModelPresentation().removeNodeListener(this);
+		super.dispose();
 	}
 	/** Change view flag
 	 * @param view_flag view flag
@@ -172,7 +175,7 @@ public class ParallelMachineView extends AbstractParallelSetView implements INod
 		BLtable.setLayout(new FillLayout());
 		BLtable.setHeaderVisible(false);
 		BLtable.setLinesVisible(true);
-		new TableColumn(BLtable, SWT.LEFT).setWidth(60);
+		new TableColumn(BLtable, SWT.LEFT).setWidth(80);
 		new TableColumn(BLtable, SWT.LEFT).setWidth(200);
 		BRtable = new Table(bright, SWT.FULL_SELECTION | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		BRtable.setLayout(new FillLayout());
@@ -438,5 +441,11 @@ public class ParallelMachineView extends AbstractParallelSetView implements INod
 				node.getIDString())) {
 			refresh(false);
 		}		
-	}	
+	}
+	/***************************************************************************************************************************************************************************************************
+	 * Job Change Listener
+	 **************************************************************************************************************************************************************************************************/
+	public void jobChangedEvent(final int type, final String cur_job_id, final String pre_job_id) {
+		refresh(false);
+	}
 }
