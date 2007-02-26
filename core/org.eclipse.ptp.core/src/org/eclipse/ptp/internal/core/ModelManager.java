@@ -819,6 +819,9 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 			if (monitor.isCanceled())
 				return null;
 
+			if (controlSystem == null || !controlSystem.isHealthy())
+				throw makeCoreException("Control System is dead.", null);
+			
 			IPJob job = newJob(jobRunConfig.getNumberOfProcesses(), jobRunConfig.isDebug(), monitor);
 			System.out.println("ModelManager.run() - new JobID = "+job.getJobNumberInt());
 
