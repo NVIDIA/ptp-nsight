@@ -13,6 +13,7 @@
 <li><a href="#bkpt">Breakpoints</a>
 <li><a href="#cip">Current Instruction Pointer</a>
 <li><a href="#reg">Process Registration </a> and the Debug view (including stack traces)
+<li><a href="#ptpVar">PTP Variable View</a>
 
 </ul>
 
@@ -223,7 +224,23 @@ in the toolbar of the Jobs view (tab title: Parallel Debug)
 control the currently selected process set.
 The debug commands in the toolbar of the Debug view 
 control the single process that is currently selected  in that view.
+<h2 id="ptpVar">PTP Variable View</h2>
+<p>The PTP Variable view allows you to 
+view a particular variable's values across the various processes.
 
+<p>If you open the PTP Variable View (Window -> Show View -> Other)
+you can add a variable. 
+<br>
+<img src="images/ptpVarAdd1.png"> 
+<p>This opens the PTP Variable Dialog which allows you to select a variable or expression,
+and a process set (use Root for all processes) for which to create the variable to watch for each process.
+<br>
+<img src="images/ptpVarAdd.png">
+<p>
+Then when you mouse over a process icon in the
+Parallel Debug view, it will show the value of the variable in the tooltip.
+<br>
+<img src="images/ptpVarDisplay.png">
 <h2>Putting it all together</h2>
 <p>Note that with the above instructions, you should now be able to do the following:
 <i>Answers are in italics.</i>
