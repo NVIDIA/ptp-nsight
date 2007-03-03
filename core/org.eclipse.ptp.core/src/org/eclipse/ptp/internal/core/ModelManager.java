@@ -259,16 +259,14 @@ public class ModelManager implements IModelManager, IRuntimeListener {
 				monitor.subTask("Initializing Simulation");
 				initializeSimulation(new SubProgressMonitor(monitor, 10));
 			}
-			else if(monitoringSystemID == MonitoringSystemChoices.ORTE && controlSystemID == ControlSystemChoices.ORTE) {
-				monitor.subTask("Initializing OMPI");
-				initializeORTE(new SubProgressMonitor(monitor, 10));
-			}
 			else if(monitoringSystemID == MonitoringSystemChoices.MPICH2 && controlSystemID == ControlSystemChoices.MPICH2) {
 				monitor.subTask("Initializing MPICH2");
 				initializeMPICH2(new SubProgressMonitor(monitor, 10));
 			}
 			else {
-				throw new CoreException(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), IStatus.ERROR, "Invalid monitoring/control system selected.  Set using the PTP preferences page.", null));
+				// Default to OMPI. Bad bad bad, but it works around bug #175895
+				monitor.subTask("Initializing OMPI");
+				initializeORTE(new SubProgressMonitor(monitor, 10));
 			}
 
 			stateLock.lock();
