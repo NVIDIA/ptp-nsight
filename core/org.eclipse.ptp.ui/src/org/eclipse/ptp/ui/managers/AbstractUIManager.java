@@ -63,10 +63,14 @@ public abstract class AbstractUIManager implements IManager {
 	 * @see org.eclipse.ptp.ui.IManager#shutdown()
 	 */
 	public void shutdown() {
-		setListeners.clear();
-		setListeners = null;
-		jListeners.clear();
-		jListeners = null;
+		if (setListeners != null) {
+			setListeners.clear();
+			setListeners = null;
+		}
+		if (jListeners != null) {
+			jListeners.clear();
+			jListeners = null;
+		}
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.ui.IManager#addSetListener(org.eclipse.ptp.ui.listeners.ISetListener)
