@@ -38,7 +38,7 @@ import org.eclipse.jface.util.Assert;
  *
  */
 public class MPIProjectRunnable implements Runnable {
-	private static final boolean traceOn=false;
+	private static final boolean traceOn=true;
 	
 	/**
 	 * Take the info from the MPI project wizard page and fix up the project include paths etc.
@@ -97,8 +97,7 @@ public class MPIProjectRunnable implements Runnable {
 		for (int i = 0; i < configs.length; i++) {
 			IConfiguration cf = configs[i];
 			if(traceOn)System.out.println("Config " + i + ": " + cf.getName());
-			addIncludePath(cf, newIncludePath);
-			addLinkerOpt(cf,newLib,newLibSearchPath);
+			addIncludeAndLinkerOpts(cf, newIncludePath, newLib, newLibSearchPath);			
 			setCompileCommand(cf,mpiCompileCommand);
 			setLinkCommand(cf,mpiLinkCommand);
 			
@@ -115,6 +114,82 @@ public class MPIProjectRunnable implements Runnable {
 
 	}
 
+	/**
+	 * Add the include and linker options for those tools
+	 * @param cf the configuration
+	 * @param newIncludePath the path(s) to add to the include path of the compiler options
+	 * @param libName the lib name to add to the libary options
+	 * @param libPath the libPath (library search path) associated with the give libName
+	 */
+	private void addIncludeAndLinkerOpts(IConfiguration cf, String newIncludePath, String libName, String libPath) {
+
+		ITool cfTool = cf.getToolFromInputExtension("c");
+		changeOptions(cf, newIncludePath, libName, libPath, cfTool);
+		
+		cfTool = cf.getToolFromInputExtension("o");
+		changeOptions(cf, newIncludePath, libName, libPath, cfTool);
+		
+		if(traceOn)System.out.println("done with addIncludeAndLinkerOpts");
+	}
+	/**
+	 * Change the options we're interested in within  an ITool (e.g. include paths, lib paths, etc.)
+	 * @param cf the configuration
+	 * @param newIncludePath the path(s) to add to the include path of the compiler options
+	 * @param libName the lib name to add to the libary options
+	 * @param libPath the libPath (library search path) associated with the give libName
+	 * @param cfTool the tool e.g. compiler or linker to change the options in
+	 */
+	private void changeOptions(IConfiguration cf, String newIncludePath, String libName, String libPath, ITool cfTool) {
+		IOption[] allOptions = cfTool.getOptions();
+		if(traceOn)System.out.println("Tool "+cfTool.toString()+" has "+allOptions.length+" options.");
+		for (int i = 0; i < allOptions.length; i++) {
+			IOption option = allOptions[i];
+			String[] valueList = null;
+			try {
+				int optionType = option.getValueType();
+				String optionName=option.getName();
+				String id= option.getId();
+				String enumCmd=option.getEnumCommand(id);
+				if(traceOn)System.out.println("  option value type: "+optionType+" ecmd: "+enumCmd+"  id:"+id+"  name:"+optionName);
+				switch (optionType) {
+				case IOption.INCLUDE_PATH:
+					if(traceOn)System.out.println("           change include path to add: "+newIncludePath);
+					//addOptionValue...
+					valueList = option.getIncludePaths();
+					valueList = add(valueList,newIncludePath);
+					break;
+				case IOption.LIBRARIES: //6
+					if(traceOn)System.out.println("           change libraries to add: "+libName);
+					//addOptionValue(cf, cfTool, option, libName);
+					valueList = option.getLibraries();
+					valueList=addNotPath(valueList, libName);
+					break;
+ 				case IOption.STRING_LIST: //3, string, incl IOption.LIBRARY_PATHS:
+ 					final String lsp="Library search path (-L)";
+ 					if(optionName.equals(lsp)){
+ 						if(traceOn)System.out.println("           change library search path to add: "+libPath);
+ 						addOptionValue(cf, cfTool, option, libPath);
+ 						valueList = option.getStringListValue();
+ 						valueList=addNotPath(valueList,libPath);
+ 					}
+ 					else{
+ 						if(traceOn)System.out.println("           no match: "+optionName+"-"+lsp);
+
+ 					}
+				default:
+					break;
+				}//end switch
+ 				// update the option in the managed builder options
+				ManagedBuildManager.setOption(cf, cfTool, option, valueList);
+				
+			} catch (BuildException e) {
+				System.out
+						.println("MPIProjectRunnable, problem getting include paths: "
+								+ e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
 	/**
 	 * Get a value that was possibly obtained from the user on the associated wizard page.
 	 * @param pageID The pageID for our wizard page
@@ -136,112 +211,6 @@ public class MPIProjectRunnable implements Runnable {
 		return newValue;
 	}
 
-	/**
-	 * Add an include path for C compiling to the existing include paths of the given
-	 * Configuration
-	 * 
-	 * @param cf
-	 *            the configuration of the project (e.g. Release, Debug, etc.)
-	 * @param newIncludePath
-	 *            include path(s) to add
-	 */
-	private void addIncludePathOld(IConfiguration cf, String newIncludePath) {
-
-		// note: could be > 1 path in 'newIncludePath'
-		String ext = "c";
-		ITool cfTool = cf.getToolFromInputExtension(ext);
-
-		String optID = "gnu.c.compiler.option.include.paths";
-		IOption option = cfTool.getOptionById(optID);
-		Assert.isNotNull(option);
-
-		String[] includePaths = null;
-		try {
-			includePaths = option.getIncludePaths();
-		} catch (BuildException e) {
-			System.out.println("MPIProjectRunnable, problem getting include paths: "+e.getMessage());
-			e.printStackTrace();
-		}
-		
-		String[] newIncludePaths = add(includePaths, newIncludePath);
-		ManagedBuildManager.setOption(cf, cfTool, option, newIncludePaths);
-
-	}
-	private void addIncludePath(IConfiguration cf, String newIncludePath) {
-		// note: could be > 1 path in 'newIncludePath'
-		String ext = "c";
-		ITool cfTool = cf.getToolFromInputExtension(ext);
-		// do we need to also handle c++ case as well?
-
-		// run thru ALL options and check type for each
-		int desiredType=IOption.INCLUDE_PATH;
-		IOption[] allOptions=cfTool.getOptions();
-		for (int i = 0; i < allOptions.length; i++) {
-			IOption option = allOptions[i];
-			try {
-				int optionType = option.getValueType();
-				if (desiredType == optionType) {
-					String[] includePaths = option.getIncludePaths();
-					String[] newIncludePaths = add(includePaths, newIncludePath);
-					if(traceOn)System.out.println("add "+newIncludePath+" to existing includePaths: "+includePaths);
-					ManagedBuildManager.setOption(cf, cfTool, option, newIncludePaths);
-				    }
-				} catch (BuildException e) {
-					System.out.println("MPIProjectRunnable, problem getting include paths: "
-									+ e.getMessage());
-					e.printStackTrace();
-				} 
-			}
-		}
-	/**
-	 * Add a new linker option
-	 * @param cf the Configuration to which we want to add to linker options
-	 * @param libName the lib name (e.g. "lib")
-	 * @param libPath the library search path name (e.g. "c:/mypath/lib")
-	 * 
-	 */
-	private void addLinkerOpt(IConfiguration cf, String libName, String libPath) {
-		String ext = "o";
-		ITool cfTool = cf.getToolFromInputExtension(ext);
-		IOption[] allOptions = cfTool.getOptions();
-		if(traceOn)System.out.println("Tool "+cfTool.toString()+" has "+allOptions.length+" options.");
-		for (int i = 0; i < allOptions.length; i++) {
-			IOption option = allOptions[i];
-			try {
-				int optionType = option.getValueType();
-				String optionName=option.getName();
-				String id= option.getId();
-				String enumCmd=option.getEnumCommand(id);
-				if(traceOn)System.out.println("  option value type: "+optionType+" ecmd: "+enumCmd+"  id:"+id+"  name:"+optionName);
-				//int libraries=IOption.LIBRARIES;
-				//int libSearchPath=5
-				switch (optionType) {
-				case IOption.LIBRARIES: //6
-					if(traceOn)System.out.println("           change libraries to add: "+libName);
-					addOptionValue(cf, cfTool, option, libName);
-					break;
- 				case IOption.STRING_LIST: //3, string, incl IOption.LIBRARY_PATHS:
- 					final String lsp="Library search path (-L)";
- 					if(optionName.equals(lsp)){
- 						if(traceOn)System.out.println("           change library search path to add: "+libPath);
- 						addOptionValue(cf, cfTool, option, libPath);
- 					}
- 					else{
- 						if(traceOn)System.out.println("           no match: "+optionName+"-"+lsp);
-
- 					}
-				default:
-					break;
-				}
-			} catch (BuildException e) {
-				System.out
-						.println("MPIProjectRunnable, problem getting include paths: "
-								+ e.getMessage());
-				e.printStackTrace();
-			}
-		}
-		if(traceOn)System.out.println("done with addLinkerOpt");
-	}
 	private void setCompileCommand(IConfiguration cf, String buildCmd) {
 		if(traceOn)System.out.println("compile cmd: "+buildCmd);
 		ITool compiler = cf.getToolFromInputExtension("c");
