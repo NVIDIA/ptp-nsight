@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.IBinaryParser;
@@ -36,7 +35,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
@@ -59,7 +57,90 @@ import org.eclipse.ptp.rtsystem.JobRunConfiguration;
  *
  */
 public abstract class AbstractParallelLaunchConfigurationDelegate extends LaunchConfigurationDelegate {
-    public static final String HYPHEN = "-";
+	private static class ArgumentParser {
+
+		private String fArgs;
+		private int fIndex = 0;
+		private int ch = -1;
+
+		public ArgumentParser(String args) {
+			fArgs = args;
+		}
+
+		public String[] parseArguments() {
+			ArrayList v = new ArrayList();
+
+			ch = getNext();
+			while (ch > 0) {
+				while (Character.isWhitespace((char)ch))
+					ch = getNext();
+
+				if (ch == '"') {
+					v.add(parseString());
+				} else {
+					v.add(parseToken());
+				}
+			}
+
+			String[] result = new String[v.size()];
+			v.toArray(result);
+			return result;
+		}
+
+		private int getNext() {
+			if (fIndex < fArgs.length())
+				return fArgs.charAt(fIndex++);
+			return -1;
+		}
+
+		private String parseString() {
+			StringBuffer buf = new StringBuffer();
+			ch = getNext();
+			while (ch > 0 && ch != '"') {
+				if (ch == '\\') {
+					ch = getNext();
+					if (ch != '"') { // Only escape double quotes
+						buf.append('\\');
+					}
+				}
+				if (ch > 0) {
+					buf.append((char)ch);
+					ch = getNext();
+				}
+			}
+
+			ch = getNext();
+
+			return buf.toString();
+		}
+
+		private String parseToken() {
+			StringBuffer buf = new StringBuffer();
+
+			while (ch > 0 && !Character.isWhitespace((char)ch)) {
+				if (ch == '\\') {
+					ch = getNext();
+					if (ch > 0) {
+						if (ch != '"') { // Only escape double quotes
+							buf.append('\\');
+						}
+						buf.append((char)ch);
+						ch = getNext();
+					} else if (ch == -1) { // Don't lose a trailing backslash
+						buf.append('\\');
+					}
+				} else if (ch == '"') {
+					buf.append(parseString());
+				} else {
+					buf.append((char)ch);
+					ch = getNext();
+				}
+			}
+			return buf.toString();
+		}
+	}
+	
+	public static final String HYPHEN = "-";
     public static final String NUM_PROC = HYPHEN + "p";
     public static final String PROC_PER_NODE = HYPHEN + "N";
     public static final String START_NODE = HYPHEN + "o";
@@ -107,11 +188,13 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends Launch
 		return programPath;
 	}
 	protected String[] getProgramParameters(ILaunchConfiguration configuration) throws CoreException {
-		List arguments = new ArrayList();
-		String temp = getArgument(configuration);
-		if (temp != null && temp.length() > 0) 
-			arguments.add(temp);
-		return (String[]) arguments.toArray(new String[arguments.size()]);
+		String args = getArgument(configuration);
+		if (args == null)
+			return new String[0];
+		ArgumentParser parser = new ArgumentParser(args);
+		String[] res = parser.parseArguments();
+
+		return res;
 	}
 	protected JobRunConfiguration getJobRunConfiguration(ILaunchConfiguration configuration) throws CoreException
 	{
