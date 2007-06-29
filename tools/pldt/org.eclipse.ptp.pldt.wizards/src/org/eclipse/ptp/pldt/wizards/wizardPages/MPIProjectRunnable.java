@@ -38,7 +38,7 @@ import org.eclipse.jface.util.Assert;
  *
  */
 public class MPIProjectRunnable implements Runnable {
-	private static final boolean traceOn=true;
+	private static final boolean traceOn=false;
 	
 	/**
 	 * Take the info from the MPI project wizard page and fix up the project include paths etc.
