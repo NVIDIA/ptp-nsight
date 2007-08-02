@@ -68,6 +68,8 @@ On the options tab, do NOT select "package as individual jar archives."
 This jars the feature too, which doesn't work.
 The feature setup item above sets the jarring of the individual plug-ins.
 
+Note that this zips things with plugins and features as root folders.
+Unzip and rezip under 'eclipse' to be consistent with other features.
 
 ===========
 Upload notes
