@@ -135,9 +135,9 @@ public class PExpression extends PLocalVariable implements IExpression {
 										fValue = PValueFactory.createIndexedValue(this, variable, 0, dims[0]);
 								}
 							}
-						}
-						else {
-							fValue = PValueFactory.createValue(this, variable);
+							else {
+								fValue = PValueFactory.createValue(this, variable);
+							}
 						}
 					}
 				} catch (PCDIException e) {
