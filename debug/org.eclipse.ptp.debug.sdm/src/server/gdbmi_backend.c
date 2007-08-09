@@ -1949,7 +1949,9 @@ ComplexVarToAIF(char *exp, MIVar *var, int named)
 	}
 	
 	if (a == NULL) {//try again with ptype
-		var->type = GetPtypeValue(exp);
+		char *pt = GetPtypeValue(var->type);
+		if (pt != NULL)
+			var->type = pt; 
 		a = ComplexVarToAIF(NULL, var, named);
 	}
 	return a;
@@ -2695,14 +2697,29 @@ GetPointerAIF(MIVar *var, char *exp)
 static AIF * 
 GetComplexAIF(MIVar *var, char *exp)
 {
+	char *pt;
 	switch (var->type[strlen(var->type) - 1]) {
 	case ']':
 		return GetArrayAIF(var, exp);
 	case '*':
 		return GetPointerAIF(var, exp);
-	default:
+	default:	
 		if (strncmp(var->type, "union", 5) == 0) {
 			return GetUnionAIF(var, exp);
+		}
+		pt = GetPtypeValue(var->type);
+		if (pt != NULL) {
+			var->type = pt;
+			switch (var->type[strlen(var->type) - 1]) {
+			case ']':
+				return GetArrayAIF(var, exp);
+			case '*':
+				return GetPointerAIF(var, exp);
+			default:	
+				if (strncmp(var->type, "union", 5) == 0) {
+					return GetUnionAIF(var, exp);
+				}
+			}
 		}
 		return GetStructAIF(var, exp);
 	}
