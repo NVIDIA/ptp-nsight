@@ -20,7 +20,8 @@
 package org.eclipse.ptp.debug.core.aif;
 
 public interface IAIF {
-	public IAIFType getType();
-	public IAIFValue getValue();
-	public String getDescription();
+	IAIFType getType();
+	IAIFValue getValue();
+	String getDescription();
+	boolean isPartial();
 }

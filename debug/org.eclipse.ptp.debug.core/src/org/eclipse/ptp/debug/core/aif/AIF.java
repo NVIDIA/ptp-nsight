@@ -22,18 +22,33 @@ public class AIF implements IAIF {
 	private IAIFType aifType;
 	private IAIFValue aifValue;
 	private String typeDesc = "";
-
+	private boolean partial = false;
+	
 	public AIF(IAIFType aifType, IAIFValue aifValue) {
+		this(false, aifType, aifValue);
+	}
+	public AIF(boolean partial, IAIFType aifType, IAIFValue aifValue) {
 		this.aifType = aifType;
 		this.aifValue = aifValue;
+		this.partial = partial;
+	}
+	public AIF(boolean partial, String fds, byte[] data) {
+		this.partial = partial;
+		this.aifType = AIFFactory.getAIFType(fds);
+		this.aifValue = AIFFactory.getAIFValue(null, aifType, data);
 	}
 	public AIF(String fds, byte[] data) {
-		aifType = AIFFactory.getAIFType(fds);
-		aifValue = AIFFactory.getAIFValue(null, aifType, data);
+		this(false, fds, data);
+	}
+	public AIF(boolean partial, String fds, byte[] data, String desc) {
+		this(partial, fds, data);
+		this.typeDesc = desc;
 	}
 	public AIF(String fds, byte[] data, String desc) {
-		this(fds, data);
-		typeDesc = desc;
+		this(false, fds, data, desc);
+	}
+	public boolean isPartial() {
+		return partial;
 	}
 	public IAIFType getType() {
 		return aifType;
