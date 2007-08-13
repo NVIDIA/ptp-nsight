@@ -295,13 +295,10 @@ ReadResponse(int fd)
 	static int		res_buf_len = MI_BUFSIZ;
 	static char *	res_buf = NULL;
 	
-	if (res_buf != NULL)
-		free(res_buf);
-	//if (res_buf == NULL)
-	res_buf = (char *)malloc(MI_BUFSIZ);
+	if (res_buf == NULL)
+		res_buf = (char *)malloc(MI_BUFSIZ);
 	
 	p = res_buf;
-
 	for (;;) {
 		n = read(fd, p, MI_BUFSIZ);
 		if (n <= 0) {
