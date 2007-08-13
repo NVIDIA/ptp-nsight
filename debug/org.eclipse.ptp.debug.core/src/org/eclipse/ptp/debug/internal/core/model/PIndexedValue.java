@@ -99,7 +99,7 @@ public class PIndexedValue extends AbstractPValue implements IIndexedValue {
 		return (type != null) ? type.getName() : "";
 	}
 	public String getValueString() throws DebugException {
-		return "";
+		return "[" + fOffset + " - " + fSize + "]";
 	}
 	public boolean isAllocated() throws DebugException {
 		return true;

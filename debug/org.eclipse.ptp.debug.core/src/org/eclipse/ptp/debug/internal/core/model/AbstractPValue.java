@@ -42,7 +42,8 @@ public abstract class AbstractPValue extends PDebugElement implements IPValue {
 		if (parent != null) {
 			if (frame != null && frame.canEvaluate()) {
 				try {
-					valueString = frame.evaluateExpressionToString(parent.getExpressionString());
+					valueString = parent.getValue().getValueString();
+					//valueString = frame.evaluateExpressionToString(parent.getExpressionString());
 				}
 				catch( DebugException e ) {
 					valueString = e.getMessage();
