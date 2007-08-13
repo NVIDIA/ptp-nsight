@@ -23,5 +23,4 @@ public interface IAIF {
 	IAIFType getType();
 	IAIFValue getValue();
 	String getDescription();
-	boolean isPartial();
 }
