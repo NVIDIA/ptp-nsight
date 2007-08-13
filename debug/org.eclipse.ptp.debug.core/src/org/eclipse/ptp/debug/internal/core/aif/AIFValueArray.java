@@ -32,10 +32,11 @@ import org.eclipse.ptp.debug.core.aif.AIFFactory.SimpleByteBuffer;
  */
 public class AIFValueArray extends ValueDerived implements IAIFValueArray {
 	IAIFValue[] values = new IAIFValue[0];
+	SimpleByteBuffer buffer = null;
 	
 	public AIFValueArray(IAIFTypeArray type, SimpleByteBuffer buffer) {
 		super(type);
-		parse(buffer);
+		this.buffer = buffer;
 	}
 	protected void parse(SimpleByteBuffer buffer) {
 		IAIFTypeArray arrType = (IAIFTypeArray)type;
@@ -47,6 +48,10 @@ public class AIFValueArray extends ValueDerived implements IAIFValueArray {
 		}
 	}
 	public IAIFValue[] getValues() {
+		if (values.length == 0 && buffer != null) {
+			parse(buffer);
+			buffer = null;
+		}
 		return values;
 	}
 	public String getValueString() throws AIFException {
@@ -58,6 +63,8 @@ public class AIFValueArray extends ValueDerived implements IAIFValueArray {
 	private String getString() throws AIFException {
 		String content = "[";
 		for (int i=0; i<values.length; i++) {
+			if (values[i] == null)
+				continue;
 			content += values[i].getValueString();
 			if (i < values.length - 1) {
 				content += ",";
