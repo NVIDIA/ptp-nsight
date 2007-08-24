@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (c) 2005 IBM Corporation.
+ * Copyright (c) 2005, 2007 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,20 +20,22 @@ import java.util.StringTokenizer;
 
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 /**
- * The main plugin class to be used for MPI development.
+ * The main plugin class to be used for MPI development Tools.
  */
 public class MpiPlugin extends AbstractUIPlugin
 {
-    // The shared instance.
+    /** The shared instance */
     private static MpiPlugin plugin;
-    // Resource bundle.
+    /** Resource bundle */
     private ResourceBundle   resourceBundle;
+    private static final boolean traceOn=false;
     
     private static final String PLUGIN_ID = "org.eclipse.ptp.pldt.mpi.core";
 
@@ -43,7 +45,7 @@ public class MpiPlugin extends AbstractUIPlugin
     public MpiPlugin()
     {
         super();
-        plugin = this;
+        plugin = this;   	
     }
 
     /**
@@ -52,7 +54,25 @@ public class MpiPlugin extends AbstractUIPlugin
     public void start(BundleContext context) throws Exception
     {
         super.start(context);
+        if(traceOn)printPrefs("**plugin start");
     }
+
+    /**
+     * For debugging, to trace preference values on startup and shutdown of plugin
+     * @param when
+     */
+	public void printPrefs(String when) {
+		IPreferenceStore ps= super.getPreferenceStore();
+		System.out.println(when);
+    	String bc=ps.getString(MpiIDs.MPI_BUILD_CMD);
+    	String ip=ps.getString(MpiIDs.MPI_INCLUDES);
+    	System.out.println("   MpiPlugin: buildCmd="+bc+" includes="+ip);
+    	System.out.println();
+    	String oldPrefIncludes = getPluginPreferences().getString(MpiIDs.MPI_INCLUDES);
+    	String oldPrefBuildCmd=getPluginPreferences().getString(MpiIDs.MPI_BUILD_CMD);
+    	System.out.println("   OldPrefs:  buildCmd="+oldPrefBuildCmd+" includes="+oldPrefIncludes);
+    	System.out.println();
+	}
 
     /**
      * This method is called when the plug-in is stopped
@@ -62,6 +82,8 @@ public class MpiPlugin extends AbstractUIPlugin
         super.stop(context);
         plugin = null;
         resourceBundle = null;
+        
+        if(traceOn)printPrefs("**plugin stop");
     }
 
     /**
@@ -129,24 +151,6 @@ public class MpiPlugin extends AbstractUIPlugin
         if (display == null) display = Display.getDefault();
         return display;
     }
-
-    // java5
-    // /**
-    // * Returns the preference setting for MPI include paths
-    // *
-    // * @return
-    // */
-    // public List<String> getMpiIncludeDirs()
-    // {
-    // String stringList = getPluginPreferences().getString(MpiIDs.MPI_INCLUDES);
-    // StringTokenizer st = new StringTokenizer(stringList, File.pathSeparator + "\n\r");//$NON-NLS-1$
-    // List<String> dirs = new ArrayList<String>();
-    // while (st.hasMoreElements()) {
-    // dirs.add(st.nextToken());
-    // }
-    // return dirs;
-    // }
-
     /**
      * Returns the preference setting for MPI include paths
      * 
@@ -167,4 +171,5 @@ public class MpiPlugin extends AbstractUIPlugin
     {
         return PLUGIN_ID;
     }
+
 }

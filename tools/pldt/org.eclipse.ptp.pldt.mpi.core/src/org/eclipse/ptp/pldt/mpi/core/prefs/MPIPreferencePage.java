@@ -31,6 +31,7 @@ public class MPIPreferencePage extends FieldEditorPreferencePage implements IWor
     private static final String MPI_INCLUDES_PREFERENCE_LABEL  = "MPI include paths:";
     private static final String MPI_INCLUDES_PREFERENCE_BROWSE = "Please choose a directory:";
     private static final String MPI_BUILD_COMMAND_LABEL = "MPI build command:";
+    private static final boolean traceOn=false;
 
     public MPIPreferencePage()
     {
@@ -68,11 +69,22 @@ public class MPIPreferencePage extends FieldEditorPreferencePage implements IWor
     public void init(IWorkbench workbench)
     {
     	IPreferenceStore store = MpiPlugin.getDefault().getPreferenceStore();
-    	store.setDefault(MpiIDs.MPI_BUILD_CMD, "mpicc");
+    	//workaround for bug 200623, don't set default preference store 
+    	//store.setDefault(MpiIDs.MPI_BUILD_CMD, "mpicc");
+    	// when do store.setDefault, and current value is mpicc, value is empty on next plugin restart
+    	// (it's still set ok on plugin.stop(), but empty by plugin.start()
+    	if(traceOn) System.out.println("MPIPreferencePage: NOT setting build cmd default to mpicc");
     }
 
     protected void createFieldEditors()
     {
+    	// workaround for bug 200623, altho this prevents user from setting build command to blank,
+    	// which probably isn't a problem.
+    	String bc=getPreferenceStore().getString(MpiIDs.MPI_BUILD_CMD);
+    	if(bc.length()==0){
+    		if(traceOn)System.out.println("MPIPreferencePage:   setting   to mpicc w/i createFieldEditors");
+    		getPreferenceStore().setValue(MpiIDs.MPI_BUILD_CMD, "mpicc");
+    	}
         PathEditor pathEditor = new PathEditor(MpiIDs.MPI_INCLUDES, MPI_INCLUDES_PREFERENCE_LABEL,
                 MPI_INCLUDES_PREFERENCE_BROWSE, getFieldEditorParent());
         addField(pathEditor);
