@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: PTP Proxy Library
+Bundle-SymbolicName: org.eclipse.ptp.proxy
+Bundle-Version: 1.1.0
+Bundle-Localization: plugin
+Bundle-Vendor: Eclipse.org

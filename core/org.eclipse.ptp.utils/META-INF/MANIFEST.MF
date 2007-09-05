@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: PTP Utility Library
+Bundle-SymbolicName: org.eclipse.ptp.utils
+Bundle-Version: 1.1.0
+Bundle-Localization: plugin
+Bundle-Vendor: Eclipse.org
