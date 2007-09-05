@@ -19,10 +19,10 @@
    </license>
 
    <requires>
-      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui" version="3.2" match="compatible"/>
       <import plugin="org.eclipse.ui.ide"/>
-      <import plugin="org.eclipse.core.runtime"/>
-      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.core.runtime" version="3.2.2" match="compatible"/>
+      <import plugin="org.eclipse.core.resources" version="3.2.2" match="compatible"/>
       <import plugin="org.eclipse.debug.core"/>
       <import plugin="org.eclipse.debug.ui"/>
       <import plugin="org.eclipse.search"/>
@@ -32,8 +32,8 @@
       <import plugin="org.eclipse.jface.text"/>
       <import plugin="org.eclipse.ui.forms"/>
       <import plugin="org.eclipse.cdt.debug.core"/>
-      <import plugin="org.eclipse.cdt.core"/>
-      <import plugin="org.eclipse.cdt.ui"/>
+      <import plugin="org.eclipse.cdt.core" version="3.1.2" match="compatible"/>
+      <import plugin="org.eclipse.cdt.ui" version="3.1.2" match="compatible"/>
       <import plugin="org.eclipse.cdt.debug.mi.core"/>
       <import plugin="org.eclipse.cdt.launch"/>
       <import plugin="org.eclipse.cdt.debug.mi.ui"/>
@@ -124,5 +124,64 @@
          install-size="0"
          version="1.1.0"
          unpack="false"/>
+
+   <plugin
+         id="org.eclipse.ptp.macosx.x86"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"
+         fragment="true"/>
+
+   <plugin
+         id="org.eclipse.ptp.macosx.ppc"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"
+         fragment="true"/>
+
+   <plugin
+         id="org.eclipse.ptp.linux.x86_64"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"
+         fragment="true"/>
+
+   <plugin
+         id="org.eclipse.ptp.linux.x86"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"
+         fragment="true"/>
+
+   <plugin
+         id="org.eclipse.ptp.linux.ppc"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"
+         fragment="true"/>
+
+   <plugin
+         id="org.eclipse.ptp.debug.sdm"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"/>
+
+   <plugin
+         id="org.eclipse.ptp.utils"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"/>
+
+   <plugin
+         id="org.eclipse.ptp.proxy"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"/>
+
+   <plugin
+         id="org.eclipse.ptp.orte.proxy"
+         download-size="0"
+         install-size="0"
+         version="1.1.0"/>
 
 </feature>
