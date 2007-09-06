@@ -175,12 +175,17 @@ public class PDebuggerTab extends AbstractPDebuggerTab {
 	}
 
 	protected boolean validateCPU(ILaunchConfiguration config, IPDebugConfiguration debugConfig) {
+		/*
+		 * Disable this check since it prevents fix to bug #194952
+		 */
 		IBinaryObject binaryFile = null;
+		/*
 		try {
 			binaryFile = getBinary(config);
 		} catch (CoreException e) {
 			setErrorMessage(e.getLocalizedMessage());
 		}
+		*/
 		String projectCPU = IPDebugConfiguration.CPU_NATIVE;
 		if (binaryFile != null) {
 			projectCPU = binaryFile.getCPU();

@@ -266,7 +266,7 @@ public abstract class AbstractPDebuggerTab extends PLaunchConfigurationTab {
 
 	protected void loadDebuggerCombo(IPDebugConfiguration[] debugConfigs, String current) {
 		fDCombo.removeAll();
-		int select = -1;
+		int select = 0;
 		for (int i = 0; i < debugConfigs.length; i++) {
 			fDCombo.add(debugConfigs[i].getName());
 			fDCombo.setData(Integer.toString(i), debugConfigs[i]);
