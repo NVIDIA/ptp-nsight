@@ -19,6 +19,10 @@ export FRAGMENT=`basename $PWD`
 
 export PREFIX=$PARENT/$FRAGMENT
 
+if [ ! -d bin ]; then
+	mkdir bin
+fi
+
 for fragment in $KNOWN_FRAGMENTS
 do
 	path=$PARENT/$fragment
