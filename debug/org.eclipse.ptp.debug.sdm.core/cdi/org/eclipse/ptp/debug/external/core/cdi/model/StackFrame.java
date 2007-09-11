@@ -160,7 +160,8 @@ public class StackFrame extends PObject implements IPCDIStackFrame {
 		return super.equals(stackframe);
 	}
 	public void stepReturn() throws PCDIException {
-		finish();
+		throw new PCDIException ("Step Return does not implement at this version");
+		//finish();
 	}
 	public void stepReturn(IAIFValue value) throws PCDIException {
 		throw new PCDIException ("----StackFrame - stepReturn not implemented yet");
