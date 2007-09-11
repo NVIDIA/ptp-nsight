@@ -2121,7 +2121,7 @@ CurrentFrame(int level, char *name)
 	List *		frames;
 	int val = 0;
 	
-	if (GDB_Version > 6.3 && GDB_Version < 6.6) {
+	if (GDB_Version > 6.3 && GDB_Version < 6.7) {
 		cmd = MIStackListFrames(level, level);
 		SendCommandWait(DebugSession, cmd);
 		if (!MICommandResultOK(cmd)) {
