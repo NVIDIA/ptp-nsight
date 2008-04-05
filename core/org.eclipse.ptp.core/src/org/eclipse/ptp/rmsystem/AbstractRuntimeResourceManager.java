@@ -292,43 +292,48 @@ public abstract class AbstractRuntimeResourceManager extends
 	 */
 	public void handleEvent(IRuntimeNewJobEvent e) {
 		IPQueueControl queue = getQueueControl(e.getParentId());
-		ElementAttributeManager mgr = e.getElementAttributeManager();
-
-		for (Map.Entry<RangeSet, AttributeManager> entry : mgr.getEntrySet()) {
-			AttributeManager jobAttrs = entry.getValue();
-			
-			RangeSet jobIds = entry.getKey();
-			List<IPJobControl> newJobs = new ArrayList<IPJobControl>(jobIds.size());
-
-			for (String elementId : jobIds) {
-				IPJobControl job = getJobControl(elementId);
-				if (job == null) {
-					job = doCreateJob(queue, elementId, jobAttrs);
-					newJobs.add(job);
-					
-					StringAttribute jobSubAttr = 
-						(StringAttribute) jobAttrs.getAttribute(JobAttributes.getSubIdAttributeDefinition());
-					if (jobSubAttr != null) {
-						/*
-						 * Notify any submitJob() calls that the job has been created
-						 */
-						subLock.lock();
-						try {
-							JobSubmission sub = jobSubmissions.get(jobSubAttr.getValue());
-							if (sub != null && sub.getState() == JobSubState.SUBMITTED) {
-								sub.setJob(job);
-								job.setLaunchConfiguration(sub.getLaunchConfiguration());
-								sub.setState(JobSubState.COMPLETED);
-								subCondition.signalAll();
+		
+		if (queue != null) {
+			ElementAttributeManager mgr = e.getElementAttributeManager();
+	
+			for (Map.Entry<RangeSet, AttributeManager> entry : mgr.getEntrySet()) {
+				AttributeManager jobAttrs = entry.getValue();
+				
+				RangeSet jobIds = entry.getKey();
+				List<IPJobControl> newJobs = new ArrayList<IPJobControl>(jobIds.size());
+	
+				for (String elementId : jobIds) {
+					IPJobControl job = getJobControl(elementId);
+					if (job == null) {
+						job = doCreateJob(queue, elementId, jobAttrs);
+						newJobs.add(job);
+						
+						StringAttribute jobSubAttr = 
+							(StringAttribute) jobAttrs.getAttribute(JobAttributes.getSubIdAttributeDefinition());
+						if (jobSubAttr != null) {
+							/*
+							 * Notify any submitJob() calls that the job has been created
+							 */
+							subLock.lock();
+							try {
+								JobSubmission sub = jobSubmissions.get(jobSubAttr.getValue());
+								if (sub != null && sub.getState() == JobSubState.SUBMITTED) {
+									sub.setJob(job);
+									job.setLaunchConfiguration(sub.getLaunchConfiguration());
+									sub.setState(JobSubState.COMPLETED);
+									subCondition.signalAll();
+								}
+					        } finally {
+					        	subLock.unlock();
 							}
-				        } finally {
-				        	subLock.unlock();
 						}
-					}
-			 	}
+				 	}
+				}
+				
+				addJobs(queue, newJobs);
 			}
-			
-			addJobs(queue, newJobs);
+		} else {
+			PTPCorePlugin.log("IRuntimeEventListener#handleEvent: unknown queue ID " + e.getParentId());
 		}
 	}
 	
@@ -379,6 +384,8 @@ public abstract class AbstractRuntimeResourceManager extends
 				
 				addNodes(machine, newNodes);
 			}
+		} else {
+			PTPCorePlugin.log("IRuntimeEventListener#handleEvent: unknown machine ID " + e.getParentId());
 		}
 	}
 
@@ -406,6 +413,8 @@ public abstract class AbstractRuntimeResourceManager extends
 				
 				addProcesses(job, newProcesses);
 			}
+		} else {
+			PTPCorePlugin.log("IRuntimeEventListener#handleEvent: unknown job ID " + e.getParentId());
 		}
 	}
 
