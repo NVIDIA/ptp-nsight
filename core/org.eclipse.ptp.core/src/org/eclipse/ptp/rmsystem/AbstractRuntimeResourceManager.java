@@ -149,7 +149,7 @@ public abstract class AbstractRuntimeResourceManager extends
 	private enum RMState {STARTING, STARTED, STOPPING, STOPPED, ERROR}
 	
 	private IRuntimeSystem runtimeSystem;
-	private RMState state;
+	private volatile RMState state;
 	private String errorMessage = null;
 	
 	private final ReentrantLock stateLock = new ReentrantLock();;
@@ -666,21 +666,14 @@ public abstract class AbstractRuntimeResourceManager extends
 	 */
 	public void handleEvent(IRuntimeRunningStateEvent e) {
 		stateLock.lock();
-        CoreException exc = null;
 		try {
             if (state == RMState.STARTING) {
-            	runtimeSystem.startEvents();
-            	state = RMState.STARTED;
+             	state = RMState.STARTED;
 				stateCondition.signal();
             }
-		} catch (CoreException ex) {
-            exc = ex;
         } finally {
         	stateLock.unlock();
 		}
-        if (exc != null) {
-            fireError(exc.getMessage());
-        }
 	}
 
 	/* (non-Javadoc)
@@ -893,24 +886,27 @@ public abstract class AbstractRuntimeResourceManager extends
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
 		}
+
+		state = RMState.STOPPING;
+
+		doBeforeCloseConnection();
+		closeConnection(monitor);
+
 		stateLock.lock();
 		try {
-			doBeforeCloseConnection();
-			closeConnection(monitor);
-			state = RMState.STOPPING;
 			while (state != RMState.STOPPED && state != RMState.ERROR) {
 				try {
 					stateCondition.await(500, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException e) {
 				}
 			}
-			doAfterCloseConnection();
-		}
-		finally {
+		} finally {
 			stateLock.unlock();
-			runtimeSystem.removeRuntimeEventListener(this);
-			monitor.done();
 		}
+		
+		doAfterCloseConnection();
+		runtimeSystem.removeRuntimeEventListener(this);
+		monitor.done();
 	}
 	
 	/* (non-Javadoc)
@@ -920,52 +916,68 @@ public abstract class AbstractRuntimeResourceManager extends
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
 		}
+		
+		if (state != RMState.STOPPED) {
+			return false;
+		}
+		
+		monitor.beginTask("Runtime resource manager startup", 10); //$NON-NLS-1$
+		doBeforeOpenConnection();
+		monitor.subTask("Creating runtime system"); //$NON-NLS-1$
+		runtimeSystem = doCreateRuntimeSystem();
+		monitor.worked(1);
+		runtimeSystem.addRuntimeEventListener(this);
+		monitor.worked(2);
+		monitor.subTask("Starting runtime system"); //$NON-NLS-1$
+		
+		state = RMState.STARTING;
+				
+		try {
+			runtimeSystem.startup(monitor);
+		} catch (CoreException e) {
+			state = RMState.ERROR;
+			throw e;
+		}
+		
+		monitor.worked(7);
+		
+		/*
+		 * Wait until state changes or the monitor is canceled
+		 */
 		stateLock.lock();
 		try {
-			if (state == RMState.STOPPED) {
-				monitor.beginTask("Runtime resource manager startup", 10); //$NON-NLS-1$
-				doBeforeOpenConnection();
-				monitor.subTask("Creating runtime system"); //$NON-NLS-1$
-				runtimeSystem = doCreateRuntimeSystem();
-				monitor.worked(1);
-				runtimeSystem.addRuntimeEventListener(this);
-				monitor.worked(2);
-				monitor.subTask("Starting runtime system"); //$NON-NLS-1$
-				
+			while (!monitor.isCanceled() && state != RMState.STARTED && state != RMState.ERROR) {
 				try {
-					runtimeSystem.startup(monitor);
-				} catch (CoreException e) {
-					state = RMState.ERROR;
-					throw e;
+					stateCondition.await(500, TimeUnit.MILLISECONDS);
+				} catch (InterruptedException e) {
+					// Expect to be interrupted if monitor is canceled
 				}
-				
-				monitor.worked(7);
-				state = RMState.STARTING;
-				while (!monitor.isCanceled() && state != RMState.STARTED && state != RMState.ERROR) {
-					try {
-						stateCondition.await(500, TimeUnit.MILLISECONDS);
-					} catch (InterruptedException e) {
-						// Expect to be interrupted if monitor is canceled
-					}
-				}
-				if (state == RMState.ERROR) {
-					if (errorMessage == null) {
-						errorMessage= "Fatal error occurred in the runtime system"; //$NON-NLS-1$
-					}
-					throw new CoreException(new Status(IStatus.ERROR, 
-							PTPCorePlugin.getUniqueIdentifier(), errorMessage));
-				}
-				if (monitor.isCanceled()) {
-					state = RMState.STOPPED;
-					return false;
-				}
-				doAfterOpenConnection();
 			}
-		}
-		finally {
+		} finally {
 			stateLock.unlock();
-			monitor.done();
+		}		
+		
+		if (state == RMState.ERROR) {
+			if (errorMessage == null) {
+				errorMessage= "Fatal error occurred in the runtime system"; //$NON-NLS-1$
+			}
+			throw new CoreException(new Status(IStatus.ERROR, 
+					PTPCorePlugin.getUniqueIdentifier(), errorMessage));
 		}
+		
+		if (monitor.isCanceled()) {
+			state = RMState.STOPPED;
+			return false;
+		}
+		
+       	try {
+			runtimeSystem.startEvents();
+		} catch (CoreException e) {
+	        fireError(e.getMessage());
+		}
+
+		doAfterOpenConnection();
+		
 		return true;
 	}
 	
