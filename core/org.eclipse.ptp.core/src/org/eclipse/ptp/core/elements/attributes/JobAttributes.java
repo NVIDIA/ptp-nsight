@@ -53,6 +53,7 @@ public class JobAttributes {
 	private static final String QUEUEID_ATTR_ID = "queueId";
 	private static final String STATE_ATTR_ID = "jobState";
 	private static final String SUBID_ATTR_ID = "jobSubId";
+	private static final String USERID_ATTR_ID = "userId";
 	private static final String WORKING_DIR_ATTR_ID = "workingDir";
 
 	private final static ArrayAttributeDefinition<String> debugArgsAttrDef = 
@@ -100,7 +101,7 @@ public class JobAttributes {
 				"Job ID that command applies to", true, "");
 
 	private final static IntegerAttributeDefinition numProcsAttrDef = 
-		new IntegerAttributeDefinition(NUM_PROCS_ATTR_ID, "Number of Processes", 
+		new IntegerAttributeDefinition(NUM_PROCS_ATTR_ID, "Procs", 
 				"Number of processes to launch", true, 0);
 
 	private final static ArrayAttributeDefinition<String> progArgsAttrDef = 
@@ -112,12 +113,16 @@ public class JobAttributes {
 				"Job submission queue ID", true, "");
 	
 	private final static EnumeratedAttributeDefinition<State> stateAttrDef = 
-		new EnumeratedAttributeDefinition<State>(STATE_ATTR_ID, "Job State", "State of a job", 
+		new EnumeratedAttributeDefinition<State>(STATE_ATTR_ID, "State", "State of a job", 
 				true, State.STARTED);
 
 	private final static StringAttributeDefinition subIdAttrDef = 
 		new StringAttributeDefinition(SUBID_ATTR_ID, "Job Submission ID",
 				"Temporary ID used for job submission", false, "");
+
+	private final static StringAttributeDefinition userIdAttrDef = 
+		new StringAttributeDefinition(USERID_ATTR_ID, "User",
+				"User ID", true, "");
 
 	private final static StringAttributeDefinition workingDirAttrDef = 
 		new StringAttributeDefinition(WORKING_DIR_ATTR_ID, "Working Directory",
@@ -162,6 +167,7 @@ public class JobAttributes {
 				queueIdAttrDef,
 				stateAttrDef, 
 				subIdAttrDef, 
+				userIdAttrDef,
 				workingDirAttrDef,
 			};
 	}
@@ -210,6 +216,10 @@ public class JobAttributes {
 		return subIdAttrDef;
 	}
 	
+	public static StringAttributeDefinition getUserIdAttributeDefinition() {
+		return userIdAttrDef;
+	}
+
 	public static StringAttributeDefinition getWorkingDirectoryAttributeDefinition() {
 		return workingDirAttrDef;
 	}
