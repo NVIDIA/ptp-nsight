@@ -45,6 +45,8 @@ public class JobAttributes {
 	private static final String ENV_ATTR_ID = "env";
 	private static final String EXEC_NAME_ATTR_ID = "execName";
 	private static final String EXEC_PATH_ATTR_ID = "execPath";
+	private static final String HOST_FILE_ATTR_ID = "hostFile";
+	private static final String HOST_LIST_ATTR_ID = "hostList";
 	private static final String IO_FORWARDING_ATTR_ID = "ioForwarding";
 	private static final String LAUNCHED_BY_PTP_FLAG_ATTR_ID = "launchedByPTP";
 	private static final String JOB_ID_ATTR_ID = "jobId";
@@ -87,6 +89,14 @@ public class JobAttributes {
 	private final static StringAttributeDefinition execPathAttrDef = 
 		new StringAttributeDefinition(EXEC_PATH_ATTR_ID, "Executable Path",
 				"Path of executable to be launched", true, "");
+
+	private final static StringAttributeDefinition hostFileAttrDef = 
+		new StringAttributeDefinition(HOST_FILE_ATTR_ID, "Host File",
+				"Path to file containing hosts to use for launch", true, "");
+
+	private final static StringAttributeDefinition hostListAttrDef = 
+		new StringAttributeDefinition(HOST_LIST_ATTR_ID, "Host List",
+				"Comma separated list of hosts to use for launch", true, "");
 
 	private final static IntegerAttributeDefinition ioForwardingAttrDef = 
 		new IntegerAttributeDefinition(IO_FORWARDING_ATTR_ID, "I/O Forwarding", 
@@ -159,6 +169,8 @@ public class JobAttributes {
 				envAttrDef,
 				execNameAttrDef, 
 				execPathAttrDef,
+				hostFileAttrDef,
+				hostListAttrDef,
 				ioForwardingAttrDef,
 				jobIdAttrDef,
 				launchedByPTPFlagAttrDef,
@@ -182,6 +194,14 @@ public class JobAttributes {
 
 	public static StringAttributeDefinition getExecutablePathAttributeDefinition() {
 		return execPathAttrDef;
+	}
+
+	public static StringAttributeDefinition getHostFileAttributeDefinition() {
+		return hostFileAttrDef;
+	}
+
+	public static StringAttributeDefinition getHostListAttributeDefinition() {
+		return hostListAttrDef;
 	}
 
 	public static BooleanAttributeDefinition getLaunchedByPTPFlagAttributeDefinition() {
