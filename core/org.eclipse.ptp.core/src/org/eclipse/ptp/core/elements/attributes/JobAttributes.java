@@ -102,7 +102,7 @@ public class JobAttributes {
 
 	private final static IntegerAttributeDefinition numProcsAttrDef = 
 		new IntegerAttributeDefinition(NUM_PROCS_ATTR_ID, "Procs", 
-				"Number of processes to launch", true, 0);
+				"Number of processes to launch", true, 1);
 
 	private final static ArrayAttributeDefinition<String> progArgsAttrDef = 
 		new ArrayAttributeDefinition<String>(PROG_ARGS_ATTR_ID, "Program Arguments",
