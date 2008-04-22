@@ -20,7 +20,6 @@ package org.eclipse.ptp.launch.internal;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +74,7 @@ import org.eclipse.ptp.core.events.IChangedResourceManagerEvent;
 import org.eclipse.ptp.core.events.INewResourceManagerEvent;
 import org.eclipse.ptp.core.events.IRemoveResourceManagerEvent;
 import org.eclipse.ptp.core.listeners.IModelManagerChildListener;
+import org.eclipse.ptp.core.util.ArgumentParser;
 import org.eclipse.ptp.debug.core.IPDebugConfiguration;
 import org.eclipse.ptp.debug.core.IPDebugger;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
@@ -552,7 +552,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 			attrMgr.addAttribute(JobAttributes.getWorkingDirectoryAttributeDefinition().create(wd));
 		}
 		
-		String[] argArr = getProgramParameters(configuration);
+		String[] argArr = getProgramArguments(configuration);
 		if (argArr != null) {
 			attrMgr.addAttribute(JobAttributes.getProgramArgumentsAttributeDefinition().create(argArr));
 		}
@@ -632,12 +632,16 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	 * @return array of strings containing the program arguments
 	 * @throws CoreException
 	 */
-	protected String[] getProgramParameters(ILaunchConfiguration configuration) throws CoreException {
-		List<String> arguments = new ArrayList<String>();
+	protected String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
 		String temp = getArguments(configuration);
-		if (temp != null && temp.length() > 0) 
-			arguments.add(temp);
-		return (String[]) arguments.toArray(new String[arguments.size()]);
+		if (temp != null && temp.length() > 0) {
+			ArgumentParser ap = new ArgumentParser(temp);
+			List<String> args = ap.getArguments();
+			if (args != null) {
+				return (String[]) args.toArray(new String[args.size()]);
+			}
+		}
+		return null;
 	}
 	
 	/**
