@@ -460,7 +460,6 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	private IAttribute<?,?,?>[] getResourceAttributes(ILaunchConfiguration configuration)
 		throws CoreException {
 
-		String queueName = getQueueName(configuration);	
 		IResourceManager rm = getResourceManager(configuration);
 
 		final AbstractRMLaunchConfigurationFactory rmFactory =
@@ -469,11 +468,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 			return new IAttribute[0];
 		}
 		IRMLaunchConfigurationDynamicTab rmDynamicTab = rmFactory.create(rm);
-		IPQueue queue = rm.getQueueByName(queueName);
-		if (queue != null) {
-			return rmDynamicTab.getAttributes(rm, queue, configuration);
-		}
-		return new IAttribute[0];
+		return rmDynamicTab.getAttributes(rm, null, configuration);
 	}
 	
 	/**
@@ -516,9 +511,23 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 		}
 		
 		AttributeManager attrMgr = new AttributeManager();
+
+		/*
+		 * Collect attributes from Resources tab
+		 */
+		attrMgr.addAttributes(getResourceAttributes(configuration));
 		
 		/*
-		 * Collect attributes from Main tab
+		 * Make sure there is a queue, even if the resources tab doesn't require
+		 * one to be specified.
+		 */
+		if (attrMgr.getAttribute(JobAttributes.getQueueIdAttributeDefinition()) == null) {
+			IPQueue queue = getQueueDefault(rm);
+			attrMgr.addAttribute(JobAttributes.getQueueIdAttributeDefinition().create(queue.getID()));
+		}
+
+		/*
+		 * Collect attributes from Application tab
 		 */
 		IPath programPath = verifyExecutablePath(configuration);
 		attrMgr.addAttribute(JobAttributes.getExecutableNameAttributeDefinition().create(programPath.lastSegment()));
@@ -527,16 +536,6 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 		if (path != null) {
 			attrMgr.addAttribute(JobAttributes.getExecutablePathAttributeDefinition().create(path));
 		}
-		
-		/*
-		 * Collect attributes from Resources tab
-		 */
-		IPQueue queue = rm.getQueueByName(getQueueName(configuration));
-		if (queue != null) {
-			attrMgr.addAttribute(JobAttributes.getQueueIdAttributeDefinition().create(queue.getID()));
-		}
-		
-		attrMgr.addAttributes(getResourceAttributes(configuration));
 		
 		/*
 		 * Collect attributes from Debugger tab
@@ -592,6 +591,25 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	}
 	
 	/**
+	 * Convert application arguments to an array of strings.
+	 * 
+	 * @param configuration launch configuration
+	 * @return array of strings containing the program arguments
+	 * @throws CoreException
+	 */
+	protected String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
+		String temp = getArguments(configuration);
+		if (temp != null && temp.length() > 0) {
+			ArgumentParser ap = new ArgumentParser(temp);
+			List<String> args = ap.getArguments();
+			if (args != null) {
+				return (String[]) args.toArray(new String[args.size()]);
+			}
+		}
+		return new String[0];
+	}
+	
+	/**
 	 * Get the path of the program to launch. No longer used since the program may not be
 	 * on the local machine.
 	 * 
@@ -626,25 +644,6 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	}
 	
 	/**
-	 * Convert application arguments to an array of strings.
-	 * 
-	 * @param configuration launch configuration
-	 * @return array of strings containing the program arguments
-	 * @throws CoreException
-	 */
-	protected String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
-		String temp = getArguments(configuration);
-		if (temp != null && temp.length() > 0) {
-			ArgumentParser ap = new ArgumentParser(temp);
-			List<String> args = ap.getArguments();
-			if (args != null) {
-				return (String[]) args.toArray(new String[args.size()]);
-			}
-		}
-		return null;
-	}
-	
-	/**
 	 * Get the IProject object from the project name.
 	 * 
      * @param project name of the project
@@ -653,6 +652,20 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
     protected IProject getProject(String project) {
         return getWorkspaceRoot().getProject(project);
     }
+	
+	/**
+	 * Get the default queue for the given resource manager
+	 * 
+	 * @param rm resource manager
+	 * @return default queue
+	 */
+	protected IPQueue getQueueDefault(IResourceManager rm) {
+		final IPQueue[] queues = rm.getQueues();
+		if (queues.length == 0) {
+			return null;
+		}
+		return queues[0];
+	}
 	
 	/**
 	 * Find the resource manager that corresponds to the unique name specified in the configuration
@@ -722,7 +735,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	protected void setSourceLocator(ILaunch launch, ILaunchConfiguration config) throws CoreException {
 		setDefaultSourceLocator(launch, config);
 	}
-	
+
 	/**
 	 * Submit a job to the resource manager. Keeps track of the submission so we know when the
 	 * job actually starts running. When this happens, the abstract method doCompleteJobLaunch()
@@ -753,7 +766,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 			}
 		}
 	}
-
+	
 	/**
 	 * @param configuration
 	 * @return
@@ -802,7 +815,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 		status.add(new Status(IStatus.ERROR, PTPCorePlugin.getUniqueIdentifier(), code, exception == null ? "" : exception.getLocalizedMessage(), exception));
 		throw new CoreException(status);
 	}
-	
+
 	/**
 	 * @param path
 	 * @throws CoreException
@@ -844,7 +857,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 		}
 		return true;
 	}
-
+	
 	/**
 	 * Verify that the project exists prior to the launch.
 	 * 

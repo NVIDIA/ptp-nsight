@@ -65,8 +65,11 @@ public class DebuggerTab extends AbstractDebuggerTab {
 		setInitializing(true);
 		super.initializeFrom(config);
 		try {
-			String id = config.getAttribute(IPTPLaunchConfigurationConstants.ATTR_DEBUGGER_ID, "");
-			loadDebuggerComboBox(config, id);
+			/*
+			 * Only set default debugger if there is a resource manager selected.
+			 */
+			String id = config.getAttribute(IPTPLaunchConfigurationConstants.ATTR_DEBUGGER_ID, EMPTY_STRING);
+			loadDebuggerComboBox(config, id, getResourceManager(config) == null);
 			initializeCommonControls(config);
 		} catch (CoreException e) {
 		}
@@ -168,7 +171,7 @@ public class DebuggerTab extends AbstractDebuggerTab {
 	 * @param config
 	 * @param selection
 	 */
-	protected void loadDebuggerComboBox(ILaunchConfiguration config, String selection) {
+	protected void loadDebuggerComboBox(ILaunchConfiguration config, String selection, boolean noDefault) {
 		IPDebugConfiguration[] debugConfigs;
 		debugConfigs = PTPDebugCorePlugin.getDefault().getDebugConfigurations();
 		Arrays.sort(debugConfigs, new Comparator<IPDebugConfiguration>() {
@@ -187,8 +190,8 @@ public class DebuggerTab extends AbstractDebuggerTab {
 		for (int i = 0; i < debugConfigs.length; i++) {
 			if (debugConfigs[i].supportsMode(mode)) {
 				list.add(debugConfigs[i]);
-				// select first exact matching debugger for platform or requested selection
-				if ((defaultSelection.equals(""))) {
+				// select first exact matching debugger for requested selection
+				if (!noDefault && defaultSelection.equals("")) {
 					defaultSelection = debugConfigs[i].getID();
 				}
 			}
