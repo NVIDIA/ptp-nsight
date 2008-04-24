@@ -25,35 +25,33 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 
-
 /**
- * The main plugin class for PLDT
+ * The main plugin class for PLDT (PTP's Parallel Language Development Tools)
  * @author Beth Tibbitts
  */
 public class CommonPlugin extends AbstractUIPlugin {
 
-	//The shared instance.
+	/** The shared instance. */
 	private static CommonPlugin plugin;
-    // Resource bundle.
-    private ResourceBundle       resourceBundle;
-    
-    private static boolean eclipseTraceOn=false;
-    private static boolean haveReadTraceStatus=false;
-    
-    public static boolean getTraceOn(){
-    	if(!haveReadTraceStatus){
-    		String traceFilter=Platform.getDebugOption("org.eclipse.ptp.pldt.common/debug/pldtTrace");
-    		if(traceFilter!=null){
-    			System.out.println("CommonPlugin.getTraceOn(): pldtTrace trace filtering is on; traceFilter= "+traceFilter);
-    			eclipseTraceOn=true;
-    		}
-    		haveReadTraceStatus=true;
-    	}
-    	return eclipseTraceOn;
+	/** Resource bundle */
+	private ResourceBundle resourceBundle;
+
+	private static boolean eclipseTraceOn = false;
+	private static boolean haveReadTraceStatus = false;
+	public static final String PLUGIN_ID = "org.eclipse.ptp.pldt.common";
+
+	public static boolean getTraceOn() {
+		if (!haveReadTraceStatus) {
+			String traceFilter = Platform.getDebugOption("org.eclipse.ptp.pldt.common/debug/pldtTrace");
+			if (traceFilter != null) {
+				System.out.println("CommonPlugin.getTraceOn(): pldtTrace trace filtering is on; traceFilter= " + traceFilter);
+				eclipseTraceOn = true;
+			}
+			haveReadTraceStatus = true;
+		}
+		return eclipseTraceOn;
 	}
 
-
-	
 	/**
 	 * The constructor.
 	 */
@@ -78,10 +76,7 @@ public class CommonPlugin extends AbstractUIPlugin {
 			String msg="This is PLDT 2.0 which requires CDT Version 4.0.2 or higher.";
 				msg+="\nThis eclipse installation contains CDT version "+version;
 			MessageDialog.openError(null, "Version mismatch", msg);
-		}
-		
-		
-		
+		}		
 	}
 
 	/**
@@ -122,7 +117,6 @@ public class CommonPlugin extends AbstractUIPlugin {
         return display;
     }
     /**
-     * BRT using this?
      * Returns the plugin's resource bundle,
      */
     public ResourceBundle getResourceBundle()
@@ -137,7 +131,6 @@ public class CommonPlugin extends AbstractUIPlugin {
     }
 
     /**
-     * BRT using this?
      * Returns the string from the plugin's resource bundle, or 'key' if not found.
      */
     public static String getResourceString(String key)
