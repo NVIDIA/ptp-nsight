@@ -206,7 +206,6 @@ Inc. in the United States, other countries, or both.\n
       <import plugin="org.eclipse.ui.ide"/>
       <import plugin="org.eclipse.ui.views.properties.tabbed"/>
       <import plugin="org.eclipse.cdt.ui"/>
-      <import plugin="org.eclipse.photran.ui"/>
    </requires>
 
    <plugin
