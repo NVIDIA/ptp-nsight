@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (c) 2005, 2007 IBM Corporation.
+ * Copyright (c) 2005, 2008 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,10 @@
 
 package org.eclipse.ptp.pldt.common.analysis;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
@@ -29,11 +32,23 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.c.CASTVisitor;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ptp.pldt.common.Artifact;
 import org.eclipse.ptp.pldt.common.CommonPlugin;
 import org.eclipse.ptp.pldt.common.ScanReturn;
 import org.eclipse.ptp.pldt.common.util.SourceInfo;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * This dom-walker helper collects interesting constructs (currently
@@ -50,15 +65,18 @@ public class PldtAstVisitor extends CASTVisitor {
 
 	protected static String ARTIFACT_CALL = "Artifact Call";
 	protected static String ARTIFACT_CONSTANT = "Artifact Constant";
+	protected static String ARTIFACT_NAME = "Artifact Name";
 	protected static String PREFIX = "";
 	private static /*final*/ boolean traceOn=false;
+	
+	private static boolean dontAskToModifyIncludePathAgain=false;
 
 	/**
 	 * List of include paths that we'll probably want to consider in the work that this visitor does.
 	 * For example, only paths found in this list (specified in PLDT preferences) would be considered
 	 * to be a path from which definitions of "Artifacts" would be found.
 	 */
-	private final List<String> includes_;
+	private /*final*/ List<String> includes_;
 	private final String fileName;
 	private final ScanReturn scanReturn;
 	//private static final String STRING_QUOTE = "\"";
@@ -78,7 +96,8 @@ public class PldtAstVisitor extends CASTVisitor {
 		this.includes_ = includes;
 		this.fileName = fileName;
 		this.scanReturn = scanReturn;
-		traceOn=CommonPlugin.getTraceOn();
+		dontAskToModifyIncludePathAgain=false;
+		if(!traceOn) traceOn=CommonPlugin.getTraceOn();
 		if(traceOn)System.out.println("PldtAstVisitor, traceOn="+traceOn);
 	}
 
@@ -122,7 +141,7 @@ public class PldtAstVisitor extends CASTVisitor {
 		if (isArtifact(funcName)) {
 			SourceInfo sourceInfo = getSourceInfo(astExpr, Artifact.FUNCTION_CALL);
 			if (sourceInfo != null) {
-				if(traceOn) System.out.println("found MPI artifact: " + funcName.toString());
+				if(traceOn) System.out.println("found artifact: " + funcName.toString());
 				// FIXME we're determining the artifact name twice. (also in chooseName())
 				String artName=funcName.toString();
 				String rawName=funcName.getRawSignature();
@@ -177,25 +196,22 @@ public class PldtAstVisitor extends CASTVisitor {
 		name = chooseName(name, rawSig);
 
 
-		// cdt40 CDT4.0: declarations null
-		IASTName[] decls=funcName.getTranslationUnit().getDeclarationsInAST(binding);//10/2/07: empty for MPI/C++ MPI::
+		IASTTranslationUnit tu = funcName.getTranslationUnit();
+		
+		IASTName[] decls=tu.getDeclarationsInAST(binding);
 		if (traceOn) {
 			if (decls.length == 0) { // BRT decls=null detection
-				IASTTranslationUnit tu = funcName.getTranslationUnit();
 				IASTName[] na = tu.getDeclarationsInAST(binding);
 				//IASTDeclaration[] astDecls = tu.getDeclarations();
 				for (int i = 0; i < na.length; i++) {
-					IASTName nm = na[i];
-					System.out.println(nm);
-
+					System.out.println("   IASTName: "+na[i]);
 				}
 			}
 		}
 		if(decls.length==0){
-			System.out.println("PldtAstVisitor.isArtifact(): decls empty!");
-		}
-		//CDT3.1 IASTName[] decls = funcName.getTranslationUnit().getDeclarations(binding);
-		
+			System.out.println("PldtAstVisitor.isArtifact(): decls empty: there are no declarations for "+
+					funcName+ " in translation unit for "+tu.getContainingFilename());
+		}		
 		
 		for (int i = 0; i < decls.length; ++i) {
 			// IASTFileLocation is file and range of lineNos
@@ -210,10 +226,23 @@ public class PldtAstVisitor extends CASTVisitor {
 				if(traceOn)System.out.println("   path match! "+name+" is an artifact.");
 				return true;
 			}
+			else {
+				if (traceOn) {
+          System.out.println(name + " was found in " + path
+              + " but  PLDT preferences have been set to only include: " + includes_.toString());
+        }
+				// add them here?
+				if(allowIncludePathAdd()) {
+					boolean addit = addIncludePath(path, name, dontAskToModifyIncludePathAgain);
+					if(addit)return true;
+				}
+				
+			}
 		}
 		return false;
 	}
-	
+
+
 	/**
 	 * Choose how to distinguish between binding name, and raw signature.<br>
 	 * Could be overridden by subclasses if, for example, a name with a prefix e.g. "MPI::foo" should be preferred over "foo".<br>
@@ -358,5 +387,256 @@ public class PldtAstVisitor extends CASTVisitor {
 			}
 		}
 	}
+
+	/**
+	 * allow dynamic adding to include path?  Can be overridden by derived classes.
+	 * @return
+	 */
+	public boolean allowIncludePathAdd() {
+		return !dontAskToModifyIncludePathAgain;
+	}
+	/**
+	 * Replace the includes list in this visitor so the change will be recognized.
+	 * @param includes
+	 */
+	protected void replaceIncludes(String includes) {
+		includes_=convertToList(includes);
+	}
+    @SuppressWarnings({ "unchecked"})
+	public List convertToList(String stringList)
+    {
+        StringTokenizer st = new StringTokenizer(stringList, File.pathSeparator + "\n\r");//$NON-NLS-1$
+        List dirs = new ArrayList();
+        while (st.hasMoreElements()) {
+            dirs.add(st.nextToken());
+        }
+        return dirs;
+    }
+	/** 
+	 * Add an include path to the prefs - probably found dynamically during analysis
+	 * and requested to be added by the user
+	 * <br>
+	 * Note that the path will be to the actual file in which the name was found;
+	 * the path that will be added to the prefs is the parent directory of that file.
+	 * @param path
+	 * @param name the name (function etc) that was found in the path
+	 * @param dontAskAgain  initial value of toggle "don't ask again"
+	 * 
+	 * @returns whether the user chose to add the path or not
+	 */
+	public boolean addIncludePath( IPath path,  String name/*, IPreferenceStore store, String id*/, boolean dontAskAgain) {
+
+		IPreferenceStore store=getPreferenceStore();
+		String id=getIncludesPrefID();
+		String type=getTypeName();
+		boolean doitThisTime=false;
+		
+		if(store==null || id == null) {
+			CommonPlugin.log(IStatus.ERROR, "PLDT: Visitor subclass does not implement getPreferenceStore() or "+
+					"getIncludesPrefID() to return non-null values.");
+			return false;
+		}
+		
+		try {
+		//final IPreferenceStore store = MpiPlugin.getDefault().getPreferenceStore();
+		//final String id =MpiIDs.MPI_INCLUDES;
+		 String value = store.getString(id);
+		System.out.println("value: "+value);
+		String newValue;
+		
+		if(!dontAskAgain) {
+
+				// probably inefficient string construction, but rarely called.
+				String msg = "The following API: \n  " + name
+						+ "\nwas found in the following path: \n  "
+						+ path.toString()
+						+ "\nwhich is not in the "+type+" preferences path list of: \n  "
+						+ value + ".\nDo you want to add it?  If so, further APIs found here will be automatically recognized.";
+				String title = "Add "+type+" include path?";
+				boolean[] twoAnswers=  askUI(title, msg, dontAskToModifyIncludePathAgain);
+        doitThisTime=twoAnswers[0];
+				dontAskAgain=twoAnswers[1];
+				dontAskToModifyIncludePathAgain= dontAskAgain;
+
+			}
+		
+		if(doitThisTime) {
+			String s = java.io.File.pathSeparator;
+			String parent = path.toFile().getParent();
+			// add path separator (: or ; ?) if necessary
+			if(!value.endsWith(s)) {
+			 value+=s;
+			}
+			// add this new include path location to the value stored in preferences, and add it to the value within this class as well.
+			value+=parent+s;
+			System.out.println("new path: "+value);
+			store.putValue(id, value);
+			replaceIncludes(value);
+			//includes_=convertToList(value);
+		}
+		int stophere=0;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		return doitThisTime;
+	}
+
+	/**
+	 * needs to be overrridden for derived classes that need to dynamically update the pref store 
+	 * e.g. for the includes path.  This type name is used for messages, etc.
+	 * @return artifact type name such as "MPI", "OpenMP" etc.
+	 */	
+	protected String getTypeName() {
+		return "";
+	}
+
+	/**
+	 * needs to be overrridden for derived classes that need to dynamically update the pref store 
+	 * e.g. for the includes path
+	 * @return
+	 */
+	protected String getIncludesPrefID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	/**
+	 * needs to be overrridden for derived classes that need to dynamically update the pref store 
+	 * e.g. for the includes path
+	 * @return
+	 */
+	protected IPreferenceStore getPreferenceStore() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+/**
+ * Dialog to ask a question in the UI thread
+ * @author beth
+ *
+ */
+	class RunGetAnswer implements Runnable {
+		boolean answer, dontAskAgain;
+		String title, message;
+
+		RunGetAnswer(String title, String message, boolean initialToggleState) {
+			this.title = title;
+			this.message = message;
+			this.dontAskAgain=initialToggleState;
+		}
+
+		public void run() {
+			IWorkbench wb = PlatformUI.getWorkbench();
+			IWorkbenchWindow w = wb.getActiveWorkbenchWindow();
+			Shell shell = w.getShell();
+			if (shell == null) {
+				Display display = CommonPlugin.getStandardDisplay();
+				shell = display.getActiveShell();
+			}
+			//answer = MessageDialog.openQuestion(shell, title, message);
+			
+			// see also: openYesNoCancelQuestion
+			String toggleMessage="Don't ask again";
+			IPreferenceStore store = null;
+			String key = null;
+			MessageDialogWithToggle md;
+			md=MessageDialogWithToggle.openYesNoQuestion(shell, title, message, toggleMessage, dontAskAgain, store, key);
+			int retCode=md.getReturnCode();  // yes=2
+			answer = (retCode==2);
+			dontAskAgain= md.getToggleState();  
+		}
+
+		public boolean getAnswer() {
+			return answer;
+		}
+		public boolean getDontAskAgain() {
+		  return dontAskAgain;
+		}
+	}
+		
+	public boolean[] askUI(final String title, final String message, boolean dontAskAgain) {
+	  boolean[] twoAnswers = new boolean[2];
+		RunGetAnswer runner = new RunGetAnswer(title,message,dontAskAgain);
+		
+		Display.getDefault().syncExec(runner);
+		boolean answer=runner.getAnswer();
+		dontAskAgain=runner.getDontAskAgain();
+		twoAnswers[0]=answer;
+		twoAnswers[1]=dontAskAgain;
+		return twoAnswers;
+	}
+	/**
+	 * Show a message dialog; force to UI thread
+	 * This has NOT been tried.
+	 */
+	public void messageUI_HIDE(final String title, final String message) {
+
+		UIJob job = new UIJob("PLDTAstVisitor query") {
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				IWorkbench wb = PlatformUI.getWorkbench();
+
+				IWorkbenchWindow w = wb.getActiveWorkbenchWindow();
+				//IWorkbenchPage page = w.getActivePage();
+				Shell shell = w.getShell();
+				if (shell == null) {
+					Display display = CommonPlugin.getStandardDisplay();
+					shell = display.getActiveShell();
+				}
+				boolean answer = MessageDialog.openQuestion(w.getShell(), title, message);
+
+				IStatus result = new Status(IStatus.OK, CommonPlugin.PLUGIN_ID,
+						IStatus.OK, "ok", null);
+				return result;
+			}
+
+		};
+		job.schedule();
+		
+		
+		
+	}
+/*	
+	public void temp() {
+		Display.getDefault().syncExec(new Runnable(){  // syncExec always blocks until done
+			 public void run(){
+				 IWorkbench wb = PlatformUI.getWorkbench();
+				 IWorkbenchWindow w = wb.getActiveWorkbenchWindow();
+				 Shell shell =w.getShell();
+				// probably inefficient string construction, but rarely called.
+					String msg="The following API: "+name+" was found in the following path: "+path.toString()+
+					" which is not in the MPI preferences path list of: "+value+".  Do you want to add it?";
+					boolean doit=MessageDialog.openQuestion(shell, "Add MPI include path?", msg);
+				 //MessageDialog.openError(w.getShell(), title, message);
+					if(doit) {
+						String s = java.io.File.pathSeparator;
+						//char s = new String(Path.DEVICE_SEPARATOR); // colon or semicolon
+//						System.out.println("before: "+path.toPortableString());
+//						path.removeLastSegments(1); // remove the file name from the path
+//						System.out.println("after:  "+path.toPortableString());
+						String parent = path.toFile().getParent();
+						System.out.println("parent: "+parent);
+						// add path separator (: or ; ?) if necessary
+						if(!value.endsWith(s)) {
+						 value+=s;
+						}
+						// add this new include path location to the value stored in preferences, and add it to the value within this class as well.
+						value+=parent+s;
+						System.out.println("new path: "+value);
+						store.putValue(id, value);
+						replaceIncludes(value);
+						//includes_=convertToList(value);
+						newValue = value;
+						result=value;
+					}
+			 }
+			 public String result;
+			 public String getResult() {return result;}
+		 });
+	}
+	*/
+
+
+
 
 }
