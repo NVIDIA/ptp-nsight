@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright (c) 2006, 2007 IBM Corporation.
+ * Copyright (c) 2006, 2008 IBM Corporation.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -969,12 +969,12 @@ public class PASTOMPFactory
     
     // We are presently unsure of what to do with all the following stuff:
     protected static final ScannerProblemFactory spf = new ScannerProblemFactory();
-    protected ScannerCallbackManager callbackManager;
+   // protected ScannerCallbackManager callbackManager;
     protected static char[] EMPTY_CHAR_ARRAY = new char[0];
     
     protected void otherinit(ISourceElementRequestor requestor)
     {
-        callbackManager = new ScannerCallbackManager(new NullSourceElementRequestor());
+      //  callbackManager = new ScannerCallbackManager(new NullSourceElementRequestor());
     }
     
     /**
