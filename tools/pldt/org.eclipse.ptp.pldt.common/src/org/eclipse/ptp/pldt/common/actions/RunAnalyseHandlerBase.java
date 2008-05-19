@@ -15,15 +15,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTProblem;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.internal.core.dom.parser.c.CVisitor;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPVisitor;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectNature;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -361,7 +365,8 @@ public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
 					String filename = file.getName();
 					//String fn2 = ce.getElementName();// shd be filename too
 														// cdt40
-					if (AnalysisUtil.validForAnalysis(filename)) {
+					boolean cpp = isCPPproject(ce);				
+					if (AnalysisUtil.validForAnalysis(filename,cpp)) {
 						if (traceOn)
 							println(getSpaces(indent) + "file: " + filename);
 						results = analyse(monitor, (ITranslationUnit) ce,
@@ -443,6 +448,24 @@ public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
 
 		return foundError;
 	}
+/**
+ * Determine if the project is a C++ project
+ * @param ce the ICElement representing a file 
+ * @return
+ */
+  protected boolean isCPPproject(ICElement ce) {
+    IProject p = ce.getCProject().getProject();
+    try {
+      IProjectNature nature = p.getNature("org.eclipse.cdt.core.ccnature");
+      if(nature!=null) {
+        return true;
+      }
+    } catch (CoreException e) {
+      // TODO Auto-generated catch block
+      //e.printStackTrace();
+    }
+    return false;
+  }
 
 	protected void processResults(ScanReturn results, IResource resource) {
 		List<Artifact> artifacts = results.getArtifactList();
@@ -467,6 +490,18 @@ public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
 			println("RunAnalyseBase:              file = " + tu.getLocation());
 
 		monitor.subTask(" on " + rawPath);
+		// did tu parse w/o errors?  If we can determine that, we can
+		// warn user; otherwise OpenMP analysis will, for example, "finish with errors"
+		// e.g. if header file can't be found.
+		/*
+		try {
+      IASTProblem[] problems  = CPPVisitor.getProblems(tu.getAST());
+      IASTProblem[] problems2 = CVisitor.getProblems(tu.getAST());
+    } catch (CoreException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+		*/
 		ScanReturn scanReturn = doArtifactAnalysis(tu, includes);
 		monitor.worked(1);
 		if (traceOn)
