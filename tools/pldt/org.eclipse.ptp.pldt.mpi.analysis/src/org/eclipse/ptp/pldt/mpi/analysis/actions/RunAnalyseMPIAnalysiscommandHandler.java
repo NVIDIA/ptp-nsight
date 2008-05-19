@@ -38,6 +38,7 @@ import org.eclipse.ptp.pldt.mpi.analysis.analysis.MPIResourceCollector;
  */
 public class RunAnalyseMPIAnalysiscommandHandler extends RunAnalyseHandler  {
 	protected MPICallGraph callGraph_;
+	boolean traceOn=false;
 	
 	public RunAnalyseMPIAnalysiscommandHandler(){ 
 		callGraph_ = null;
@@ -68,6 +69,7 @@ public class RunAnalyseMPIAnalysiscommandHandler extends RunAnalyseHandler  {
 				if (obj instanceof IAdaptable) {
 					final IResource res = (IResource) ((IAdaptable) obj)
 							.getAdapter(IResource.class);
+					if(traceOn)System.out.println("resourceCollector on "+res.getName());
 					// FIXME put this in a runnable to batch resource changes?
 					if (res != null) {
 						resourceCollector(res);
@@ -141,7 +143,8 @@ public Object execute2(ExecutionEvent event) throws ExecutionException {
 			IFile file = (IFile) resource;
 			String filename = file.getName();
 			if(filename.endsWith(".c")){
-				MPIResourceCollector rc = new MPIResourceCollector(callGraph_, file);
+			  if(traceOn)System.out.println("resourceCollector on c file: "+file.getName());
+				MPIResourceCollector rc = new MPIResourceCollector(callGraph_, file); // BRT why 'new' each time?
 				rc.run();
 			}
 			return true;
@@ -151,6 +154,7 @@ public Object execute2(ExecutionEvent event) throws ExecutionException {
 			try {
 				IResource[] mems = container.members();
 				for (int i = 0; i < mems.length; i++) {
+				  if(traceOn)System.out.println("descend to "+mems[i].getName());
 					boolean err = resourceCollector(mems[i]);
 					foundError = foundError || err;
 				}
