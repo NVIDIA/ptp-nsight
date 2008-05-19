@@ -39,7 +39,31 @@ public class CommonPlugin extends AbstractUIPlugin {
 	private static boolean eclipseTraceOn = false;
 	private static boolean haveReadTraceStatus = false;
 	public static final String PLUGIN_ID = "org.eclipse.ptp.pldt.common";
-
+	
+  /**
+   * To use dynamic tracing (User instructions):
+   * Create a file ".options" in the
+   * same directory as your eclipse executable. Put this in the file:
+   * 
+   * <pre>
+   *  org.eclipse.ptp.pldt.common/debug = true
+   *  org.eclipse.ptp.pldt.common/debug/pldtTrace = true
+   * </pre>
+   * 
+   * Then launch eclipse in debug mode using the -debug option, and mirror the
+   * Console view output to the command line console using the -consoleLog
+   * option. (Maybe Linux already spits out the console, not sure.)
+   * 
+   * <pre>
+   * eclipse - debug - consoleLog
+   * </pre>
+   * 
+   * When you run with this tracing enabled, it will print out a bunch of
+   * trace information to the console. At least MPI artifact analysis has been
+   * enabled for user-directed tracing.
+   * 
+   * @return
+   */
 	public static boolean getTraceOn() {
 		if (!haveReadTraceStatus) {
 			String traceFilter = Platform.getDebugOption("org.eclipse.ptp.pldt.common/debug/pldtTrace");
@@ -102,7 +126,7 @@ public class CommonPlugin extends AbstractUIPlugin {
 	 * @return the image descriptor
 	 */
 	public static ImageDescriptor getImageDescriptor(String path) {
-		return AbstractUIPlugin.imageDescriptorFromPlugin("org.eclipse.ptp.pldt.common", path);
+		return AbstractUIPlugin.imageDescriptorFromPlugin(PLUGIN_ID, path);
 	}
 	
     /**
