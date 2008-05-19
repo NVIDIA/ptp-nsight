@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
+import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
 import org.eclipse.cdt.core.model.ILanguage;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTTranslationUnit;
@@ -55,16 +56,15 @@ public class RunAnalyseMPIcommandHandler extends RunAnalyseHandlerBase
 		final String fileName = tu.getElementName();
 		ILanguage lang;
 		try {
-			lang = tu.getLanguage();
+			lang = tu.getLanguage(); 
             
 			IASTTranslationUnit atu = tu.getAST();
-			if (lang.getId().equals(GCCLanguage.ID)) {// cdt40
+			String languageID=lang.getId();
+			if (languageID.equals(GCCLanguage.ID)) {// C
 				atu.accept(new MpiCASTVisitor(includes, fileName, msr));
-				// BRT FIXME  inconsistent way of accessing Language;
-				// clean up when Fortran is integrated here
-			} else if (atu instanceof CPPASTTranslationUnit) {
-				atu.accept(new MpiCPPASTVisitor(includes, fileName, msr));
-
+			}
+			else if (languageID.equals(GPPLanguage.ID)) { // C++
+			  atu.accept(new MpiCPPASTVisitor(includes, fileName, msr));
 			}
 
 		} catch (CoreException e) {
