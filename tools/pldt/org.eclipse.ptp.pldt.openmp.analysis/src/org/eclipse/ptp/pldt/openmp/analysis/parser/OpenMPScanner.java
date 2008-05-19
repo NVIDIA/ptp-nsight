@@ -40,11 +40,11 @@ public class OpenMPScanner
     
     protected static char[] EMPTY_CHAR_ARRAY = new char[0];
     
-    protected ScannerCallbackManager callbackManager_ = null;
+    //protected ScannerCallbackManager callbackManager_ = null;
     
-    //**
-    //  OpenMPScanner - Object to scan OpenMP pragma line
-    //**
+    /**
+    * OpenMPScanner - Object to scan OpenMP pragma line
+    */
     public OpenMPScanner(String inputBuffer)
     {
        inputBuffer_ = inputBuffer.toCharArray(); 
