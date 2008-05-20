@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>  
 #include <math.h>    
-#include "openmp.h"    
+#include "omp.h"    
 
  
 // Sample dummy OpenMP program 

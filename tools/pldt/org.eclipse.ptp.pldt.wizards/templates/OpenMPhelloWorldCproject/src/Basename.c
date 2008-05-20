@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdlib.h>  
 #include <math.h>    
-#include "openmp.h"    
+#include "omp.h"    
 
 
 int main(int argc, char* argv[]){
