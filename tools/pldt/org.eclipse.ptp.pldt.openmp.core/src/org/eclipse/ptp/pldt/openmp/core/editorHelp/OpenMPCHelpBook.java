@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.cdt.internal.errorparsers.MakeErrorParser;
 import org.eclipse.cdt.ui.IFunctionSummary.IFunctionPrototypeSummary;
 import org.eclipse.ptp.pldt.common.editorHelp.CHelpBookImpl;
 import org.eclipse.ptp.pldt.common.editorHelp.FunctionPrototypeSummaryImpl;
