@@ -15,6 +15,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.index.IIndex;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
@@ -29,6 +32,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -641,5 +645,26 @@ public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
 		AnalysisDropdownHandler.setLastHandledAnalysis(this, selection);
 	    return null;
 	}
+
+  /**
+   * Get AST from index, not full tu
+   * @param tu translation unit from which to get the AST
+   * @return
+   */
+  protected IASTTranslationUnit getAST(ITranslationUnit tu) {
+    IIndex index;
+    try {
+      index = CCorePlugin.getIndexManager().getIndex(tu.getCProject());
+      IASTTranslationUnit ast = tu.getAST(index, ITranslationUnit.AST_SKIP_ALL_HEADERS);
+      //IASTTranslationUnit ast = tu.getAST(index, 0);
+      if(traceOn)System.out.println("    getAST(index,AST_SKIP_ALL_HEADERS)");
+      
+      return ast;
+    } catch (CoreException e) {
+      CommonPlugin.log(IStatus.ERROR,"RunAnalyseMPICommandHandler.getAST():Error getting AST (from index) for project "+tu.getCProject());
+      return null;
+    }
+    
+  }
 
 }
