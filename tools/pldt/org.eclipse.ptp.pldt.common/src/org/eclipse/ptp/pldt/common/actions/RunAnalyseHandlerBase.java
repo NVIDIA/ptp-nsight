@@ -15,13 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTProblem;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.ITranslationUnit;
-import org.eclipse.cdt.internal.core.dom.parser.c.CVisitor;
-import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPVisitor;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
@@ -37,12 +34,14 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.preference.IPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ptp.pldt.common.Artifact;
 import org.eclipse.ptp.pldt.common.ArtifactMarkingVisitor;
 import org.eclipse.ptp.pldt.common.CommonPlugin;
 import org.eclipse.ptp.pldt.common.IDs;
+import org.eclipse.ptp.pldt.common.MessageDialogWithLink;
 import org.eclipse.ptp.pldt.common.ScanReturn;
 import org.eclipse.ptp.pldt.common.util.AnalysisUtil;
 import org.eclipse.swt.widgets.Shell;
@@ -66,7 +65,7 @@ import org.eclipse.ui.actions.WorkspaceModifyOperation;
  */
 
 public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
-	private static /*final*/ boolean traceOn = false;
+	protected static /*final*/ boolean traceOn = false;
 
 	/**
 	 * indent amount for each level of nesting; useful when printing debug
@@ -153,8 +152,7 @@ public abstract class RunAnalyseHandlerBase extends RunAnalyseHandler {
 			// get preference for include paths
 			final List<String> includes = getIncludePath();
 			if (areIncludePathsNeeded() && includes.isEmpty()) {
-				System.out
-						.println("RunAnalyseBase.run(), no include paths found.");
+				//System.out.println("RunAnalyseHandlerBase.run(), no include paths found.");
 				MessageDialog.openWarning(shell, name
 						+ " Include Paths Not Found",
 						"Please first specify the " + name
