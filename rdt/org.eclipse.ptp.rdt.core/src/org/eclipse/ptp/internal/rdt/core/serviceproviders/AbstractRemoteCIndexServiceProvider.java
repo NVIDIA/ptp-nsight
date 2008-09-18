@@ -95,13 +95,6 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 		
 		return fTypeHierarchyService;
 	}
-
-	/**
-	 * @return the system connection for this service provider
-	 */
-	public IHost getHost() {
-		return fHost;
-	}
 	
 	
 
