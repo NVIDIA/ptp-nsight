@@ -508,10 +508,12 @@ static string_launch_attr string_launch_attrs[] = {
      */
     {"MP_PMDLOG_DIR", ATTR_ALWAYS_ALLOWED, "PMD Log Directory",
      "Specify directory where PMD log is generated (MP_PMDLOG_DIR)", ""},
+#if 0
     {"MP_PRIORITY_LOG_DIR", ATTR_FOR_AIX | ATTR_FOR_ALL_PROXY, "Priority Log Directory",
      "Specify directory containing co-scheduler log (MP_PRIORITY_LOG_DIR)", "/tmp"},
     {"MP_PRIORITY_LOG_NAME", ATTR_FOR_AIX | ATTR_FOR_ALL_PROXY, "Priority Log Name",
      "Specify name of co-scheduler log (MP_PRIORITY_LOG_NAME)", "pmadjpri.log"},
+#endif
     /*
      * Debug related attributes
      */

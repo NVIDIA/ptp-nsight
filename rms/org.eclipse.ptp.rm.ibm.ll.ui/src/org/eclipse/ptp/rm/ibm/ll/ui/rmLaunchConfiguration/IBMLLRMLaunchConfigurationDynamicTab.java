@@ -1332,6 +1332,7 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 		createLimitsTab(rm);
 		print_message(TRACE_MESSAGE, "<<< " + this.getClass().getName()
 				+ ":createControl returning.");
+		currentRM = rm; //DRW-09-22-08 Fix null pointer exception in validating fields
 	}
 
 	/**
@@ -2344,13 +2345,13 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 //				LL_PTP_NETWORK_LAPI);
 //		llNetwork_mpi_lapi = createTextWidget(nodesNetworkTabPane, rm,
 //				LL_PTP_NETWORK_MPI_LAPI);
-		validateNumericRange(llNodeMin, LL_PTP_NODE_MIN, "Invalid.llNodeMin");
-		validateNumericRange(llNodeMax, LL_PTP_NODE_MAX, "Invalid.llNodeMax");
+//drw		validateNumericRange(llNodeMin, LL_PTP_NODE_MIN, "Invalid.llNodeMin");
+//drw		validateNumericRange(llNodeMax, LL_PTP_NODE_MAX, "Invalid.llNodeMax");
 //no checks will be performed on the following widgets at this time
 //		llTaskGeometry = createTextWidget(nodesNetworkTabPane, rm,
 //				LL_PTP_TASK_GEOMETRY);
-		validatePositiveNumeric(llTasksPerNode,"Invalid.llTasksPerNode");
-		validatePositiveNumeric(llTotalTasks,"Invalid.llTotalTasks");
+//drw		validatePositiveNumeric(llTasksPerNode,"Invalid.llTasksPerNode");
+//drw		validatePositiveNumeric(llTotalTasks,"Invalid.llTotalTasks");
 
 		print_message(TRACE_MESSAGE, "<<< " + this.getClass().getName()
 				+ ":validateNodesNetworkTab returning.");
@@ -2674,6 +2675,8 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 
 		print_message(TRACE_MESSAGE, ">>> " + this.getClass().getName()
 				+ ":validateNumericRange entered.");
+		IAttributeDefinition def;
+		def = currentRM.getAttributeDefinition(attrName);
 		attrDef = (IntegerAttributeDefinition) currentRM
 				.getAttributeDefinition(attrName);
 		try {
