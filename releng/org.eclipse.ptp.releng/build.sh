@@ -36,8 +36,8 @@ cd results/plugins
 
 # Check out rdt.core.remotejars, rdt.core.stubs and cdt.core for source
 export CVSROOT=:pserver:anonymous@dev.eclipse.org:/cvsroot/tools
-cvs co -d org.eclipse.ptp.rdt.core.remotejars org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.remotejars
-cvs co -d org.eclipse.ptp.rdt.core.stubs org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.stubs
+cvs co -r ptp_2_1 -d org.eclipse.ptp.rdt.core.remotejars org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.remotejars
+cvs co -r ptp_2_1 -d org.eclipse.ptp.rdt.core.stubs org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.stubs
 cvs co -r cdt_5_0 -d org.eclipse.cdt.core org.eclipse.cdt/all/org.eclipse.cdt.core
 
 cd org.eclipse.ptp.rdt.core.remotejars
