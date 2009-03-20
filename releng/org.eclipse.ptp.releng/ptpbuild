@@ -43,7 +43,7 @@ rm -fr org.eclipse.ptp
 
 # Check out the releng project
 export CVSROOT=:pserver:anonymous@dev.eclipse.org:/cvsroot/tools
-cvs co -r $TAG -d org.eclipe.ptp org.eclipse.ptp/releng/org.eclipse.ptp.releng
+cvs co -r $TAG -d org.eclipse.ptp org.eclipse.ptp/releng/org.eclipse.ptp.releng
 
 # run the main script
 cd org.eclipse.ptp
