@@ -14,11 +14,13 @@
 # launching the build script in the releng project
 
 TAG=HEAD
+# main staging directory
+BUILD_DIR=/opt/public/download-staging.priv/tools/ptp/releng
 
 args=`getopt t: $*`
 
 if [ $? != 0 ]; then
-	echo "usage: ptpbuild [-t tag] [build_args]"
+	echo "usage: ptpbuild [-t tag] [-d build_dir] [build_args]"
 	exit 1
 fi
 
@@ -28,17 +30,13 @@ do
 	case "$i"
 	in
 	-t) TAG="$2"; shift; shift;;
+	-d) BUILD_DIR="$2"; shift; shift;;
 	--) shift; break;;
 	esac
 done
 
-
-# main staging directory
-BUILD_DIR=/opt/public/download-staging.priv/tools/ptp/releng
-
 # create the releng staging directory and go there
-mkdir -p $BUILD_DIR
-cd $BUILD_DIR
+mkdir -p $BUILD_DIR && cd $BUILD_DIR
 
 # remove the old build
 rm -fr org.eclipse.ptp
