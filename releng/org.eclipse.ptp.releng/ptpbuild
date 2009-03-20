@@ -34,11 +34,11 @@ done
 
 
 # main staging directory
-STAGING_DIR=/opt/public/download-staging.priv/tools/ptp/releng
+BUILD_DIR=/opt/public/download-staging.priv/tools/ptp/releng
 
 # create the releng staging directory and go there
-mkdir -p $STAGING_DIR
-cd $STAGING_DIR
+mkdir -p $BUILD_DIR
+cd $BUILD_DIR
 
 # remove the old build
 rm -fr org.eclipse.ptp
