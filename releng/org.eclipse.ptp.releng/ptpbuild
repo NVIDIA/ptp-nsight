@@ -2,13 +2,13 @@
 #
 # ptpbuild wrapper script
 #
-# Usage: ptpbuild [-t tag] [build_args]
+# Usage: ptpbuild [-t tag] [-d build_dir] [build_args]
 #
 # where
 #
 # tag is the CVS tag used to check out the releng project (default HEAD)
-#
-# build_args are any arguments you want to pass to the build script.
+# build_dir is the location that the build will take place
+# build_args are any arguments you want to pass to the build script
 #
 # set up anything environment specific that needs to be done before
 # launching the build script in the releng project
