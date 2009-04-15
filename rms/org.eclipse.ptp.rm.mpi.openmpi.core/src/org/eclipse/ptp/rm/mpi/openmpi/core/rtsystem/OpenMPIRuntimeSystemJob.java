@@ -266,7 +266,14 @@ public class OpenMPIRuntimeSystemJob extends AbstractToolRuntimeSystemJob {
 		// Parse stdout or stderr, depending on mpi 1.2 or 1.3
 		OpenMPIResourceManagerConfiguration configuration = (OpenMPIResourceManagerConfiguration) getRtSystem().getRmConfiguration();
 		if (configuration.getVersionId().equals(OpenMPIResourceManagerConfiguration.VERSION_12)) {
-			stderrObserver.addListener(parserPipedStreamListener);
+			 /* 
+			  * Fix for bug #271810 
+			  */
+			if (!rtSystem.getRemoteServices().getId().equals("org.eclipse.ptp.remote.RSERemoteServices")) { //$NON-NLS-1$
+				stderrObserver.addListener(parserPipedStreamListener);
+			} else {
+				stdoutObserver.addListener(parserPipedStreamListener);
+			}
 		} else if (configuration.getVersionId().equals(OpenMPIResourceManagerConfiguration.VERSION_13)) {
 			stdoutObserver.addListener(parserPipedStreamListener);
 		} else {
@@ -297,7 +304,7 @@ public class OpenMPIRuntimeSystemJob extends AbstractToolRuntimeSystemJob {
 //			}
 			boolean parseError = true;
 //			if (!process.isCompleted()) {
-				DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: destroy process due error while parsing display map", jobID); //$NON-NLS-1$
+				DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: destroy process due to error while parsing display map", jobID); //$NON-NLS-1$
 //				process.destroy();
 //			} else {
 //				DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: process terminated with no valid display map", jobID); //$NON-NLS-1$
