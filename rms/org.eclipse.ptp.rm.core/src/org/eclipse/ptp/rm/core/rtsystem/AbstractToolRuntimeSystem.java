@@ -654,13 +654,16 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 		return remoteServices.getProcessBuilder(connection, command);
 	}
 
-	public IRemoteProcessBuilder createProcessBuilder(List<String> command, String workdir) {
-		IRemoteFileManager fileManager = remoteServices.getFileManager(connection);
+	public IRemoteProcessBuilder createProcessBuilder(List<String> command, String workdir) throws IOException {
 		IFileStore directory = null;
-		try {
-			directory = fileManager.getResource(new Path(workdir), new NullProgressMonitor());
-		} catch (IOException e) {
-			e.printStackTrace();
+		 /* 
+		  * Ignore workdir if we're using RSE to avoid triggering bug #258481
+		  */
+		if (!getRemoteServices().getId().equals("org.eclipse.ptp.remote.RSERemoteServices")) { //$NON-NLS-1$
+			IRemoteFileManager fileManager = remoteServices.getFileManager(connection);
+			if (fileManager != null) {
+				directory = fileManager.getResource(new Path(workdir), new NullProgressMonitor());
+			}
 		}
 		IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(connection, command);
 		processBuilder.directory(directory);
