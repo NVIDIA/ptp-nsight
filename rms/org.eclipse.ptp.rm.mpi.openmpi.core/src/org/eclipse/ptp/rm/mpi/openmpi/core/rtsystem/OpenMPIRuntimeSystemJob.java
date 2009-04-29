@@ -398,11 +398,13 @@ public class OpenMPIRuntimeSystemJob extends AbstractToolRuntimeSystemJob {
 		 * Wait until both stdout and stderr stop because stream are closed.
 		 * This means that the process has finished.
 		 */
-		DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: waiting stderr thread to finish", jobID); //$NON-NLS-1$
-		try {
-			stderrObserver.join();
-		} catch (InterruptedException e1) {
-			// Ignore
+		if (!rtSystem.getRemoteServices().getId().equals("org.eclipse.ptp.remote.RSERemoteServices")) { //$NON-NLS-1$
+			DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: waiting stderr thread to finish", jobID); //$NON-NLS-1$
+			try {
+				stderrObserver.join();
+			} catch (InterruptedException e1) {
+				// Ignore
+			}
 		}
 
 		DebugUtil.trace(DebugUtil.RTS_JOB_TRACING_MORE, "RTS job #{0}: waiting stdout thread to finish", jobID); //$NON-NLS-1$
