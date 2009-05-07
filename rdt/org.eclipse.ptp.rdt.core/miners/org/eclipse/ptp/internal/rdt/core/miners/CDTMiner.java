@@ -811,7 +811,7 @@ public class CDTMiner extends Miner {
 					if (needToFindDefinition(subject)) {
 						IBinding binding= IndexQueries.elementToBinding(index, subject);
 						if (binding != null) {
-							ICElement[] result= IndexQueries.findAllDefinitions(index, binding, null, subject.getCProject(), new RemoteCProjectFactory());
+							ICElement[] result= IndexQueries.findAllDefinitions(index, binding, getLocationConverter(hostName), subject.getCProject(), new RemoteCProjectFactory());
 							if (result.length > 0) {
 								definitions = result;
 							}
@@ -872,14 +872,14 @@ public class CDTMiner extends Miner {
 							}
 						}
 						else {
-							ICElement[] elems= IndexQueries.findAllDefinitions(index, binding, null, project, new RemoteCProjectFactory());
+							ICElement[] elems= IndexQueries.findAllDefinitions(index, binding, getLocationConverter(hostName), project, new RemoteCProjectFactory());
 							if (elems.length == 0) {
 								ICElement elem= null;
 								if (name.isDeclaration()) {
-									elem= IndexQueries.getCElementForName(project, index, name, null, new RemoteCProjectFactory());
+									elem= IndexQueries.getCElementForName(project, index, name, getLocationConverter(hostName), new RemoteCProjectFactory());
 								}
 								else {
-									elem= IndexQueries.findAnyDeclaration(index, project, binding, null, new RemoteCProjectFactory());
+									elem= IndexQueries.findAnyDeclaration(index, project, binding, getLocationConverter(hostName), new RemoteCProjectFactory());
 								}
 								if (elem != null) {
 									elems= new ICElement[]{elem};
