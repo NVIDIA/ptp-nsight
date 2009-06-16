@@ -806,7 +806,7 @@ public class CDTMiner extends Miner {
 				ICElement[] definitions = null;
 				if (subject instanceof ISourceReference) {
 					ISourceReference input = (ISourceReference) subject;
-					ITranslationUnit tu = ((ISourceReference) subject).getTranslationUnit();
+					ITranslationUnit tu = input.getTranslationUnit();
 					
 					if (needToFindDefinition(subject)) {
 						IBinding binding= IndexQueries.elementToBinding(index, subject);
@@ -916,7 +916,9 @@ public class CDTMiner extends Miner {
 	}
 	
 	private IIndexFileLocation createLocation(String hostName, IIndexFileLocation location) throws URISyntaxException {
-		return new RemoteIndexFileLocation(null, new URI("rse://" + hostName + location.getFullPath())); //$NON-NLS-1$
+		URI uri = location.getURI();
+		URI newURI = new URI("rse", hostName, uri.getPath(), null, null); //$NON-NLS-1$
+		return new RemoteIndexFileLocation(null, newURI);
 	}
 
 	protected void handleUnregisterScope(DataElement scopeName, DataElement status) {
@@ -1110,7 +1112,7 @@ public class CDTMiner extends Miner {
 		
 		Set<String> files = new LinkedHashSet<String>();
 		
-		System.out.println("Added scope " + scope + "Files:\n"); //$NON-NLS-1$ //$NON-NLS-2$
+		System.out.println("Added scope " + scope + ". Files:\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		System.out.flush();
 		
 		while(iterator.hasNext())

@@ -136,7 +136,10 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 		int selectionLength = fTextSelection.getLength();
 		
 		INavigationService service = getNavigationService(workingCopy.getCProject().getProject());
+		
 		OpenDeclarationResult result = service.openDeclaration(scope, workingCopy, fSelectedText, selectionStart, selectionLength, monitor);
+		
+		
 		if(result == null) // can happen when using the null service provider
 			return Status.OK_STATUS;
 		
@@ -147,7 +150,7 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 				break;
 			case RESULT_C_ELEMENTS:
 				ICElement[] elements = (ICElement[]) result.getResult();
-				navigateCElements(elements);
+				navigateCElements(elements, project);
 				break;
 			case RESULT_INCLUDE_PATH:
 				String path = (String) result.getResult();
@@ -200,6 +203,7 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 			public void run() {
 				try {
 					clearStatusLine();
+					
 					IEditorPart editor = EditorUtility.openInEditor(uri, element);
 					if (editor instanceof ITextEditor) {
 						ITextEditor textEditor = (ITextEditor)editor;
@@ -210,14 +214,14 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 					}
 						
 				} catch (CoreException e) {
-					CUIPlugin.log(e);
+					RDTLog.logError(e);
 				}
 			}
 		});
 	}
 	
 	
-	private void navigateCElements(final ICElement[] elements) {
+	private void navigateCElements(final ICElement[] elements, final ICProject project) {
 		if (elements == null || elements.length == 0)
 			return;
 
@@ -237,8 +241,10 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 					try {
 						ISourceRange sourceRange = ((ISourceReference) target).getSourceRange();
 						URI uri = replacePath(target.getLocationURI(), target.getPath().toString());
-						open(uri, target, sourceRange.getIdStartPos(), sourceRange.getIdLength());
-					} catch (CModelException e) {
+						
+						open(uri, project, sourceRange.getIdStartPos(), sourceRange.getIdLength());
+						
+					} catch (CoreException e) {
 						RDTLog.logError(e);
 					}
 				}
