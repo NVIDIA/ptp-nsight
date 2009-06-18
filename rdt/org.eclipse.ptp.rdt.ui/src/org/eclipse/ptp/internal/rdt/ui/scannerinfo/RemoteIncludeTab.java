@@ -13,12 +13,10 @@ import org.eclipse.cdt.ui.newui.IncludeTab;
  */
 public class RemoteIncludeTab extends IncludeTab {
 	
-	private static final String DIALOG_TITLE = "Remote Include Directory"; //$NON-NLS-1$
-
 	@Override
 	public ICLanguageSettingEntry doAdd() {
 		
-		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), DIALOG_TITLE);
+		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, false);
 		
 		if(dlg.open() && dlg.getDirectory().trim().length() > 0 ) {
 			toAllCfgs = dlg.isAllConfigurations();
@@ -33,7 +31,7 @@ public class RemoteIncludeTab extends IncludeTab {
 	@Override
 	public ICLanguageSettingEntry doEdit(ICLanguageSettingEntry ent) {
 		
-		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), DIALOG_TITLE);
+		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, true);
 		dlg.setPathText(ent.getValue());
 		
 		if(dlg.open()) {
