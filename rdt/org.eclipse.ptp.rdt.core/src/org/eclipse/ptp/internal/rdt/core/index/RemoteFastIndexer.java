@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,10 +40,15 @@ public class RemoteFastIndexer extends AbstractPDOMIndexer {
 		
 		IServiceProvider serviceProvider = serviceConfig.getServiceProvider(indexingService);
 		
+		boolean update = true;
+		
+		if (changed.length == 0 && removed.length == 0)
+			update = false;
+		
 		if(serviceProvider instanceof IIndexServiceProvider)
-			return new RemoteIndexerTask(this, (IIndexServiceProvider) serviceProvider, added, changed, removed);
-		else
-			return null;
+			return new RemoteIndexerTask(this, (IIndexServiceProvider) serviceProvider, added, changed, removed, update);
+		
+		return null;
 	}
 
 	public String getID() {
