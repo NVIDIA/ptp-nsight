@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007-2008 IBM Corporation and others.
+ * Copyright (c) 2007, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -116,5 +116,26 @@ public class RemoteIndexManager {
 		}
 
 		return indexer;
+	}
+	
+	/**
+	 * Deletes the index file associated with the given scope name.
+	 * @param scope
+	 * @return true if and only if the file is successfully deleted; false otherwise
+	 */
+	public boolean removeIndexFile(String scope) {
+		
+		if(scope.equals(Scope.WORKSPACE_ROOT_SCOPE_NAME)) {
+			throw new IllegalArgumentException("Attempted to remove index file for root scope."); //$NON-NLS-1$
+		}
+		
+		scopeToIndexerMap.remove(scope);
+		
+		File indexFile = new File(scope + PDOM_EXTENSION);
+		
+		System.out.println("Remove index at location: " + indexFile.getAbsolutePath()); //$NON-NLS-1$
+		System.out.flush();
+		
+		return indexFile.delete();
 	}
 }
