@@ -251,7 +251,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 	try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						RDTLog.logError(e);
 					}
                 }
                 
@@ -259,7 +259,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
-					e.printStackTrace();
+					RDTLog.logError(e);
 				}
 
 				monitor.done();
@@ -361,7 +361,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 	try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						RDTLog.logError(e);
 					}
                 }
                 
@@ -369,7 +369,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
-					e.printStackTrace();
+					RDTLog.logError(e);
 				}
 
 				monitor.done();
@@ -394,9 +394,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     			RemoteIndexerProgress info = (RemoteIndexerProgress) result;
     			return info;
     		} catch (IOException e) {
-    			e.printStackTrace();
+    			RDTLog.logError(e);
     		} catch (ClassNotFoundException e) {
-    			e.printStackTrace();
+    			RDTLog.logError(e);
     		}    		
     	}
     	return null;
@@ -489,7 +489,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					
 				} catch (CModelException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					RDTLog.logError(e);
 				}
 			}
 			
@@ -724,7 +724,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         }
         catch (Exception e)
         {
-        	e.printStackTrace();
+        	RDTLog.logError(e);
         }
     	
     	DataElement element = status.get(0);
@@ -738,9 +738,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			}
 			return (List<Proposal>) result;
 		} catch (IOException e) {
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			RDTLog.logError(e);
 		}
     	return Collections.emptyList();
 	}
@@ -812,7 +812,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         	}
         }
         catch (Exception e) {
-        	e.printStackTrace();
+        	RDTLog.logError(e);
         }
     	
     	DataElement element = status.get(0);
@@ -831,9 +831,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			Object result = Serializer.deserialize(data);
 			return result;
 		} catch (IOException e) {
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			RDTLog.logError(e);
 		}
     	return null;
 	}
@@ -843,7 +843,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         	String serialized = Serializer.serialize(object);
         	return dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, serialized);
     	} catch (IOException e) {
-    		e.printStackTrace();
+    		RDTLog.logError(e);
     		return null;
     	}
 	}
@@ -890,7 +890,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				
 				checkProject(project, monitor);
 			} catch (Throwable e) {
-				e.printStackTrace();
+				RDTLog.logError(e);
 			}
 		}
 	}

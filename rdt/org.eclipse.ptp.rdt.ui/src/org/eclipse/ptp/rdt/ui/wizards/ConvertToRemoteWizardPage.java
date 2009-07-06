@@ -26,6 +26,7 @@ import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
@@ -99,7 +100,7 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 			b = !project.hasNature(RemoteNature.REMOTE_NATURE_ID);
 			c = !project.hasNature("org.eclipse.rse.ui.remoteSystemsTempNature"); //$NON-NLS-1$
 		} catch (CoreException e) {
-			e.printStackTrace();
+			RDTLog.logError(e);
 		}
 		return a && b && c; 
     }
@@ -113,11 +114,9 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 			RemoteNature.addRemoteNature(project, monitor);
 			configureServicesForRemoteProject(project);
 		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} finally {
 			monitor.done();
 		}
@@ -133,11 +132,9 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 			RemoteNature.addRemoteNature(project, monitor);
 			configureServicesForRemoteProject(project);
 		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			RDTLog.logError(e);
 		} finally {
 			monitor.done();
 		}
