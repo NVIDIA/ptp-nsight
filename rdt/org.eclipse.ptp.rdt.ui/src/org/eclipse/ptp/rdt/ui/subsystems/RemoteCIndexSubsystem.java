@@ -256,6 +256,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 }
                 
 				try {
+					smonitor.waitForUpdate(status, monitor);
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
@@ -366,6 +367,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 }
                 
 				try {
+					smonitor.waitForUpdate(status, monitor);
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
@@ -867,6 +869,17 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		{
 			dataStore.command(commandDescriptor, cmd, false, true);
 		}	
+	}
+	
+	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor) {
+		Object result = sendRequest(CDTMiner.C_MODEL_BUILDER, new Object[] {unit}, monitor);
+		if (result == null) 
+		{
+			return null;
+		}
+		
+		//the working copy	
+		return (ITranslationUnit) result;
 	}
 	
 	public void checkAllProjects(IProgressMonitor monitor) {

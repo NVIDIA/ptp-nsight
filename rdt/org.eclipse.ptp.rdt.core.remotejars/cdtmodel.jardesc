@@ -11,9 +11,10 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=org.eclipse.cdt.core/model&lt;org.eclipse.cdt.core.model"/>
+        <javaElement handleIdentifier="=org.eclipse.cdt.core/model&lt;org.eclipse.cdt.internal.core.model{ASTStringUtil.java"/>
         <javaElement handleIdentifier="=org.eclipse.cdt.core/model&lt;org.eclipse.cdt.internal.core.util"/>
         <javaElement handleIdentifier="=org.eclipse.cdt.core/browser"/>
-        <javaElement handleIdentifier="=org.eclipse.cdt.core/model&lt;org.eclipse.cdt.core.model"/>
     </selectedElements>
     <fatjar builder="org.eclipse.jdt.ui.plain_jar_builder" launchConfig=""/>
 </jardesc>

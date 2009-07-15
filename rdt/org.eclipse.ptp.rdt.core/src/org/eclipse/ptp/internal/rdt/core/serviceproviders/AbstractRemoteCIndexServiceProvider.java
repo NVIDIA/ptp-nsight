@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,8 @@ import org.eclipse.ptp.internal.rdt.core.callhierarchy.ICallHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.RemoteCallHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.index.IIndexLifecycleService;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexLifecycleService;
+import org.eclipse.ptp.internal.rdt.core.model.IModelBuilderService;
+import org.eclipse.ptp.internal.rdt.core.model.RemoteModelBuilderService;
 import org.eclipse.ptp.internal.rdt.core.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.core.navigation.RemoteNavigationService;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.ITypeHierarchyService;
@@ -41,6 +43,7 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 	protected INavigationService fNavigationService;
 	protected ICallHierarchyService fCallHierarchyService;
 	protected ITypeHierarchyService fTypeHierarchyService;
+	protected IModelBuilderService fModelBuilderService;
 	
 	public static final String ID = "org.eclipse.ptp.rdt.core.RemoteCIndexServiceProvider"; //$NON-NLS-1$
 	public static final String NAME = Messages.RemoteCIndexServiceProvider_0;
@@ -103,6 +106,16 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 			fTypeHierarchyService = new RemoteTypeHierarchyService(fHost, fConnectorService);
 		
 		return fTypeHierarchyService;
+	}
+	
+	public synchronized IModelBuilderService getModelBuilderService() {
+		if(!isConfigured())
+			return null;
+		
+		if(fModelBuilderService== null)
+			fModelBuilderService = new RemoteModelBuilderService(fHost, fConnectorService);
+		
+		return fModelBuilderService;
 	}
 
 	/**

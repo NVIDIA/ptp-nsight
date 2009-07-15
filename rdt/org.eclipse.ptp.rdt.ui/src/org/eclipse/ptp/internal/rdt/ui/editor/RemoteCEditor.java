@@ -2,10 +2,18 @@ package org.eclipse.ptp.internal.rdt.ui.editor;
 
 import org.eclipse.cdt.internal.ui.editor.CContentOutlinePage;
 import org.eclipse.cdt.internal.ui.editor.CEditor;
+import org.eclipse.cdt.internal.ui.text.CTextTools;
+import org.eclipse.cdt.internal.ui.util.EditorUtility;
+import org.eclipse.cdt.ui.CUIPlugin;
+import org.eclipse.cdt.ui.text.ICPartitions;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
 import org.eclipse.ptp.internal.rdt.ui.search.actions.SelectionSearchGroup;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.actions.ActionGroup;
 
 
@@ -23,6 +31,7 @@ import org.eclipse.ui.actions.ActionGroup;
  */
 public class RemoteCEditor extends CEditor {
 	
+	private IEditorInput input;
 	
 	/**
 	 * Returns true if the input translation unit comes from
@@ -71,7 +80,34 @@ public class RemoteCEditor extends CEditor {
 			return super.getOutlinePage();
 		}
 	}
-
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.cdt.internal.ui.editor.CEditor#setPreferenceStore(org.eclipse.jface.preference.IPreferenceStore)
+	 */
+	@Override
+	protected void setPreferenceStore(IPreferenceStore store) {
+		super.setPreferenceStore(store);
+		
+		IProject project = EditorUtility.getCProject(input).getProject();
+		if (RemoteNature.hasRemoteNature(project)) {
+			//use remote source viewer configuration
+			SourceViewerConfiguration sourceViewerConfiguration= getSourceViewerConfiguration();
+			if (!(sourceViewerConfiguration instanceof RemoteCSourceViewerConfiguration)) {
+				CTextTools textTools= CUIPlugin.getDefault().getTextTools();
+				setSourceViewerConfiguration(new RemoteCSourceViewerConfiguration(textTools.getColorManager(), store, this, ICPartitions.C_PARTITIONING));
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.cdt.internal.ui.editor.CEditor#doSetInput(org.eclipse.ui.IEditorInput)
+	 */
+	@Override
+	protected void doSetInput(IEditorInput input) throws CoreException {
+		//save a copy of the editor input for setPreferenceStore() 
+		//since it hasn't been stored in the editor yet
+		this.input = input; 
+		super.doSetInput(input);
+	}
 	
 }

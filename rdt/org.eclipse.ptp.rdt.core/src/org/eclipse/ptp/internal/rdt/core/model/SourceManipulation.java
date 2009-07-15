@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -66,6 +66,22 @@ public abstract class SourceManipulation extends Parent implements ISourceManipu
 
 	public int getIdStartPos() {
 		return fRange.getIdStartPos();
+	}
+	
+	public int getLength() {
+		return fRange.getLength();
+	}
+	
+	public int getIdLength() {
+		return fRange.getIdLength();
+	}
+	
+	public int getStartLine() {
+		return fRange.getStartLine();
+	}
+
+	public int getEndLine() {
+		return fRange.getEndLine();
 	}
 
 	public void setPos(int offset, int length) {

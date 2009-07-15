@@ -243,4 +243,12 @@ public interface ICIndexSubsystem {
 	 * @return
 	 */
 	public OpenDeclarationResult openDeclaration(Scope scope, ITranslationUnit unit, String selectedText, int selectionStart, int selectionLength, IProgressMonitor monitor);
+	
+	/**
+	 * Returns a model built using the content of the given translation unit
+	 * @param unit
+	 * @param monitor
+	 * @return
+	 */
+	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor);
 }
