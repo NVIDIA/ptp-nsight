@@ -17,6 +17,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Plugin;
+import org.eclipse.core.runtime.Preferences;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -50,6 +52,9 @@ import org.eclipse.swt.widgets.Text;
  * The dynamic tab for SDM-based debugger implementations.
  */
 public class SDMPage extends AbstractLaunchConfigurationTab {
+	
+	private static final String SDM_LOCATION = "last_valid_applied_location_of_sdm_executable";
+	
 	protected static final String EMPTY_STRING = ""; //$NON-NLS-1$
 
 	private IResourceManagerControl resourceManager = null;
@@ -243,6 +248,14 @@ public class SDMPage extends AbstractLaunchConfigurationTab {
 		if (isValid(configuration)) {
 			configuration.setAttribute(IPTPLaunchConfigurationConstants.ATTR_DEBUGGER_EXECUTABLE_PATH, getFieldContent(fRMDebuggerPathText.getText()));
 			configuration.setAttribute(IPTPLaunchConfigurationConstants.ATTR_DEBUGGER_HOST, getFieldContent(fRMDebuggerAddressText.getText()));
+			
+			Plugin plugin=org.eclipse.ptp.debug.sdm.ui.SDMDebugUIPlugin.getDefault();
+			Preferences prefs = plugin.getPluginPreferences();
+			
+			prefs.setValue(SDM_LOCATION, getFieldContent(fRMDebuggerPathText.getText()));
+			
+			plugin.savePluginPreferences();
+			
 		}
 	}
 
@@ -268,7 +281,18 @@ public class SDMPage extends AbstractLaunchConfigurationTab {
 					AbstractRemoteResourceManagerConfiguration remConfig = (AbstractRemoteResourceManagerConfiguration)rmConfig;
 					IPath rmPath = new Path(remConfig.getProxyServerPath());
 					path = rmPath.removeLastSegments(1).append("sdm").toString(); //$NON-NLS-1$/
+					
 				}
+				
+				if(path.equals("sdm")||path.equals("")){
+					Plugin plugin=org.eclipse.ptp.debug.sdm.ui.SDMDebugUIPlugin.getDefault();
+					Preferences prefs = plugin.getPluginPreferences();
+					path=prefs.getString(SDM_LOCATION);
+					if(path==null||path.equals("")){
+						path="sdm";
+					}
+				}
+				
 			}
 		} catch (CoreException e) {
 		}
