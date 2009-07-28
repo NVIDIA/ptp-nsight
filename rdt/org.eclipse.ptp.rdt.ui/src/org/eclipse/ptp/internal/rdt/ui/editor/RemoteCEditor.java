@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * IBM Corporation - Initial API and implementation
+ *******************************************************************************/
+
 package org.eclipse.ptp.internal.rdt.ui.editor;
 
 import org.eclipse.cdt.internal.ui.editor.CContentOutlinePage;
@@ -8,6 +19,7 @@ import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.text.ICPartitions;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
@@ -108,6 +120,12 @@ public class RemoteCEditor extends CEditor {
 		//since it hasn't been stored in the editor yet
 		this.input = input; 
 		super.doSetInput(input);
+	}
+
+	@Override
+	public void editorContextMenuAboutToShow(IMenuManager menu) {
+		super.editorContextMenuAboutToShow(menu);
+		menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
 	}
 	
 }
