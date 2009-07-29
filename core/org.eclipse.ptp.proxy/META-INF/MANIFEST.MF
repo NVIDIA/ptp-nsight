@@ -2,5 +2,5 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.ptp.proxy
-Bundle-Version: 2.1.3.qualifier
+Bundle-Version: 2.1.4.qualifier
 Bundle-Vendor: %pluginProvider
