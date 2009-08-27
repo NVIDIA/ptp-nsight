@@ -38,4 +38,9 @@ public interface IIndexServiceProvider extends IServiceProvider {
 	public ITypeHierarchyService getTypeHierarchyService();
 
 	public IModelBuilderService getModelBuilderService();
+	
+	
+	public void setIndexLocation(String path);
+	
+	public String getIndexLocation();
 }

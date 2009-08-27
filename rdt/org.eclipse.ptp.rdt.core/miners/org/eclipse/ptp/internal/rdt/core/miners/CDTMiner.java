@@ -88,6 +88,8 @@ public class CDTMiner extends Miner {
 	public static final String T_INDEX_DELTA_REMOVED = "Type.Index.Delta.Removed"; //$NON-NLS-1$
 	public static final String T_INDEX_SCANNER_INFO_PROVIDER = "Type.Index.ScannerInfoProvider"; //$NON-NLS-1$
 	public static final String C_REMOVE_INDEX_FILE = "C_REMOVE_INDEX_FILE"; //$NON-NLS-1$
+	public static final String C_MOVE_INDEX_FILE = "C_MOVE_INDEX_FILE"; //$NON-NLS-1$
+	public static final String T_MOVE_INDEX_FILE_RESULT = "Type.Index.MoveResult";  //$NON-NLS-1$
 	
 	// indexer progress
 	public static final String T_INDEXER_PROGRESS_INFO = "Type.Indexer.ProgressInfo"; //$NON-NLS-1$
@@ -98,6 +100,7 @@ public class CDTMiner extends Miner {
 	public static final String C_SCOPE_DELTA = "C_SCOPE_DELTA"; //$NON-NLS-1$
 	public static final String C_SCOPE_COUNT_ELEMENTS = "C_SCOPE_COUNT_ELEMENTS"; //$NON-NLS-1$
 	public static final String T_SCOPE_SCOPENAME_DESCRIPTOR = "Type.Scope.Scopename"; //$NON-NLS-1$
+	public static final String T_SCOPE_CONFIG_LOCATION = "Type.Scope.ConfigLocation"; //$NON-NLS-1$
 	
 	// call hierarchy service
 	public static final String C_CALL_HIERARCHY_GET_CALLS = "C_CALL_HIERARCHY_GET_CALLS"; //$NON-NLS-1$
@@ -145,10 +148,12 @@ public class CDTMiner extends Miner {
 		if (name.equals(C_SCOPE_REGISTER)) {
 
 			DataElement scopeName = getCommandArgument(theCommand, 1);
+			DataElement configLocation = getCommandArgument(theCommand, 2);
+			
 
 			ArrayList<DataElement> fileNames = new ArrayList<DataElement>();
 
-			for (int i = 2; i < theCommand.getNestedSize() - 1; i++) {
+			for (int i = 3; i < theCommand.getNestedSize() - 1; i++) {
 				DataElement fileName = getCommandArgument(theCommand, i);
 				String type = fileName.getType();
 
@@ -167,7 +172,7 @@ public class CDTMiner extends Miner {
 
 			System.out.println("about to register scope\n"); //$NON-NLS-1$
 			System.out.flush();
-			handleRegisterScope(scopeName, fileNames, status);
+			handleRegisterScope(scopeName, configLocation.getName(), fileNames, status);
 
 		}
 		
@@ -183,7 +188,7 @@ public class CDTMiner extends Miner {
 		{
 			DataElement scopeName = getCommandArgument(theCommand, 1);
 	
-			handleRemoveIndexFile(scopeName, status);
+			handleIndexFileRemove(scopeName, status);
 		}
 
 		else if (name.equals(C_INDEX_START)) {
@@ -268,10 +273,11 @@ public class CDTMiner extends Miner {
 			try {
 				String scopeName = getString(theCommand, 1);
 				IRemoteIndexerInfoProvider provider = (IRemoteIndexerInfoProvider) Serializer.deserialize(getString(theCommand, 2));
+				String newIndexLocation = getString(theCommand, 3);
 	
 				System.out.println("Re-indexing scope " + scopeName); //$NON-NLS-1$
 	
-				handleReindex(scopeName, provider, status);
+				handleReindex(scopeName, newIndexLocation, provider, status);
 				
 				System.out.println("Reindexing complete."); //$NON-NLS-1$
 				System.out.flush();
@@ -283,6 +289,18 @@ public class CDTMiner extends Miner {
 
 		}
 
+		else if(name.equals(C_MOVE_INDEX_FILE)) {
+			try {
+				String scopeName = getString(theCommand, 1);
+				String newIndexLocation = getString(theCommand, 2);
+				
+				handleIndexFileMove(scopeName, newIndexLocation, status);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		else if (name.equals(C_CALL_HIERARCHY_GET_CALLERS)) {
 			try {
 				String scopeName = getString(theCommand, 1);
@@ -503,7 +521,22 @@ public class CDTMiner extends Miner {
 		
 		return status;
 	}
-
+	
+	
+	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
+		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation);
+		status.getDataStore().createObject(status, T_MOVE_INDEX_FILE_RESULT, actualLocation);
+		statusDone(status);
+	}
+	
+	
+	protected void handleIndexFileRemove(DataElement scopeName, DataElement status) {
+		String scope = scopeName.getName();
+		RemoteIndexManager.getInstance().removeIndexFile(scope);
+		statusDone(status);
+	}
+	
+	
 	/**
 	 * Builds a model using content from given translation unit
 	 * @param unit
@@ -840,6 +873,7 @@ public class CDTMiner extends Miner {
 		createCommandDescriptor(schemaRoot, "Reindex", C_INDEX_REINDEX, false); //$NON-NLS-1$
 		createCommandDescriptor(schemaRoot, "Index Delta", C_INDEX_DELTA, false); //$NON-NLS-1$
 		createCommandDescriptor(schemaRoot, "Remove Index File", C_REMOVE_INDEX_FILE, false); //$NON-NLS-1$
+		createCommandDescriptor(schemaRoot, "Move Index File", C_MOVE_INDEX_FILE, false); //$NON-NLS-1$
 		
 		// call hierarchy
 		createCommandDescriptor(schemaRoot, "Get Callers", C_CALL_HIERARCHY_GET_CALLERS, false); //$NON-NLS-1$
@@ -1009,12 +1043,6 @@ public class CDTMiner extends Miner {
 		
 	}
 	
-	protected void handleRemoveIndexFile(DataElement scopeName, DataElement status) {
-		String scope = scopeName.getName();
-		
-		RemoteIndexManager.getInstance().removeIndexFile(scope);
-		statusDone(status);
-	}
 
 	protected void handleGetCallers(String scopeName, ICElement subject, String hostName, DataElement status) {
 		String subjectName = subject.getElementName();
@@ -1165,13 +1193,15 @@ public class CDTMiner extends Miner {
 		}
 	}
 	
-	protected void handleReindex(String scopeName, IRemoteIndexerInfoProvider provider, DataElement status) {
-		StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider);
+	protected void handleReindex(String scopeName, String newIndexLocation, IRemoteIndexerInfoProvider provider, DataElement status) {
+		RemoteIndexManager indexManager = RemoteIndexManager.getInstance();
+		indexManager.setIndexFileLocation(scopeName, newIndexLocation);
+		StandaloneFastIndexer indexer = indexManager.getIndexerForScope(scopeName, provider);
 		Set<String> sources = ScopeManager.getInstance().getFilesForScope(scopeName);
 		
 		List<String> sourcesList = new LinkedList<String>(sources);
 	
-		try {
+		try { 
 			indexer.setTraceStatistics(true);
 			indexer.setShowProblems(true);
 			indexer.setShowActivity(true);
@@ -1188,14 +1218,14 @@ public class CDTMiner extends Miner {
 	 * @param scopeName DataElement containing the string name of the scope
 	 * @param fileNames a list of DataElements which each store the string pathname of a file in the scope
 	 */
-	protected void handleRegisterScope(DataElement scopeName, List<DataElement> fileNames, DataElement status) {
+	protected void handleRegisterScope(DataElement scopeName, String configLocation, List<DataElement> fileNames, DataElement status) {
 		String scope = scopeName.getName();
 		
 		Iterator<DataElement> iterator = fileNames.iterator();
 		
 		Set<String> files = new LinkedHashSet<String>();
 		
-		System.out.println("Added scope " + scope + ". Files:\n"); //$NON-NLS-1$ //$NON-NLS-2$
+		System.out.println("Added scope " + scope + " at " + configLocation + " Files:\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		System.out.flush();
 		
 		while(iterator.hasNext())
@@ -1210,6 +1240,7 @@ public class CDTMiner extends Miner {
 		}
 		
 		ScopeManager.getInstance().addScope(scope, files);
+		RemoteIndexManager.getInstance().setIndexFileLocation(scope, configLocation);
 		
 		statusDone(status);
 		

@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CProjectNature;
+import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModelUtil;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -63,6 +64,7 @@ import org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.THGraph;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
+import org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider;
 import org.eclipse.ptp.rdt.services.core.IService;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
@@ -75,6 +77,7 @@ import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.SubSystem;
+import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 
 /**
  * An RSE subsystem which is used to provide C/C++ indexing services from a Miner
@@ -108,7 +111,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	@Override
 	public void initializeSubSystem(IProgressMonitor monitor) {
 		super.initializeSubSystem(monitor);
-		
+
 		fInitializedProjects = new HashSet<IProject>();
 		fProjectOpenListener = new ProjectChangeListener(this);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
@@ -188,7 +191,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 * (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#reindexScope(org.eclipse.ptp.internal.rdt.core.model.Scope, org.eclipse.ptp.internal.rdt.core.IRemoteIndexerInfoProvider, org.eclipse.core.runtime.IProgressMonitor, org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask)
 	 */
-	public IStatus reindexScope(Scope scope, IRemoteIndexerInfoProvider provider, IProgressMonitor monitor, RemoteIndexerTask task)
+	public IStatus reindexScope(Scope scope, IRemoteIndexerInfoProvider provider, String indexLocation, IProgressMonitor monitor, RemoteIndexerTask task)
 	{
 		DataStore dataStore = getDataStore();
 		   
@@ -218,8 +221,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 //	    	}
 //	    	
 //	    	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.1"), count); //$NON-NLS-1$
+	     	
 	     	monitor.beginTask("Rebuilding indexing...", 100); //$NON-NLS-1$
-
+	   
 	        DataElement queryCmd = dataStore.localDescriptorQuery(dataStore.getDescriptorRoot(), CDTMiner.C_INDEX_REINDEX);
             if (queryCmd != null)
             {
@@ -227,7 +231,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
             	ArrayList<Object> args = new ArrayList<Object>();
             	            	
             	// need to know the scope
-               	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
+            	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
                	args.add(scopeElement);
             	
             	String serializedProvider = null;
@@ -240,8 +244,12 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				DataElement providerElement = dataStore.createObject(null, CDTMiner.T_INDEX_SCANNER_INFO_PROVIDER, serializedProvider);
 				args.add(providerElement);
             	
+				// need to know the scope config location
+            	DataElement indexLocationElement = dataStore.createObject(null, CDTMiner.T_SCOPE_CONFIG_LOCATION, indexLocation);
+               	args.add(indexLocationElement);
+				
                 DataElement status = dataStore.command(queryCmd, args, result);   
-                
+
                 //poll for progress information until the operation is done or canceled
                 while (!status.getName().equals("done") && !status.getName().equals("cancelled") && !monitor.isCanceled()) { //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -250,7 +258,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 	try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						RDTLog.logError(e);
+						RDTLog.logError(e);	
 					}
                 }
                 
@@ -259,7 +267,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
-					RDTLog.logError(e);
+					RDTLog.logError(e);	
 				}
 
 				monitor.done();
@@ -361,7 +369,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                 	try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						RDTLog.logError(e);
+						RDTLog.logError(e);	
 					}
                 }
                 
@@ -370,7 +378,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					if (monitor.isCanceled()) 
 						cancelOperation(monitor, status.getParent());
 				} catch (Exception e) {
-					RDTLog.logError(e);
+					RDTLog.logError(e);	
 				}
 
 				monitor.done();
@@ -395,9 +403,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     			RemoteIndexerProgress info = (RemoteIndexerProgress) result;
     			return info;
     		} catch (IOException e) {
-    			RDTLog.logError(e);
+    			RDTLog.logError(e);	
     		} catch (ClassNotFoundException e) {
-    			RDTLog.logError(e);
+    			RDTLog.logError(e);	
     		}    		
     	}
     	return null;
@@ -408,7 +416,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#registerScope(org.eclipse.ptp.internal.rdt.core.model.Scope, java.lang.String[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public IStatus registerScope(Scope scope, List<ICElement> elements, IProgressMonitor monitor)
+	public IStatus registerScope(Scope scope, List<ICElement> elements, String configLocation, IProgressMonitor monitor)
 	{
 		DataStore dataStore = getDataStore();
 		   
@@ -429,12 +437,14 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
             	// need to know the scope
             	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
             	args.add(scopeElement);
+            	
+            	// need to know where to find the pdom file for the scope
+            	DataElement configElement = dataStore.createObject(null, CDTMiner.T_SCOPE_CONFIG_LOCATION, configLocation);
+            	args.add(configElement);
             
             	// add in the filenames
-            	Iterator<ICElement> iterator = elements.iterator();
-            	while(iterator.hasNext())
-            	{
-            		addElement(dataStore, args, iterator.next());
+            	for(ICElement element : elements) {
+            		addElement(dataStore, args, element);
             	}
             	
             	// execute the command
@@ -489,8 +499,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 						addElement(dataStore, args, children[k]);
 					
 				} catch (CModelException e) {
-					// TODO Auto-generated catch block
-					RDTLog.logError(e);
+					RDTLog.logError(e);	
 				}
 			}
 			
@@ -578,47 +587,18 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		return Status.OK_STATUS;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#removeIndexFile(org.eclipse.ptp.internal.rdt.core.model.Scope, org.eclipse.core.runtime.IProgressMonitor)
-	 */
+
 	public IStatus removeIndexFile(Scope scope, IProgressMonitor monitor) {
-		DataStore dataStore = getDataStore();
-		   
-	    if (dataStore != null)
-	    {
-	     	StatusMonitor smonitor = StatusMonitorFactory.getInstance().getStatusMonitorFor(getConnectorService(), dataStore);
-     		
-	    	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.10"), 100); //$NON-NLS-1$
-	   
-	        DataElement queryCmd = dataStore.localDescriptorQuery(dataStore.getDescriptorRoot(), CDTMiner.C_REMOVE_INDEX_FILE);
-            if (queryCmd != null)
-            {
-            	ArrayList<Object> args = new ArrayList<Object>();
-            	            	
-            	// need to know the scope
-            	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
-            	args.add(scopeElement);
-            	
-            	// execute the command
-            	DataElement status = dataStore.command(queryCmd, args, dataStore.getDescriptorRoot());
-            	
-            	try
-                {
-                	smonitor.waitForUpdate(status, monitor);
-                	if (monitor.isCanceled())
-                	{
-                		cancelOperation(monitor, status.getParent());
-                	}
-                }
-                catch (Exception e)
-                {                	
-                } 
-            }	
-	    }
-		
+		sendRequest(CDTMiner.C_REMOVE_INDEX_FILE, new Object[] {scope}, monitor);
 		return Status.OK_STATUS;
 	}	
+	
+	
+	public String moveIndexFile(String scopeName, String newIndexLocation, IProgressMonitor monitor) {
+		String actualLocation = sendRequestStringResult(CDTMiner.C_MOVE_INDEX_FILE, new Object[] {scopeName, newIndexLocation}, monitor);
+		return actualLocation;
+	}
+	
 	
 	public OpenDeclarationResult openDeclaration(Scope scope, ITranslationUnit unit, String selectedText, int selectionStart, int selectionLength, IProgressMonitor monitor) {
 		monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.9"), 100); //$NON-NLS-1$
@@ -725,7 +705,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         }
         catch (Exception e)
         {
-        	RDTLog.logError(e);
+        	RDTLog.logError(e);	
         }
     	
     	DataElement element = status.get(0);
@@ -739,9 +719,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			}
 			return (List<Proposal>) result;
 		} catch (IOException e) {
-			RDTLog.logError(e);
+			RDTLog.logError(e);	
 		} catch (ClassNotFoundException e) {
-			RDTLog.logError(e);
+			RDTLog.logError(e);	
 		}
     	return Collections.emptyList();
 	}
@@ -770,7 +750,21 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		return (ICElement[]) result;
 	}
 	
+	
 	public Object sendRequest(String requestType, Object[] arguments, IProgressMonitor monitor) {
+		return sendRequest(requestType, arguments, monitor, true);
+	}
+	
+	public String sendRequestStringResult(String requestType, Object[] arguments, IProgressMonitor monitor) {
+		return (String) sendRequest(requestType, arguments, monitor, false);
+	}
+	
+	/**
+	 * Sends a request in a set format of arguments.
+	 * 
+	 * @param deserializeResult If true the result will be deserialized, if false it will treat the result as a raw string.
+	 */
+	private Object sendRequest(String requestType, Object[] arguments, IProgressMonitor monitor, boolean deserializeResult) {
 		DataStore dataStore = getDataStore();
 	    if (dataStore == null)
 	    	return null;
@@ -813,7 +807,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         	}
         }
         catch (Exception e) {
-        	RDTLog.logError(e);
+        	RDTLog.logError(e);	
         }
     	
     	DataElement element = status.get(0);
@@ -827,14 +821,17 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     	}
     	
     	String data = element.getName();
+    	if(!deserializeResult)
+    		return data;
+    	
 		try
 		{
 			Object result = Serializer.deserialize(data);
 			return result;
 		} catch (IOException e) {
-			RDTLog.logError(e);
+			RDTLog.logError(e);	
 		} catch (ClassNotFoundException e) {
-			RDTLog.logError(e);
+			RDTLog.logError(e);	
 		}
     	return null;
 	}
@@ -844,7 +841,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
         	String serialized = Serializer.serialize(object);
         	return dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, serialized);
     	} catch (IOException e) {
-    		RDTLog.logError(e);
+    		RDTLog.logError(e);	
     		return null;
     	}
 	}
@@ -870,17 +867,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		}	
 	}
 	
-	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor) {
-		Object result = sendRequest(CDTMiner.C_MODEL_BUILDER, new Object[] {unit}, monitor);
-		if (result == null) 
-		{
-			return null;
-		}
-		
-		//the working copy	
-		return (ITranslationUnit) result;
-	}
-	
 	public void checkAllProjects(IProgressMonitor monitor) {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceRoot workspaceRoot = workspace.getRoot();
@@ -902,7 +888,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				
 				checkProject(project, monitor);
 			} catch (Throwable e) {
-				RDTLog.logError(e);
+				RDTLog.logError(e);	
 			}
 		}
 	}
@@ -950,15 +936,30 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			// collect the translation units
 			project.accept(fileCollector);
 
+			String configLocation = ((IIndexServiceProvider)provider).getIndexLocation();
 			Scope scope = new Scope(project.getName());
 
 			// unregister the scope if there already is one
 			unregisterScope(scope, monitor);
 
 			// register the new scope
-			registerScope(scope, cElements, monitor);
+			registerScope(scope, cElements, configLocation, monitor);
 			
 			fInitializedProjects.add(project);
 		}
 	}
+
+
+	
+	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor) {
+		Object result = sendRequest(CDTMiner.C_MODEL_BUILDER, new Object[] {unit}, monitor);
+		if (result == null) 
+		{
+			return null;
+		}
+		
+		//the working copy	
+		return (ITranslationUnit) result;
+	}
+	
 }

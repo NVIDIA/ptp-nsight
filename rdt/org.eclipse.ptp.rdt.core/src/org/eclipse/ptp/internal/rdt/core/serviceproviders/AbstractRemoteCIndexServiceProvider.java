@@ -44,6 +44,7 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 	protected ICallHierarchyService fCallHierarchyService;
 	protected ITypeHierarchyService fTypeHierarchyService;
 	protected IModelBuilderService fModelBuilderService;
+	protected String indexLocation;
 	
 	public static final String ID = "org.eclipse.ptp.rdt.core.RemoteCIndexServiceProvider"; //$NON-NLS-1$
 	public static final String NAME = Messages.RemoteCIndexServiceProvider_0;
@@ -123,6 +124,14 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 	 */
 	public IHost getHost() {
 		return fHost;
+	}
+	
+	public String getIndexLocation() {
+		return indexLocation;
+	}
+
+	public void setIndexLocation(String path) {
+		this.indexLocation = path;
 	}
 	
 	
