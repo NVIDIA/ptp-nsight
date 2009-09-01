@@ -46,6 +46,14 @@ public class RemoteCEditor extends CEditor {
 	private IEditorInput input;
 	
 	/**
+	 * Default constructor.
+	 */
+	public RemoteCEditor() {
+		super();		
+		setRulerContextMenuId("#RemoteCEditorRulerContext"); //$NON-NLS-1$
+	}
+	
+	/**
 	 * Returns true if the input translation unit comes from
 	 * a remote project. Also returns true if the editor
 	 * is opened on an external translation unit that was navigated
@@ -125,7 +133,10 @@ public class RemoteCEditor extends CEditor {
 	@Override
 	public void editorContextMenuAboutToShow(IMenuManager menu) {
 		super.editorContextMenuAboutToShow(menu);
+		//remove text search
 		menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
+		//remove refactoring for now
+		menu.remove("org.eclipse.cdt.ui.refactoring.menu"); //$NON-NLS-1$
 	}
 	
 }
