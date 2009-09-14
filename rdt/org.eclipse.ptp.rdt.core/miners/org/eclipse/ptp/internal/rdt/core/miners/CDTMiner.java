@@ -1145,6 +1145,8 @@ public class CDTMiner extends Miner {
 							if (defs != null && defs.length > 0) {
 								IIndexFileLocation indexLocation = createLocation(hostName, name.getFile().getLocation());
 								IIndexName reference = new DummyName(name, name.getFileLocation(), indexLocation);
+								
+								System.out.println("Found a callee: " + defs[0].getElementName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
 								result.add(defs, reference);
 							}
 						}
