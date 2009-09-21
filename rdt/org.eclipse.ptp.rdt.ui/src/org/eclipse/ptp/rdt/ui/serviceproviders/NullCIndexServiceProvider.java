@@ -123,21 +123,6 @@ public class NullCIndexServiceProvider extends
 	public static final String NAME = Messages.getString("NullCIndexServiceProvider.name"); //$NON-NLS-1$
 	public static final String SERVICE_ID = "org.eclipse.ptp.rdt.core.CIndexingService"; //$NON-NLS-1$
 	
-	/**
-	 * @param id
-	 * @param name
-	 * @param serviceId
-	 */
-	public NullCIndexServiceProvider(String id, String name, String serviceId) {
-		super(id, name, serviceId);
-	}
-
-	/**
-	 * 
-	 */
-	public NullCIndexServiceProvider() {
-		this(ID, NAME, SERVICE_ID);
-	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.serviceproviders.AbstractRemoteCIndexServiceProvider#getCallHierarchyService()
@@ -296,31 +281,23 @@ public class NullCIndexServiceProvider extends
 		};
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.internal.rdt.core.serviceproviders.AbstractRemoteCIndexServiceProvider#isConfigured()
-	 */
+
 	@Override
 	public boolean isConfigured() {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.rdt.services.core.IServiceProvider#getConfigurationString()
-	 */
+
 	public String getConfigurationString() {
 		return Messages.getString("NullServiceProvider.config"); //$NON-NLS-1$
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.rdt.services.core.IServiceProvider#restoreState(org.eclipse.ui.IMemento)
-	 */
+
 	public void restoreState(IMemento memento) {
 		// does not restore anything
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.rdt.services.core.IServiceProvider#saveState(org.eclipse.ui.IMemento)
-	 */
+
 	public void saveState(IMemento memento) {
 		// does not save anything
 	}

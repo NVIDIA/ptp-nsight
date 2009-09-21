@@ -162,13 +162,6 @@
             name="%RDTRemoteCIndexingService.name"
             serviceId="org.eclipse.ptp.rdt.core.CIndexingService">
       </provider>
-      <provider
-            class="org.eclipse.ptp.rdt.ui.serviceproviders.NullCIndexServiceProvider"
-            configurationUIClass="org.eclipse.ptp.rdt.ui.wizards.RemoteCIndexServiceProviderConfigurer"
-            id="org.eclipse.ptp.rdt.ui.NullCIndexServiceProvider"
-            name="%NullCIndexingService.name"
-            serviceId="org.eclipse.ptp.rdt.core.CIndexingService">
-      </provider>
    </extension>
    <extension
          id="org.eclipse.ptp.rdt.core.remoteNature"
@@ -195,13 +188,6 @@
             id="org.eclipse.ptp.rdt.ui.RemoteBuildServiceProvider"
             name="%RDTRemoteBuildService.name"
             serviceId="org.eclipse.ptp.rdt.core.BuildService">
-      </provider>
-      <provider
-	        class="org.eclipse.ptp.rdt.ui.serviceproviders.NullBuildServiceProvider"
-	        configurationUIClass="org.eclipse.ptp.rdt.ui.wizards.RemoteServicesServiceProviderConfigurer"
-	        id="org.eclipse.ptp.rdt.ui.NullBuildServiceProvider"
-	        name="%NullBuildService.name"
-	        serviceId="org.eclipse.ptp.rdt.core.BuildService">
       </provider>
    </extension>
    <extension

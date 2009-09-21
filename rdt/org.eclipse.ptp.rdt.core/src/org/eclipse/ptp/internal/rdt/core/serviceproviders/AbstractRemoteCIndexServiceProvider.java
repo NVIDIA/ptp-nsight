@@ -12,6 +12,7 @@ package org.eclipse.ptp.internal.rdt.core.serviceproviders;
 
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.ICallHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.RemoteCallHierarchyService;
+import org.eclipse.ptp.internal.rdt.core.includebrowser.IIncludeBrowserService;
 import org.eclipse.ptp.internal.rdt.core.index.IIndexLifecycleService;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexLifecycleService;
 import org.eclipse.ptp.internal.rdt.core.model.IModelBuilderService;
@@ -22,7 +23,7 @@ import org.eclipse.ptp.internal.rdt.core.typehierarchy.ITypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.RemoteTypeHierarchyService;
 import org.eclipse.ptp.rdt.core.messages.Messages;
 import org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider;
-import org.eclipse.ptp.rdt.services.core.ServiceProviderDescriptor;
+import org.eclipse.ptp.rdt.services.core.ServiceProvider;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 
@@ -33,16 +34,16 @@ import org.eclipse.rse.core.subsystems.IConnectorService;
  * @noextend
  * @see org.eclipse.ptp.rdt.ui.serviceproviders.RemoteCIndexServiceProvider
  */
-public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProviderDescriptor implements IIndexServiceProvider {
+public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvider implements IIndexServiceProvider {
 
 	protected boolean fIsConfigured;
 	protected IHost fHost;
-	protected String fHostName;
 	protected IConnectorService fConnectorService;
 	protected IIndexLifecycleService fIndexLifecycleService;
 	protected INavigationService fNavigationService;
 	protected ICallHierarchyService fCallHierarchyService;
 	protected ITypeHierarchyService fTypeHierarchyService;
+	protected IIncludeBrowserService fIncludeBrowserService;
 	protected IModelBuilderService fModelBuilderService;
 	protected String indexLocation;
 	
@@ -50,44 +51,8 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 	public static final String NAME = Messages.RemoteCIndexServiceProvider_0;
 	public static final String SERVICE_ID = "org.eclipse.ptp.rdt.core.CIndexingService"; //$NON-NLS-1$
 	
-	public AbstractRemoteCIndexServiceProvider(String id, String name, String serviceId) {
-		super(id, name, serviceId);
-	}
-	
-	public void setConnection(IHost host, IConnectorService connectorService) {
-		fHost = host;
-		fHostName = host.getAliasName();
-		fConnectorService = connectorService;
-		setConfigured(true);
-	}
-	
-	public boolean isConfigured() {
-		return fIsConfigured;
-	}
-
-	public void setConfigured(boolean isConfigured) {
-		fIsConfigured = isConfigured;
-	}
-	
-	public synchronized IIndexLifecycleService getIndexLifeCycleService() {
-		if(!isConfigured())
-			return null;
-		
-		if(fIndexLifecycleService == null)
-			fIndexLifecycleService = new RemoteIndexLifecycleService(fHost, fConnectorService);
-		
-		return fIndexLifecycleService;
-	}
-	
-	public synchronized INavigationService getNavigationService() {
-		if(!isConfigured())
-			return null;
-		
-		if(fNavigationService== null)
-			fNavigationService = new RemoteNavigationService(fHost, fConnectorService);
-		
-		return fNavigationService;
-	}
+	private static final String HOST_NAME_KEY = "host-name"; //$NON-NLS-1$
+	private static final String INDEX_LOCATION_KEY = "index-location"; //$NON-NLS-1$
 	
 	public synchronized ICallHierarchyService getCallHierarchyService() {
 		if(!isConfigured())
@@ -99,14 +64,22 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 		return fCallHierarchyService;
 	}
 	
-	public synchronized ITypeHierarchyService getTypeHierarchyService() {
+	/**
+	 * @return the system connection for this service provider
+	 */
+	public IHost getHost() {
+		return fHost;
+	}
+	
+	
+	public synchronized IIndexLifecycleService getIndexLifeCycleService() {
 		if(!isConfigured())
 			return null;
 		
-		if(fTypeHierarchyService== null)
-			fTypeHierarchyService = new RemoteTypeHierarchyService(fHost, fConnectorService);
+		if(fIndexLifecycleService == null)
+			fIndexLifecycleService = new RemoteIndexLifecycleService(fHost, fConnectorService);
 		
-		return fTypeHierarchyService;
+		return fIndexLifecycleService;
 	}
 	
 	public synchronized IModelBuilderService getModelBuilderService() {
@@ -118,20 +91,68 @@ public abstract class AbstractRemoteCIndexServiceProvider extends ServiceProvide
 		
 		return fModelBuilderService;
 	}
+	
+	public synchronized INavigationService getNavigationService() {
+		if(!isConfigured())
+			return null;
+		
+		if(fNavigationService== null)
+			fNavigationService = new RemoteNavigationService(fHost, fConnectorService);
+		
+		return fNavigationService;
+	}
 
-	/**
-	 * @return the system connection for this service provider
-	 */
-	public IHost getHost() {
-		return fHost;
+	public synchronized ITypeHierarchyService getTypeHierarchyService() {
+		if(!isConfigured())
+			return null;
+		
+		if(fTypeHierarchyService== null)
+			fTypeHierarchyService = new RemoteTypeHierarchyService(fHost, fConnectorService);
+		
+		return fTypeHierarchyService;
+	}
+
+
+		
+	public boolean isConfigured() {
+		return fIsConfigured;
 	}
 	
-	public String getIndexLocation() {
-		return indexLocation;
+	public void setConfigured(boolean isConfigured) {
+		fIsConfigured = isConfigured;
+	}
+	
+	public void setConnection(IHost host, IConnectorService connectorService) {
+		fHost = host;
+		fConnectorService = connectorService;
+		setHostName(host.getAliasName());
+		setConfigured(true);
+	}
+	
+ 	/**
+	 * Set the host name for this connection
+	 * 
+	 * @param hostName
+	 */
+	public void setHostName(String hostName) {
+		putString(HOST_NAME_KEY, hostName);
+ 	}
+	
+	/**
+	 * Get the host name for this connection.
+	 * 
+	 * @return host name
+	 */
+	public String getHostName() {
+		return getString(HOST_NAME_KEY, null);
 	}
 
 	public void setIndexLocation(String path) {
-		this.indexLocation = path;
+		putString(INDEX_LOCATION_KEY, path);
+	}
+	
+	public String getIndexLocation() {
+		return getString(INDEX_LOCATION_KEY, null);
 	}
 	
 	
