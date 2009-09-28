@@ -44,8 +44,8 @@
 	<property name="filesystemJar" value="org.eclipse.core.filesystem_${filesystemVersion}.jar"/>
 	
 	<property name="rseBaseUrl" value="http://download.eclipse.org/dsdp/tm/downloads/drops"/>
-	<property name="rseVersion" value="M20090819-0600"/>
-	<property name="dStoreBaseName" value="rseserver-M20090819-0600"/>
+	<property name="rseVersion" value="M20090922-0300"/>
+	<property name="dStoreBaseName" value="rseserver-M20090922-0300"/>
 	<property name="defaultJVMHeapSize" value="-Xms64m -Xmx128m -Xss2m"/>
 	
 	<target name="fetch" depends="fetch.rse" unless="nofetch"/>
