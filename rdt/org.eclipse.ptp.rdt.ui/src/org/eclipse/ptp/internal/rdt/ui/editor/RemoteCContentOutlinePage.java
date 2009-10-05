@@ -37,7 +37,7 @@ public class RemoteCContentOutlinePage extends CContentOutlinePage {
 	@Override
 	protected ActionGroup createOpenViewActionGroup() {
 		OpenViewActionGroup ovag= new OpenViewActionGroup(this);
-		ovag.setEnableIncludeBrowser(true);
+//		ovag.setEnableIncludeBrowser(true);
 		return ovag;
 	}
 	

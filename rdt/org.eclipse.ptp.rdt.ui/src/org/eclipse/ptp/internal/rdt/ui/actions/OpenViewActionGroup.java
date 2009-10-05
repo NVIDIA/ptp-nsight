@@ -32,7 +32,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ptp.internal.rdt.ui.callhierarchy.OpenCallHierarchyAction;
-import org.eclipse.ptp.internal.rdt.ui.includebrowser.OpenIncludeBrowserAction;
+//import org.eclipse.ptp.internal.rdt.ui.includebrowser.OpenIncludeBrowserAction;
 import org.eclipse.ptp.internal.rdt.ui.search.actions.OpenDeclarationsAction;
 import org.eclipse.ptp.internal.rdt.ui.typehierarchy.OpenTypeHierarchyAction;
 import org.eclipse.ui.IActionBars;
@@ -60,7 +60,7 @@ public class OpenViewActionGroup extends ActionGroup {
 	private boolean fSuppressTypeHierarchy;
 	private boolean fSuppressCallHierarchy;
 	private boolean fSuppressProperties;
-	private boolean fEnableIncludeBrowser;
+//	private boolean fEnableIncludeBrowser;
 	
 	private IWorkbenchSite fSite;
 	private String fGroupName= IContextMenuConstants.GROUP_OPEN;
@@ -70,7 +70,7 @@ public class OpenViewActionGroup extends ActionGroup {
 	private OpenTypeHierarchyAction fOpenTypeHierarchy;
 	private PropertyDialogAction fOpenPropertiesDialog;
 	private OpenCallHierarchyAction fOpenCallHierarchy;
-	private OpenIncludeBrowserAction fOpenIncludeBrowser;
+//	private OpenIncludeBrowserAction fOpenIncludeBrowser;
 	private OpenDeclarationsAction fOpenDeclaration;
 
 	/**
@@ -128,9 +128,9 @@ public class OpenViewActionGroup extends ActionGroup {
         fOpenCallHierarchy.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_CALL_HIERARCHY);
         part.setAction("OpenCallHierarchy", fOpenCallHierarchy); //$NON-NLS-1$
 
-        fOpenIncludeBrowser= new OpenIncludeBrowserAction(part);
-        fOpenIncludeBrowser.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_INCLUDE_BROWSER);
-        part.setAction("OpenIncludeBrowser", fOpenIncludeBrowser); //$NON-NLS-1$
+//        fOpenIncludeBrowser= new OpenIncludeBrowserAction(part);
+//        fOpenIncludeBrowser.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_INCLUDE_BROWSER);
+//        part.setAction("OpenIncludeBrowser", fOpenIncludeBrowser); //$NON-NLS-1$
         
         if (part instanceof CEditor) {
         	fOpenDeclaration= new OpenDeclarationsAction((CEditor) part);
@@ -154,8 +154,8 @@ public class OpenViewActionGroup extends ActionGroup {
 		fOpenCallHierarchy= new OpenCallHierarchyAction(site);
         fOpenCallHierarchy.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_CALL_HIERARCHY);
 
-		fOpenIncludeBrowser= new OpenIncludeBrowserAction(site);
-		fOpenIncludeBrowser.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_INCLUDE_BROWSER);
+//		fOpenIncludeBrowser= new OpenIncludeBrowserAction(site);
+//		fOpenIncludeBrowser.setActionDefinitionId(ICEditorActionDefinitionIds.OPEN_INCLUDE_BROWSER);
 
         if (editor != null) {
         	fOpenDeclaration= new OpenDeclarationsAction(editor);
@@ -176,7 +176,7 @@ public class OpenViewActionGroup extends ActionGroup {
 //		fOpenExternalJavadoc.update(selection);
 		fOpenTypeHierarchy.update(selection);
 		fOpenCallHierarchy.update(selection);
-		fOpenIncludeBrowser.update(selection);
+//		fOpenIncludeBrowser.update(selection);
 		if (!fEditorIsOwner) {
 			if (selection instanceof IStructuredSelection) {
 				IStructuredSelection ss= (IStructuredSelection)selection;
@@ -188,7 +188,7 @@ public class OpenViewActionGroup extends ActionGroup {
 //			provider.addSelectionChangedListener(fOpenExternalJavadoc);
 			provider.addSelectionChangedListener(fOpenTypeHierarchy);
 			provider.addSelectionChangedListener(fOpenCallHierarchy);
-			provider.addSelectionChangedListener(fOpenIncludeBrowser);
+//			provider.addSelectionChangedListener(fOpenIncludeBrowser);
 			// no need to register the open properties dialog action since it registers itself
 		}
 	}
@@ -224,9 +224,9 @@ public class OpenViewActionGroup extends ActionGroup {
 			if (!fSuppressCallHierarchy && fOpenCallHierarchy.isEnabled()) {
 				menu.appendToGroup(fGroupName, fOpenCallHierarchy);
 			}
-			if (fEnableIncludeBrowser && fOpenIncludeBrowser.isEnabled()) {
-				menu.appendToGroup(fGroupName, fOpenIncludeBrowser);
-			}
+//			if (fEnableIncludeBrowser && fOpenIncludeBrowser.isEnabled()) {
+//				menu.appendToGroup(fGroupName, fOpenIncludeBrowser);
+//			}
 		}
 //		appendToGroup(menu, fOpenSuperImplementation);
 		if (!fSuppressProperties) {
@@ -246,7 +246,7 @@ public class OpenViewActionGroup extends ActionGroup {
 //		provider.removeSelectionChangedListener(fOpenExternalJavadoc);
 		provider.removeSelectionChangedListener(fOpenTypeHierarchy);
 		provider.removeSelectionChangedListener(fOpenCallHierarchy);
-		provider.removeSelectionChangedListener(fOpenIncludeBrowser);
+//		provider.removeSelectionChangedListener(fOpenIncludeBrowser);
 		if (fOpenPropertiesDialog != null) {
 			fOpenPropertiesDialog.dispose();
 		}
@@ -258,7 +258,7 @@ public class OpenViewActionGroup extends ActionGroup {
 //		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_EXTERNAL_JAVA_DOC, fOpenExternalJavadoc);
 		actionBars.setGlobalActionHandler(CdtActionConstants.OPEN_TYPE_HIERARCHY, fOpenTypeHierarchy);
         actionBars.setGlobalActionHandler(CdtActionConstants.OPEN_CALL_HIERARCHY, fOpenCallHierarchy);
-        actionBars.setGlobalActionHandler(CdtActionConstants.OPEN_INCLUDE_BROWSER, fOpenIncludeBrowser);
+//        actionBars.setGlobalActionHandler(CdtActionConstants.OPEN_INCLUDE_BROWSER, fOpenIncludeBrowser);
         if (fOpenDeclaration != null) {
         	actionBars.setGlobalActionHandler(CdtActionConstants.OPEN_DECLARATION, fOpenDeclaration);
         }
@@ -314,8 +314,8 @@ public class OpenViewActionGroup extends ActionGroup {
 		fSuppressProperties = suppressProperties;
 	}
 	
-	public void setEnableIncludeBrowser(boolean enableIncludeBrowser) {
-		fEnableIncludeBrowser = false; //remote include browser is only in PTP 3.0+
-//		fEnableIncludeBrowser= enableIncludeBrowser;
-	}
+//	public void setEnableIncludeBrowser(boolean enableIncludeBrowser) {
+//		fEnableIncludeBrowser = false; //remote include browser is only in PTP 3.0+
+////		fEnableIncludeBrowser= enableIncludeBrowser;
+//	}
 }
