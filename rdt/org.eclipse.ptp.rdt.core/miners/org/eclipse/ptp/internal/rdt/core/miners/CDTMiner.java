@@ -36,12 +36,8 @@ import org.eclipse.cdt.core.index.IIndexLocationConverter;
 import org.eclipse.cdt.core.index.IIndexName;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
-import org.eclipse.cdt.core.model.ILanguage;
 import org.eclipse.cdt.core.model.ISourceReference;
 import org.eclipse.cdt.core.model.ITranslationUnit;
-import org.eclipse.cdt.core.parser.CodeReader;
-import org.eclipse.cdt.core.parser.NullLogService;
-import org.eclipse.cdt.internal.core.indexer.ILanguageMapper;
 import org.eclipse.cdt.internal.core.indexer.StandaloneFastIndexer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -49,7 +45,9 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.dstore.core.miners.Miner;
 import org.eclipse.dstore.core.model.DE;
 import org.eclipse.dstore.core.model.DataElement;
+import org.eclipse.dstore.core.model.DataStore;
 import org.eclipse.dstore.core.model.DataStoreResources;
+import org.eclipse.dstore.core.server.ServerLogger;
 import org.eclipse.ptp.internal.rdt.core.IRemoteIndexerInfoProvider;
 import org.eclipse.ptp.internal.rdt.core.Serializer;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CalledByResult;
@@ -68,6 +66,7 @@ import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchQuery;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.THGraph;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.TypeHierarchyUtil;
+import org.eclipse.rse.dstore.universal.miners.UniversalServerUtilities;
 
 /**
  * @author crecoskie
@@ -130,6 +129,12 @@ public class CDTMiner extends Miner {
 	public static final String C_MODEL_BUILDER = "C_MODEL_BUILDER"; //$NON-NLS-1$;
 	public static final String C_MODEL_RESULT= "C_MODEL_RESULT"; //$NON-NLS-1$;
 
+	
+	public static final String LOG_TAG = "CDTMiner"; //$NON-NLS-1$
+	
+	public static final boolean DEBUG = true; // must be true for debug messages to be logged 
+	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.dstore.core.miners.Miner#getVersion()
 	 */
@@ -141,16 +146,24 @@ public class CDTMiner extends Miner {
 	 * @see org.eclipse.dstore.core.miners.Miner#handleCommand(org.eclipse.dstore.core.model.DataElement)
 	 */
 	public DataElement handleCommand(DataElement theCommand) {
+		try {
+			return doHandleCommand(theCommand);
+		}
+		catch(RuntimeException e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+			throw e;
+		}
+	}
+	
+	private DataElement doHandleCommand(DataElement theCommand) {
 		String name = getCommandName(theCommand);
 		DataElement status = getCommandStatus(theCommand);
 		//DataElement subject = getCommandArgument(theCommand, 0);
 		
 		if (name.equals(C_SCOPE_REGISTER)) {
-
 			DataElement scopeName = getCommandArgument(theCommand, 1);
 			DataElement configLocation = getCommandArgument(theCommand, 2);
 			
-
 			ArrayList<DataElement> fileNames = new ArrayList<DataElement>();
 
 			for (int i = 3; i < theCommand.getNestedSize() - 1; i++) {
@@ -158,36 +171,27 @@ public class CDTMiner extends Miner {
 				String type = fileName.getType();
 
 				if (type.equals(T_INDEX_FILENAME_DESCRIPTOR)) {
-					System.out.println("found a file\n"); //$NON-NLS-1$
-					System.out.flush();
-
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "found a file", _dataStore); //$NON-NLS-1$
 					fileNames.add(fileName);
 				}
-
 				else {
-					System.out.println("bad datatype in call to RegisterScope()"); //$NON-NLS-1$
-					System.out.flush();
+					UniversalServerUtilities.logWarning(LOG_TAG, "bad datatype in call to RegisterScope()", _dataStore); //$NON-NLS-1$
 				}
 			}
 
-			System.out.println("about to register scope\n"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "about to register scope: " + scopeName, _dataStore); //$NON-NLS-1$
 			handleRegisterScope(scopeName, configLocation.getName(), fileNames, status);
-
 		}
 		
 		else if(name.equals(C_SCOPE_UNREGISTER))
 		{
 			DataElement scopeName = getCommandArgument(theCommand, 1);
-			
 			handleUnregisterScope(scopeName, status);
-			
 		}
 		
 		else if(name.equals(C_REMOVE_INDEX_FILE))
 		{
 			DataElement scopeName = getCommandArgument(theCommand, 1);
-	
 			handleIndexFileRemove(scopeName, status);
 		}
 
@@ -195,18 +199,14 @@ public class CDTMiner extends Miner {
 			try {
 				String scopeName = getString(theCommand, 1);
 				IRemoteIndexerInfoProvider provider = (IRemoteIndexerInfoProvider) Serializer.deserialize(getString(theCommand, 2));
-	
-				System.out.println("Indexing scope " + scopeName); //$NON-NLS-1$
-	
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing scope " + scopeName, _dataStore); //$NON-NLS-1$
 				handleIndexStart(scopeName, provider, status);
-				
-				System.out.println("Indexing complete."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete", _dataStore); //$NON-NLS-1$
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		
@@ -216,15 +216,15 @@ public class CDTMiner extends Miner {
 			try {
 				provider = (IRemoteIndexerInfoProvider) Serializer.deserialize(getString(theCommand, 2));
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 				return status;
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 				return status;
 			}
 			
-			System.out.println("Indexing delta for scope " + scopeName); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing delta for scope: " + scopeName, _dataStore); //$NON-NLS-1$
+			
 			
 			List<String> addedFiles = new LinkedList<String>();
 			List<String> changedFiles = new LinkedList<String>();
@@ -234,38 +234,26 @@ public class CDTMiner extends Miner {
 				DataElement changeElement = getCommandArgument(theCommand, i);
 				String type = changeElement.getType();
 
+				String elementName = changeElement.getName();
 				if (type.equals(T_INDEX_DELTA_ADDED)) {
-					System.out.println("added a file: " + changeElement.getName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-					System.out.flush();
-
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "added a file: " + elementName, _dataStore); //$NON-NLS-1$
 					addedFiles.add(changeElement.getName());
 				}
-				
 				else if (type.equals(T_INDEX_DELTA_CHANGED)) {
-					System.out.println("changed a file: " + changeElement.getName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-					System.out.flush();
-
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "changed a file: " + elementName, _dataStore); //$NON-NLS-1$
 					changedFiles.add(changeElement.getName());
 				}
-				
 				else if (type.equals(T_INDEX_DELTA_REMOVED)) {
-					System.out.println("removed a file: " + changeElement.getName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-					System.out.flush();
-
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "removed a file: " + elementName, _dataStore); //$NON-NLS-1$
 					removedFiles.add(changeElement.getName());
 				}
-
 				else {
-					System.out.println("bad datatype in call to RegisterScope()"); //$NON-NLS-1$
-					System.out.flush();
+					UniversalServerUtilities.logWarning(LOG_TAG, "bad datatype in call to RegisterScope()", _dataStore); //$NON-NLS-1$
 				}
 			}
 			
 			handleIndexDelta(scopeName, addedFiles, changedFiles, removedFiles, provider, status);
-			
-			System.out.println("Indexing complete."); //$NON-NLS-1$
-			System.out.flush();
-			
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataStore); //$NON-NLS-1$
 		}
 		
 		else if(name.equals(C_INDEX_REINDEX))
@@ -275,16 +263,16 @@ public class CDTMiner extends Miner {
 				IRemoteIndexerInfoProvider provider = (IRemoteIndexerInfoProvider) Serializer.deserialize(getString(theCommand, 2));
 				String newIndexLocation = getString(theCommand, 3);
 	
-				System.out.println("Re-indexing scope " + scopeName); //$NON-NLS-1$
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Reindexing scope " + scopeName, _dataStore); //$NON-NLS-1$
 	
 				handleReindex(scopeName, newIndexLocation, provider, status);
 				
-				System.out.println("Reindexing complete."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Reindexing complete.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 
 		}
@@ -297,7 +285,7 @@ public class CDTMiner extends Miner {
 				handleIndexFileMove(scopeName, newIndexLocation, status);
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		
@@ -307,17 +295,16 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				ICElement subject = (ICElement) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Getting callers..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callers...", _dataStore); //$NON-NLS-1$
 				
 				handleGetCallers(scopeName, subject, hostName, status);
 				
-				System.out.println("Finished getting callers."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished getting callers.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 
@@ -327,17 +314,16 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				ICElement subject = (ICElement) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Getting callees..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callees...", _dataStore); //$NON-NLS-1$
 				
 				handleGetCallees(scopeName, subject, hostName, status);
 				
-				System.out.println("Finished getting callees."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished getting callees.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		
@@ -347,17 +333,17 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				ICElement subject = (ICElement) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Getting definitions..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting definitions...", _dataStore); //$NON-NLS-1$
+				
 				
 				handleGetDefinitions(scopeName, hostName, subject, status);
 				
-				System.out.println("Finished getting definitions."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished getting definitions.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		
@@ -369,17 +355,16 @@ public class CDTMiner extends Miner {
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
 				
-				System.out.println("Getting definitions..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting definitions...", _dataStore); //$NON-NLS-1$
 				
 				handleGetDefinitions(scopeName, hostName, unit, selectionStart, selectionLength, status);
 				
-				System.out.println("Finished getting definitions."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished getting definitions.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 
@@ -389,17 +374,16 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				RemoteSearchQuery query = (RemoteSearchQuery) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Finding matches based on a pattern..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finding matches based on a pattern...", _dataStore); //$NON-NLS-1$
 				
 				handleRunQuery(scopeName, query, hostName, status);
 				
-				System.out.println("Finished finding matches"); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished finding matches", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 
@@ -409,14 +393,14 @@ public class CDTMiner extends Miner {
 				RemoteContentAssistInvocationContext context = (RemoteContentAssistInvocationContext) Serializer.deserialize(getString(theCommand, 2));
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Computing completions..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Computing completions...", _dataStore); //$NON-NLS-1$
 				
 				handleComputeCompletionProposals(scopeName, context, unit, status);
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		
@@ -426,14 +410,14 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				ICElement input = (ICElement) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Computing type graph..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Computing type graph...", _dataStore); //$NON-NLS-1$
+				
 				
 				handleComputeTypeGraph(scopeName, hostName, input, status);
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		else if (name.equals(C_TYPE_HIERARCHY_FIND_INPUT1)) {
@@ -442,15 +426,15 @@ public class CDTMiner extends Miner {
 				String hostName = getString(theCommand, 2);
 				ICElement input = (ICElement) Serializer.deserialize(getString(theCommand, 3));
 				
-				System.out.println("Finding type hierarchy input from element selection..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finding type hierarchy input from element selection...", _dataStore); //$NON-NLS-1$
+				
 				
 				String projectName = input.getCProject().getElementName();
 				handleFindTypeHierarchyInput(scopeName, hostName, projectName, input, status);
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		else if (name.equals(C_TYPE_HIERARCHY_FIND_INPUT2)) {
@@ -461,15 +445,15 @@ public class CDTMiner extends Miner {
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
 				
-				System.out.println("Finding type hierarchy input from text selection..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finding type hierarchy input from text selection...", _dataStore); //$NON-NLS-1$
+				
 				
 				String projectName = unit.getCProject().getElementName();
 				handleFindTypeHierarchyInput(scopeName, hostName, unit, projectName, selectionStart, selectionLength, status);
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
 		else if (name.equals(C_NAVIGATION_OPEN_DECLARATION)) {
@@ -480,42 +464,34 @@ public class CDTMiner extends Miner {
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
 				
-				System.out.println("Open declaration..."); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Open declaration...", _dataStore); //$NON-NLS-1$
 				
-				OpenDeclarationResult result = OpenDeclarationHandler.handleOpenDeclaration(scopeName, unit, selectedText, selectionStart, selectionLength);
+				OpenDeclarationResult result = OpenDeclarationHandler.handleOpenDeclaration(scopeName, unit, selectedText, selectionStart, selectionLength, _dataStore);
 				
 				String resultString = Serializer.serialize(result);
 				status.getDataStore().createObject(status, T_NAVIGATION_RESULT, resultString);
 				statusDone(status);
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (RuntimeException e) {
-				e.printStackTrace();
-				throw e;
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 			
 		}
-		else if (name.equals(C_MODEL_BUILDER)) 
-		{
-			try 
-			{
+		else if (name.equals(C_MODEL_BUILDER))  {
+			try {
 				ITranslationUnit workingCopy = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 1));
-				System.out.println("Model Builder: building working copy: " + workingCopy.getElementName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-				System.out.flush();
-				
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Model Builder: building working copy: " + workingCopy.getElementName() + "...", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+
 				handleGetModel(workingCopy, status);
 
-				System.out.println("Finished building model."); //$NON-NLS-1$
-				System.out.flush();
-
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished building model.", _dataStore); //$NON-NLS-1$
+				
 			} catch (IOException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}			
 		}
 		
@@ -524,7 +500,7 @@ public class CDTMiner extends Miner {
 	
 	
 	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
-		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation);
+		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation, _dataStore);
 		status.getDataStore().createObject(status, T_MOVE_INDEX_FILE_RESULT, actualLocation);
 		statusDone(status);
 	}
@@ -532,7 +508,7 @@ public class CDTMiner extends Miner {
 	
 	protected void handleIndexFileRemove(DataElement scopeName, DataElement status) {
 		String scope = scopeName.getName();
-		RemoteIndexManager.getInstance().removeIndexFile(scope);
+		RemoteIndexManager.getInstance().removeIndexFile(scope, _dataStore);
 		statusDone(status);
 	}
 	
@@ -544,8 +520,8 @@ public class CDTMiner extends Miner {
 	 */
 	protected void handleGetModel(ITranslationUnit unit, DataElement status) {
 		try {
-			System.out.println("CDTMiner: get model started"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Get model started", _dataStore); //$NON-NLS-1$
+			
 			
 			WorkingCopy workingCopy;
 			
@@ -562,13 +538,11 @@ public class CDTMiner extends Miner {
 				status.getDataStore().createObject(status, C_MODEL_RESULT, resultString);
 			}
 		} catch (IOException e) {
-			
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		} catch (DOMException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		} finally {
 			statusDone(status);
 		}
@@ -576,13 +550,13 @@ public class CDTMiner extends Miner {
 
 	protected void handleFindTypeHierarchyInput(String scopeName, String hostName, ITranslationUnit unit, String projectName, int selectionStart, int selectionLength, DataElement status) {
 		try {
-			System.out.println("File: " + unit.getLocationURI()); //$NON-NLS-1$
-			System.out.println("Element: " + unit.getElementName()); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + unit.getLocationURI(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Element: " + unit.getElementName(), _dataStore); //$NON-NLS-1$
 			
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				IIndexLocationConverter converter = getLocationConverter(hostName);
@@ -608,9 +582,9 @@ public class CDTMiner extends Miner {
 				}
 
 				if (result != null) {
-					System.out.println("Found input."); //$NON-NLS-1$
-					System.out.println("Details: " + result.toString()); //$NON-NLS-1$
-					System.out.flush();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found input.", _dataStore); //$NON-NLS-1$
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Details: " + result.toString(), _dataStore); //$NON-NLS-1$
+					
 				}
 				
 				String resultString = Serializer.serialize(result);
@@ -619,23 +593,23 @@ public class CDTMiner extends Miner {
 				index.releaseReadLock();
 				statusDone(status);
 			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+		} catch(Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
 
 	protected void handleFindTypeHierarchyInput(String scopeName, String hostName, String projectName, ICElement input, DataElement status) {
 		try {
-			System.out.println("File: " + input.getLocationURI()); //$NON-NLS-1$
-			System.out.println("Element: " + input.getElementName()); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + input.getLocationURI(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Element: " + input.getElementName(), _dataStore); //$NON-NLS-1$
+			
 			
 			IIndexLocationConverter converter = getLocationConverter(hostName);
 			
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				ICElement[] result = null;
@@ -655,8 +629,8 @@ public class CDTMiner extends Miner {
 				}
 
 				if (result != null) {
-					System.out.println("Found input."); //$NON-NLS-1$
-					System.out.flush();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found input.", _dataStore); //$NON-NLS-1$
+					
 				}
 				
 				String resultString = Serializer.serialize(result);
@@ -665,20 +639,20 @@ public class CDTMiner extends Miner {
 				index.releaseReadLock();
 				statusDone(status);
 			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
 	protected void handleComputeTypeGraph(String scopeName, String hostName, ICElement input, DataElement status) {
 		try {
-			System.out.println("File: " + input.getLocationURI()); //$NON-NLS-1$
-			System.out.println("Element: " + input.getElementName()); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + input.getLocationURI(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Element: " + input.getElementName(), _dataStore); //$NON-NLS-1$
 			
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				IProgressMonitor monitor = new NullProgressMonitor();
@@ -689,8 +663,8 @@ public class CDTMiner extends Miner {
 				graph.addSuperClasses(index, monitor, projectFactory);
 				graph.addSubClasses(index, monitor, projectFactory);
 
-				System.out.println("Found " + graph.getLeaveNodes().size() + " leaf node(s)."); //$NON-NLS-1$ //$NON-NLS-2$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + graph.getLeaveNodes().size() + " leaf node(s).", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+				
 
 				String resultString = Serializer.serialize(graph);
 				status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
@@ -698,20 +672,20 @@ public class CDTMiner extends Miner {
 				index.releaseReadLock();
 				statusDone(status);
 			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
 	protected void handleComputeCompletionProposals(String scopeName, RemoteContentAssistInvocationContext context, ITranslationUnit unit, DataElement status) {
 		try {
-			System.out.println("File: " + unit.getLocationURI()); //$NON-NLS-1$
-			System.out.println("Offset: " + context.getInvocationOffset()); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + unit.getLocationURI(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Offset: " + context.getInvocationOffset(), _dataStore); //$NON-NLS-1$
 			
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				int style = ITranslationUnit.AST_SKIP_INDEXED_HEADERS | ITranslationUnit.AST_CONFIGURE_USING_SOURCE_CONTEXT;
@@ -733,8 +707,8 @@ public class CDTMiner extends Miner {
 					proposals = computer.computeCompletionProposals(context, completionNode, prefix);
 				}
 
-				System.out.println("Found " + proposals.size() + " proposal(s)."); //$NON-NLS-1$ //$NON-NLS-2$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + proposals.size() + " proposal(s).", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+				
 
 				String resultString = Serializer.serialize(proposals);
 				status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
@@ -742,8 +716,8 @@ public class CDTMiner extends Miner {
 				index.releaseReadLock();
 				statusDone(status);
 			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+		} catch(Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
@@ -752,32 +726,32 @@ public class CDTMiner extends Miner {
 			
 			IIndex index;
 			ICProject[] projects = query.getProjects();
-			System.out.println("Searching for: \"" + query + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Searching for: \"" + query + "\"", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
 			
 			if (projects == null)
-				System.out.println("scope: " + scopeName); //$NON-NLS-1$
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
 			else
-				System.out.println("scope: " + query.getScopeDescription()); //$NON-NLS-1$
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + query.getScopeDescription(), _dataStore); //$NON-NLS-1$
 			
-			System.out.println("Getting index"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+			
 						
 			if (projects == null) {
-				index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
+				index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
 			}
 			else{			
-				index = RemoteIndexManager.getInstance().getIndexForProjects(projects);
+				index = RemoteIndexManager.getInstance().getIndexForProjects(projects, _dataStore);
 			}
 
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				query.runWithIndex(index, getLocationConverter(hostName), getProgressMonitor());
 				List<RemoteSearchMatch> matches = query.getMatches();
 
-				System.out.println("Found " + matches.size() + " match(es)"); //$NON-NLS-1$ //$NON-NLS-2$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + matches.size() + " match(es)", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+				
 				
 				String resultString = Serializer.serialize(matches);
 				status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
@@ -785,8 +759,8 @@ public class CDTMiner extends Miner {
 				index.releaseReadLock();
 				statusDone(status);
 			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
@@ -794,6 +768,7 @@ public class CDTMiner extends Miner {
 		return new SimpleLocationConverter("rse", hostName); //$NON-NLS-1$
 	}
 
+	@SuppressWarnings("unused")
 	private boolean getBoolean(DataElement theCommand, int i) {
 		DataElement element = getCommandArgument(theCommand, i);
 		return Boolean.parseBoolean(element.getName());
@@ -814,7 +789,7 @@ public class CDTMiner extends Miner {
 		try {
 //			statusWorking(status);
 			
-			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider);
+			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore);
 			ScopeManager scopeManager = ScopeManager.getInstance();
 			
 			// update the scope if required
@@ -836,11 +811,10 @@ public class CDTMiner extends Miner {
 				indexer.setShowActivity(true);
 				indexer.handleDelta(addedFiles, changedFiles, removedFiles, getProgressMonitor(indexer, status));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
-		} catch (Throwable e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 		
 		finally {
@@ -850,7 +824,7 @@ public class CDTMiner extends Miner {
 	}
 	
 	private IProgressMonitor getProgressMonitor(StandaloneFastIndexer indexer, DataElement status) {
-		return new RemoteIndexProgressMonitor(indexer, status);
+		return new RemoteIndexProgressMonitor(indexer, status, _dataStore);
 	}
 
 	private IProgressMonitor getProgressMonitor() {
@@ -862,7 +836,8 @@ public class CDTMiner extends Miner {
 	 */
 	public void extendSchema(DataElement schemaRoot) {
 		
-		System.out.println("Extended schema from CDTMiner"); //$NON-NLS-1$
+		ServerLogger.DEBUG = DEBUG; // enable debug level logging
+		UniversalServerUtilities.logInfo(LOG_TAG, "Extended schema from CDTMiner", _dataStore); //$NON-NLS-1$
 		
 		// scope management
 		createCommandDescriptor(schemaRoot, "Register Scope", C_SCOPE_REGISTER, false); //$NON-NLS-1$
@@ -903,18 +878,18 @@ public class CDTMiner extends Miner {
 	
 	protected void handleGetDefinitions(String scopeName, String hostName, ICElement subject, DataElement status) {
 		try {
-			System.out.println("Getting definitions for subject " + subject.getElementName()); //$NON-NLS-1$
-			System.out.println("scope: " + scopeName); //$NON-NLS-1$
-			System.out.println("path: " + subject.getLocationURI()); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting definitions for subject " + subject.getElementName(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + subject.getLocationURI(), _dataStore); //$NON-NLS-1$
 
-			System.out.println("Getting index"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+			
 
 			// search the index for the name
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
 
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				ICElement[] definitions = null;
@@ -948,27 +923,27 @@ public class CDTMiner extends Miner {
 				statusDone(status);
 			}
 		}
-		catch (Throwable e) {
-			e.printStackTrace();
+		catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
 	private void handleGetDefinitions(String scopeName, String hostName, ITranslationUnit workingCopy, int selectionStart, int selectionLength, DataElement status) {
 		try {
-			System.out.println("Getting definitions for subject " + workingCopy.getElementName()); //$NON-NLS-1$
-			System.out.println("scope: " + scopeName); //$NON-NLS-1$
-			System.out.println("path: " + workingCopy.getLocationURI()); //$NON-NLS-1$
-			System.out.println("offset: " + selectionStart); //$NON-NLS-1$
-			System.out.println("length: " + selectionLength); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting definitions for subject " + workingCopy.getElementName(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + workingCopy.getLocationURI(), _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "offset: " + selectionStart, _dataStore); //$NON-NLS-1$
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "length: " + selectionLength, _dataStore); //$NON-NLS-1$
 
-			System.out.println("Getting index"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+			
 
 			// search the index for the name
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
 
-			System.out.println("Acquiring read lock"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+			
 			index.acquireReadLock();
 			try {
 				ICElement[] definitions = null;
@@ -1013,8 +988,8 @@ public class CDTMiner extends Miner {
 				statusDone(status);
 			}
 		}
-		catch (Throwable e) {
-			e.printStackTrace();
+		catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
@@ -1046,24 +1021,24 @@ public class CDTMiner extends Miner {
 
 	protected void handleGetCallers(String scopeName, ICElement subject, String hostName, DataElement status) {
 		String subjectName = subject.getElementName();
-		System.out.println("Getting callers for subject " + subjectName); //$NON-NLS-1$
-		System.out.println("scope: " + scopeName); //$NON-NLS-1$
-		System.out.println("path: " + subject.getLocationURI()); //$NON-NLS-1$
-		System.out.flush();
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callers for subject " + subjectName, _dataStore); //$NON-NLS-1$
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + subject.getLocationURI(), _dataStore); //$NON-NLS-1$
+		
 		
 		try {
 			CalledByResult result = new CalledByResult();
 
-			System.out.println("Getting index"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+			
 
 			IIndexLocationConverter converter = getLocationConverter(hostName);
 			
 			// search the index for the name
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
 			try {
-				System.out.println("Acquiring read lock"); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+				
 				index.acquireReadLock();
 
 				IBinding callee= IndexQueries.elementToBinding(index, subject);
@@ -1084,8 +1059,7 @@ public class CDTMiner extends Miner {
 					}
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 				return;
 			}
 			finally {
@@ -1095,8 +1069,8 @@ public class CDTMiner extends Miner {
 			// create the result object
 			String resultString = Serializer.serialize(result);
 			status.getDataStore().createObject(status, T_CALL_HIERARCHY_RESULT, resultString);
-		} catch (Throwable e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 		finally {
 			statusDone(status);
@@ -1115,23 +1089,23 @@ public class CDTMiner extends Miner {
 	
 	protected void handleGetCallees(String scopeName, ICElement subject, String hostName, DataElement status) {
 		String subjectName = subject.getElementName();
-		System.out.println("Getting callees for subject " + subjectName); //$NON-NLS-1$
-		System.out.println("scope: " + scopeName); //$NON-NLS-1$
-		System.out.println("path: " + subject.getLocationURI()); //$NON-NLS-1$
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callees for subject " + subjectName, _dataStore); //$NON-NLS-1$
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + subject.getLocationURI(), _dataStore); //$NON-NLS-1$
 		
 		try {
 			CallsToResult result = new CallsToResult();
 			
-			System.out.println("Getting index"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+			
 
 			IIndexLocationConverter converter = getLocationConverter(hostName);
 			
 			// search the index for the name
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName);
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
 			try {
-				System.out.println("Acquiring read lock"); //$NON-NLS-1$
-				System.out.flush();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+				
 				index.acquireReadLock();
 
 				IIndexName callerName= IndexQueries.remoteElementToName(index, subject);
@@ -1146,15 +1120,14 @@ public class CDTMiner extends Miner {
 								IIndexFileLocation indexLocation = createLocation(hostName, name.getFile().getLocation());
 								IIndexName reference = new DummyName(name, name.getFileLocation(), indexLocation);
 								
-								System.out.println("Found a callee: " + defs[0].getElementName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+								UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found a callee: " + defs[0].getElementName() + "\n", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
 								result.add(defs, reference);
 							}
 						}
 					}
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 
 				return;
 			}
@@ -1169,25 +1142,24 @@ public class CDTMiner extends Miner {
 			status.getDataStore().createObject(status, T_CALL_HIERARCHY_RESULT, resultString);
 		}
 
-		catch (Throwable e) {
-			e.printStackTrace();
+		catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 	}
 
 	protected void handleIndexStart(String scopeName, IRemoteIndexerInfoProvider provider, DataElement status) {
 		try {
-			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider);
+			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore);
 			Set<String> sources = ScopeManager.getInstance().getFilesForScope(scopeName);
 			List<String> sourcesList = new LinkedList<String>(sources);
 
 			try {
 				indexer.rebuild(sourcesList, getProgressMonitor());
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
-		} catch (Throwable e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 		}
 		
 		finally {
@@ -1198,7 +1170,7 @@ public class CDTMiner extends Miner {
 	protected void handleReindex(String scopeName, String newIndexLocation, IRemoteIndexerInfoProvider provider, DataElement status) {
 		RemoteIndexManager indexManager = RemoteIndexManager.getInstance();
 		indexManager.setIndexFileLocation(scopeName, newIndexLocation);
-		StandaloneFastIndexer indexer = indexManager.getIndexerForScope(scopeName, provider);
+		StandaloneFastIndexer indexer = indexManager.getIndexerForScope(scopeName, provider, _dataStore);
 		Set<String> sources = ScopeManager.getInstance().getFilesForScope(scopeName);
 		
 		List<String> sourcesList = new LinkedList<String>(sources);
@@ -1209,8 +1181,7 @@ public class CDTMiner extends Miner {
 			indexer.setShowActivity(true);
 			indexer.rebuild(sourcesList, getProgressMonitor());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			UniversalServerUtilities.logError(LOG_TAG, "I/O Exception while reindexing", e, _dataStore); //$NON-NLS-1$
 		}
 		
 		statusDone(status);
@@ -1227,8 +1198,8 @@ public class CDTMiner extends Miner {
 		
 		Set<String> files = new LinkedHashSet<String>();
 		
-		System.out.println("Added scope " + scope + " at " + configLocation + " Files:\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		System.out.flush();
+		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Added scope " + scope + " at " + configLocation + " Files:\n", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		
 		
 		while(iterator.hasNext())
 		{
@@ -1237,8 +1208,8 @@ public class CDTMiner extends Miner {
 			
 			files.add(fileName);
 			
-			System.out.println(fileName + "\n"); //$NON-NLS-1$
-			System.out.flush();
+			UniversalServerUtilities.logDebugMessage(LOG_TAG, fileName + "\n", _dataStore); //$NON-NLS-1$
+			
 		}
 		
 		ScopeManager.getInstance().addScope(scope, files);
@@ -1278,4 +1249,7 @@ public class CDTMiner extends Miner {
 		return status;
 	}
 
+	public DataStore getDataStore(){
+		return _dataStore;
+	}
 }
