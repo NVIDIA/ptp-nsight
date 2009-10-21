@@ -26,7 +26,6 @@ import java.util.regex.PatternSyntaxException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
-import org.eclipse.cdt.internal.ui.ICHelpContextIds;
 import org.eclipse.cdt.internal.ui.search.CSearchMessages;
 import org.eclipse.cdt.internal.ui.search.CSearchUtil;
 import org.eclipse.cdt.internal.ui.search.PDOMSearchPatternQuery;
@@ -45,7 +44,6 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ptp.internal.rdt.core.index.RemoteFastIndexer;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchQuery;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
@@ -56,6 +54,7 @@ import org.eclipse.ptp.rdt.services.core.IServiceModelManager;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.rdt.ui.UIPlugin;
+import org.eclipse.ptp.rdt.ui.help.IRHelpContextIds;
 import org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2;
 import org.eclipse.search.ui.ISearchPage;
 import org.eclipse.search.ui.ISearchPageContainer;
@@ -74,6 +73,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
@@ -343,7 +343,7 @@ public class RemoteSearchPage extends DialogPage implements ISearchPage {
 		fLineManager = getStatusLineManager();
 		
 		Dialog.applyDialogFont( result );
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(result, ICHelpContextIds.C_SEARCH_PAGE);	
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(result, IRHelpContextIds.REMOTE_C_CPP_SEARCH);	
 	}
 
 	private IStatusLineManager getStatusLineManager(){

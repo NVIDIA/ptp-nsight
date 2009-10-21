@@ -20,6 +20,7 @@ import org.eclipse.cdt.managedbuilder.ui.wizards.MBSCustomPageManager;
 import org.eclipse.cdt.ui.wizards.CDTMainWizardPage;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizardPage;
+import org.eclipse.ptp.rdt.ui.help.IRHelpContextIds;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.rdt.services.core.IService;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
@@ -29,6 +30,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * 
@@ -123,8 +127,8 @@ public class ServiceModelWizardPage extends MBSCustomPage {
 		
 		fModelWidget.setServiceConfiguration(fConfig);
 		
-		//Control control = fModelWidget.getParent().getShell(); //get the shell or doesn't display help correctly
-		//PlatformUI.getWorkbench().getHelpSystem().setHelp(control,RDTHelpContextIds.SERVICE_MODEL_WIZARD);
+		Control control = fModelWidget.getParent().getShell(); //get the shell or doesn't display help correctly
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(control, IRHelpContextIds.SERVICE_MODEL_WIZARD);
 	}
 
 	/* (non-Javadoc)

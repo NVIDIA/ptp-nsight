@@ -35,6 +35,7 @@ import org.eclipse.ptp.rdt.services.core.IServiceModelManager;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.rdt.services.ui.NewServiceModelWidget;
+import org.eclipse.ptp.rdt.ui.help.IRHelpContextIds;
 import org.eclipse.ptp.rdt.ui.UIPlugin;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.swt.SWT;
@@ -44,6 +45,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * Converts existing CDT projects to RDT projects.
@@ -170,6 +173,8 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 				}							
 			}			
 		});
+		Shell shell = getContainer().getShell();
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(shell,IRHelpContextIds.CONVERTING_TO_REMOTE_PROJECT);
 		
 		
 	}
