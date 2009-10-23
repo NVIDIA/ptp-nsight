@@ -51,10 +51,11 @@ import org.eclipse.ptp.internal.rdt.core.miners.StandaloneSavedCodeReaderFactory
 public class TranslationUnit extends Parent implements ITranslationUnit {
 	private static final long serialVersionUID = 1L;
 
-	Class<? extends ILanguage> fLanguageClass;
+	private String fLanguageId;
 	transient protected ILanguage fLanguage;
 
 	private IScannerInfo fScannerInfo;
+	private Map<String,String> fLanguageProperties; // may be null as most languages don't need additional config
 	private boolean isHeaderUnit = false;
 	
 	
@@ -88,6 +89,19 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 		}
 		setLocationURI(element.getLocationURI());
 		isHeaderUnit = element.isHeaderUnit();
+	}
+	
+	public String getLanguageId() {
+		return fLanguageId;
+	}
+	
+	public Map<String,String> getLanguageProperties() {
+		return fLanguageProperties;
+	}
+	
+	public void setASTContext(IScannerInfo scannerInfo, Map<String,String> languageProperties) {
+		fScannerInfo = scannerInfo;
+		fLanguageProperties = languageProperties;
 	}
 
 	public IInclude createInclude(String name, boolean isStd,
@@ -123,7 +137,7 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 	
 	public void setLanguage(ILanguage language) {
 		fLanguage = language;
-		fLanguageClass = language == null ? null : language.getClass();
+		fLanguageId = language == null ? null : language.getId();
 	}
 	
 	/* -- ST-Origin --
@@ -488,14 +502,7 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 	}
 	
 	private void checkState() {
-		if (fLanguage == null && fLanguageClass != null) {
-			try {
-				fLanguage = fLanguageClass.newInstance();
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			} catch (InstantiationException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		if(fLanguage == null)
+			throw new IllegalStateException();
 	}
 }

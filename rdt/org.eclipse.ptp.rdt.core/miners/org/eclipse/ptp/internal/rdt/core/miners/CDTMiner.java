@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.DOMException;
@@ -60,6 +61,7 @@ import org.eclipse.ptp.internal.rdt.core.index.IndexQueries;
 import org.eclipse.ptp.internal.rdt.core.model.CModelBuilder2;
 import org.eclipse.ptp.internal.rdt.core.model.CProject;
 import org.eclipse.ptp.internal.rdt.core.model.RemoteCProjectFactory;
+import org.eclipse.ptp.internal.rdt.core.model.TranslationUnit;
 import org.eclipse.ptp.internal.rdt.core.model.WorkingCopy;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
@@ -352,6 +354,7 @@ public class CDTMiner extends Miner {
 				String scopeName = getString(theCommand, 1);
 				String hostName = getString(theCommand, 2);
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 3));
+				initializeTranslationUnit(unit);
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
 				
@@ -392,7 +395,7 @@ public class CDTMiner extends Miner {
 				String scopeName = getString(theCommand, 1);
 				RemoteContentAssistInvocationContext context = (RemoteContentAssistInvocationContext) Serializer.deserialize(getString(theCommand, 2));
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 3));
-				
+				initializeTranslationUnit(unit);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Computing completions...", _dataStore); //$NON-NLS-1$
 				
 				handleComputeCompletionProposals(scopeName, context, unit, status);
@@ -442,6 +445,7 @@ public class CDTMiner extends Miner {
 				String scopeName = getString(theCommand, 1);
 				String hostName = getString(theCommand, 2);
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 3));
+				initializeTranslationUnit(unit);
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
 				
@@ -460,6 +464,7 @@ public class CDTMiner extends Miner {
 			try {
 				String scopeName = getString(theCommand, 1);
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 2));
+				initializeTranslationUnit(unit);
 				String selectedText = getString(theCommand, 3);
 				int selectionStart = getInteger(theCommand, 4);
 				int selectionLength = getInteger(theCommand, 5);
@@ -482,6 +487,7 @@ public class CDTMiner extends Miner {
 		else if (name.equals(C_MODEL_BUILDER))  {
 			try {
 				ITranslationUnit workingCopy = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 1));
+				initializeTranslationUnit(workingCopy);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Model Builder: building working copy: " + workingCopy.getElementName() + "...", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
 
 				handleGetModel(workingCopy, status);
@@ -498,6 +504,19 @@ public class CDTMiner extends Miner {
 		return status;
 	}
 	
+	
+	/**
+	 * Must call this on a translation unit that has just been deserialized
+	 * if you want to use it to get an AST.
+	 */
+	protected void initializeTranslationUnit(ITranslationUnit unit) { 
+		if(unit instanceof TranslationUnit) {
+			TranslationUnit tu = (TranslationUnit) unit;
+			String languageId = tu.getLanguageId();
+			Map<String,String> languageProperties = tu.getLanguageProperties();
+			tu.setLanguage(RemoteLanguageMapper.getLanguageById(languageId, languageProperties, _dataStore));
+		}
+	}
 	
 	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
 		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation, _dataStore);
