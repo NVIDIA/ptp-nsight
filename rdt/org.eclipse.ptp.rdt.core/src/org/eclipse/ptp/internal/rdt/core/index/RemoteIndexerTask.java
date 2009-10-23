@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.ptp.internal.rdt.core.index;
 
+import java.net.URI;
 import java.util.Arrays;
 
 import org.eclipse.cdt.core.dom.IPDOMIndexer;
@@ -17,6 +18,7 @@ import org.eclipse.cdt.core.dom.IPDOMIndexerTask;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.internal.core.pdom.IndexerProgress;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
@@ -82,10 +84,26 @@ public class RemoteIndexerTask implements IPDOMIndexerTask {
 		IIndexLifecycleService service = fIndexServiceProvider.getIndexLifeCycleService();
 		IProject project = fIndexer.getProject().getProject();
 		String name = project.getName();
-		if (fUpdate)
-			service.update(new Scope(name), Arrays.<ICElement>asList(fAdded), Arrays.<ICElement>asList(fChanged), Arrays.<ICElement>asList(fRemoved), monitor, this);
+		
+		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
+		
+		URI locationURI = project.getLocationURI();
+		
+		String mappedPath = fsUtilityManager.getMappedPath(locationURI);
+		String rootPath = fsUtilityManager.getPathFromURI(locationURI);
+		
+		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
+		String host = null;
+		
+		if(managedURI != null)
+			host = managedURI.getHost();
 		else
-			service.reindex(new Scope(name), fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement>asList(fAdded), monitor, this);
+			host = locationURI.getHost();
+		
+		if (fUpdate)
+			service.update(new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath), Arrays.<ICElement>asList(fAdded), Arrays.<ICElement>asList(fChanged), Arrays.<ICElement>asList(fRemoved), monitor, this);
+		else
+			service.reindex(new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath), fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement>asList(fAdded), monitor, this);
 	}
 
 }

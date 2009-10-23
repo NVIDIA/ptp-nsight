@@ -17,34 +17,41 @@ import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.index.IIndexLocationConverter;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.dstore.core.model.DataStore;
 
 public class SimpleLocationConverter implements IIndexLocationConverter {
 
 	String fScheme;
 	String fHost;
+	DataStore fDataStore;
 
-	public SimpleLocationConverter(String scheme, String host) {
+	public SimpleLocationConverter(String scheme, String host, DataStore datastore) {
+				
 		fScheme = scheme;
 		fHost = host;
+		fDataStore = datastore;
 	}
 	
 	public IIndexFileLocation fromInternalFormat(String raw) {
 		try {
-			IPath path = new Path(raw);
-			StringBuilder buffer = new StringBuilder();
-			if (fScheme != null) {
-				buffer.append(fScheme);
-				buffer.append("://"); //$NON-NLS-1$
-				if (fHost != null) {
-					buffer.append(fHost);
-				}
-			}
-			buffer.append(path.toPortableString());
-			URI uri = new URI(buffer.toString());
+			
+			URI uri = createURIForScheme(fScheme, fHost, raw);
 			return new RemoteIndexFileLocation(null, uri);
 		} catch (URISyntaxException e) {
 			throw new IllegalArgumentException(e);
 		} 
+	}
+
+	private URI createURIForScheme(String scheme, String host, String path) throws URISyntaxException {
+		
+		if(scheme == null || scheme.equals("")) { //$NON-NLS-1$
+			scheme = ScopeManager.getInstance().getSchemeForFile(path);
+		}
+		
+		// create the URI
+		URI newURI = URICreatorManager.getDefault(fDataStore).createURI(scheme, host, path);
+		
+		return newURI;
 	}
 
 	public String toInternalFormat(IIndexFileLocation location) {

@@ -16,6 +16,10 @@ import java.io.Serializable;
 /**
  * Describes the context in which a service-based operation will be
  * performed.  Ultimately, a scope is a name associated with a collection of files.
+ * There is a one to one mapping between scopes and index databases (.pdom files).
+ * Scopes are analogous to projects.  Each scope can be hosted only by one EFS scheme,
+ * and scopes are used to populate the CModel's ICProject nodes.  Scopes may optionally
+ * be mapped to paths in the local filesystem on the client.
  */
 public class Scope implements Serializable {
 
@@ -24,14 +28,26 @@ public class Scope implements Serializable {
 	 */
 	public static final String WORKSPACE_ROOT_SCOPE_NAME = "__WORKSPACE_ROOT_SCOPE__"; //$NON-NLS-1$
 	
-	public static final Scope WORKSPACE_ROOT_SCOPE = new Scope(WORKSPACE_ROOT_SCOPE_NAME);
+	public static final Scope WORKSPACE_ROOT_SCOPE = new Scope(WORKSPACE_ROOT_SCOPE_NAME, null, null, null, null);
 	
 	private static final long serialVersionUID = 1L;
 	
 	private String fName;
 	
-	public Scope(String name) {
+	private String fScheme;
+	
+	private String fMappedPath;
+
+	private String fHost;
+
+	private String fRootPath;
+	
+	public Scope(String name, String scheme, String host, String rootPath, String mappedPath) {
 		fName = name;
+		fScheme = scheme;
+		fHost = host;
+		fRootPath = rootPath;
+		fMappedPath = mappedPath;
 	}
 	
 	/**
@@ -40,5 +56,33 @@ public class Scope implements Serializable {
 	 */
 	public String getName() {
 		return fName;
+	}
+	
+	/**
+	 * Returns the URI scheme which should be used to access this scope, or <code>null</code> if
+	 * this scope is the workspace scope.
+	 * 
+	 * @return
+	 */
+	public String getScheme() {
+		return fScheme;
+	}
+	
+	/**
+	 * If the scope is mapped to a local path on the client, returns the local path, or <code>null</code> if the scope
+	 * is not mapped.
+	 * 
+	 * @return
+	 */
+	public String getMappedPath() {
+		return fMappedPath;
+	}
+
+	public String getHost() {
+		return fHost;
+	}
+
+	public String getRootPath() {
+		return fRootPath;
 	}
 }

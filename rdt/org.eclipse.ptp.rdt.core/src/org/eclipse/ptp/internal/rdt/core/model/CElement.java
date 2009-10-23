@@ -44,7 +44,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.ptp.rdt.core.RDTLog;
 
-public abstract class CElement implements ICElement, Serializable {
+public abstract class CElement implements ICElement, Serializable, IHasManagedLocation {
 	private static final long serialVersionUID = 1L;
 
 	private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -55,7 +55,8 @@ public abstract class CElement implements ICElement, Serializable {
 	protected int fType;
 
 	protected URI fLocation;
-	protected IPath fPath;
+	protected URI fManagedLocation;
+	protected IPath fWorkspacePath;
 
 	protected ICProject fCProject;
 	
@@ -108,7 +109,7 @@ public abstract class CElement implements ICElement, Serializable {
 	}
 
 	public IPath getPath() {
-		return fPath;
+		return fWorkspacePath;
 	}
 
 	public IResource getResource() {
@@ -119,8 +120,8 @@ public abstract class CElement implements ICElement, Serializable {
 				return files[0];
 			}
 		}
-		if (fPath != null) {
-			IFile[] files = root.findFilesForLocation(fPath);
+		if (fWorkspacePath != null) {
+			IFile[] files = root.findFilesForLocation(fWorkspacePath);
 			if (files.length > 0) {
 				return files[0];
 			}
@@ -206,11 +207,25 @@ public abstract class CElement implements ICElement, Serializable {
 		fLocation = location;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.internal.rdt.core.model.IHasManagedLocation#setManagedLocation(java.net.URI)
+	 */
+	public void setManagedLocation(URI managedLocation) {
+		fManagedLocation = managedLocation;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.internal.rdt.core.model.IHasManagedLocation#getManagedLocation()
+	 */
+	public URI getManagedLocation() {
+		return fManagedLocation;
+	}
+	
 	public void setPath(IPath path) {
 		if (path == null || path instanceof Path) {
-			fPath = path;
+			fWorkspacePath = path;
 		} else {
-			fPath = new Path(path.toPortableString());
+			fWorkspacePath = new Path(path.toPortableString());
 		}
 	}
 	

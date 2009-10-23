@@ -20,12 +20,10 @@
 package org.eclipse.ptp.internal.rdt.ui.search.actions;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.MessageFormat;
 
 import org.eclipse.cdt.core.dom.IName;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
-import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.ISourceRange;
@@ -39,6 +37,7 @@ import org.eclipse.cdt.internal.ui.search.CSearchMessages;
 import org.eclipse.cdt.internal.ui.text.CWordFinder;
 import org.eclipse.cdt.internal.ui.util.EditorUtility;
 import org.eclipse.cdt.ui.CUIPlugin;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -131,7 +130,23 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 			workingCopy = ModelAdapter.adaptElement(null, workingCopy, 0, true);
 		}
 		
-		Scope scope = new Scope(workingCopy.getCProject().getProject().getName());
+		
+		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
+		
+		URI locationURI = project.getLocationURI();
+		
+		String mappedPath = fsUtilityManager.getMappedPath(locationURI);
+		String rootPath = fsUtilityManager.getPathFromURI(locationURI);
+		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
+		String host = null;
+		
+		if(managedURI != null)
+			host = managedURI.getHost();
+		else
+			host = locationURI.getHost();
+
+		
+		Scope scope = new Scope(workingCopy.getCProject().getProject().getName(), workingCopy.getLocationURI().getScheme(), host, rootPath, mappedPath);
 		int selectionStart  = fTextSelection.getOffset();
 		int selectionLength = fTextSelection.getLength();
 		
@@ -173,14 +188,7 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 	 * Replaces the path portion of the given URI.
 	 */
 	private URI replacePath(URI u, String path) {
-		try {
-			return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(),
-			               path, // replaced! 
-			               u.getQuery(),u.getFragment());
-		} catch (URISyntaxException e) {
-			RDTLog.logError(e);
-			return null;
-		}
+		return FileSystemUtilityManager.getDefault().replacePath(u, path);
 	}
 	
 	

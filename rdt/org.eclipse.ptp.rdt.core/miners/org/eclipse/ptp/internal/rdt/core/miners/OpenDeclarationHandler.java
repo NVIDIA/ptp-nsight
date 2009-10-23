@@ -61,14 +61,15 @@ public class OpenDeclarationHandler {
 		ITranslationUnit.AST_CONFIGURE_USING_SOURCE_CONTEXT;
 
 	
-	public static OpenDeclarationResult handleOpenDeclaration(String scopeName, ITranslationUnit workingCopy, String selectedText, int selectionStart, int selectionLength, DataStore _dataStore) {
+	
+	public static OpenDeclarationResult handleOpenDeclaration(String scopeName, String scheme, ITranslationUnit workingCopy, String path, String selectedText, int selectionStart, int selectionLength, DataStore _dataStore) {
 
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "Getting declaration for selection in " + workingCopy.getElementName(), _dataStore); //$NON-NLS-1$
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "path: " + workingCopy.getLocationURI(), _dataStore); //$NON-NLS-1$
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "offset: " + selectionStart, _dataStore); //$NON-NLS-1$
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "length: " + selectionLength, _dataStore); //$NON-NLS-1$
-
+		
 		IIndex index = RemoteIndexManager.getInstance().getIndexForScope(Scope.WORKSPACE_ROOT_SCOPE_NAME, _dataStore);
 
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "Acquiring read lock", _dataStore); //$NON-NLS-1$
@@ -84,7 +85,7 @@ public class OpenDeclarationHandler {
 		UniversalServerUtilities.logDebugMessage(CLASS_NAME, "Got Read lock", _dataStore); //$NON-NLS-1$
 		
 		try {
-			return doHandleOpenDeclaration(scopeName, workingCopy, selectedText, selectionStart, selectionLength, index, _dataStore);
+			return doHandleOpenDeclaration(scopeName, scheme, workingCopy, path, selectedText, selectionStart, selectionLength, index, _dataStore);
 			
 		} catch (CoreException e) {
 			UniversalServerUtilities.logError(CLASS_NAME, e.toString(), e, _dataStore);
@@ -112,7 +113,7 @@ public class OpenDeclarationHandler {
 	
 	
 	
-	private static OpenDeclarationResult doHandleOpenDeclaration(String scopeName, ITranslationUnit workingCopy, String selectedText, 
+	private static OpenDeclarationResult doHandleOpenDeclaration(String scopeName, String scheme, ITranslationUnit workingCopy, String path, String selectedText, 
 			                                                     int selectionStart, int selectionLength, IIndex index, DataStore _dataStore) throws CoreException {
 		IASTTranslationUnit ast = workingCopy.getAST(index, PARSE_MODE_FAST);
 		
@@ -122,8 +123,8 @@ public class OpenDeclarationHandler {
 		if (searchName != null) {
 			IASTNode parent = searchName.getParent();
 			if (parent instanceof IASTPreprocessorIncludeStatement) {
-				String path = ((IASTPreprocessorIncludeStatement) parent).getPath();
-				return OpenDeclarationResult.resultIncludePath(path);
+				String includedPath = ((IASTPreprocessorIncludeStatement) parent).getPath();
+				return OpenDeclarationResult.resultIncludePath(includedPath);
 			}
 			
 			IBinding binding = searchName.resolveBinding();
@@ -166,8 +167,8 @@ public class OpenDeclarationHandler {
 		else {
 			IASTNode node = nodeSelector.findEnclosingNode(selectionStart, selectionLength);
 			if (node instanceof IASTPreprocessorIncludeStatement) {
-				String path = ((IASTPreprocessorIncludeStatement) node).getPath();
-				return OpenDeclarationResult.resultIncludePath(path);
+				String includedPath = ((IASTPreprocessorIncludeStatement) node).getPath();
+				return OpenDeclarationResult.resultIncludePath(includedPath);
 			}
 		}
 		

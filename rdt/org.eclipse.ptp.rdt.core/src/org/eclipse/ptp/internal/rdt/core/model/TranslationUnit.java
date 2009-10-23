@@ -42,6 +42,7 @@ import org.eclipse.cdt.internal.core.dom.NullCodeReaderFactory;
 import org.eclipse.cdt.internal.core.index.IndexBasedCodeReaderFactory;
 import org.eclipse.cdt.internal.core.model.IBufferFactory;
 import org.eclipse.cdt.internal.core.pdom.ASTFilePathResolver;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -88,6 +89,19 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 			throw new IllegalArgumentException(e);
 		}
 		setLocationURI(element.getLocationURI());
+		
+		if(element instanceof IHasManagedLocation) {
+			IHasManagedLocation hml = (IHasManagedLocation) element;
+			setManagedLocation(hml.getManagedLocation());
+		}
+		
+		else {
+			// we are adapting a local TU to a remote TU
+			// we need to get a hold of the managed URI
+			URI managedURI = FileSystemUtilityManager.getDefault().getManagedURI(element.getLocationURI());
+			setManagedLocation(managedURI);
+		}
+		
 		isHeaderUnit = element.isHeaderUnit();
 	}
 	
@@ -213,10 +227,18 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 	}
 
 	public CodeReader getCodeReader() {
-		if(fLocation == null)
+		
+		URI uri = null;
+		
+		if(fManagedLocation != null)
+			uri = fManagedLocation;
+		else
+			uri = fLocation;
+		
+		if(uri == null)
 			return null;
 		
-		String filePath = fLocation.getPath();
+		String filePath = uri.getPath();
 		try {
 			return new CodeReader(filePath);
 		} catch (IOException e) {
@@ -502,7 +524,8 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 	}
 	
 	private void checkState() {
-		if(fLanguage == null)
-			throw new IllegalStateException();
+		// FIXME:  this is breaking call hierarchy badly
+		//if(fLanguage == null)
+		//	throw new IllegalStateException();
 	}
 }

@@ -11,6 +11,9 @@
 
 package org.eclipse.ptp.internal.rdt.core.model;
 
+import java.io.IOException;
+import java.net.URI;
+
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.parser.CodeReader;
 
@@ -40,10 +43,21 @@ public class WorkingCopy extends TranslationUnit implements IRemoteWorkingCopy {
 	
 	@Override
 	public CodeReader getCodeReader() {
-		if (fLocation == null)
+		
+		URI uri = null;
+		
+		if(fManagedLocation != null)
+			uri = fManagedLocation;
+		else
+			uri = fLocation;
+		
+		if(uri == null)
 			return null;
 		
-		return new CodeReader(fLocation.getPath(), getContents());
+		String filePath = uri.getPath();
+		
+		return new CodeReader(filePath, getContents());
+		
 	}
 	
 	@Override

@@ -27,6 +27,7 @@ import org.eclipse.cdt.managedbuilder.internal.core.ToolChain;
 import org.eclipse.cdt.managedbuilder.ui.wizards.CfgHolder;
 import org.eclipse.cdt.managedbuilder.ui.wizards.STDWizardHandler;
 import org.eclipse.cdt.ui.newui.UIMessages;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -108,7 +109,8 @@ public class RemoteMakefileWizardHandler extends STDWizardHandler {
 		// assume that the path portion of the URI corresponds to the path on the remote machine
 		// this may not work if the remote machine does not use UNIX paths but we have no real way of knowing the path
 		// format, so we hope for the best...
-		IPath buildPath = Path.fromPortableString(projectLocation.getPath());
+		String pathString = FileSystemUtilityManager.getDefault().getPathFromURI(projectLocation);
+		IPath buildPath = Path.fromPortableString(pathString);
 		
 		IManagedBuildInfo mbsInfo = ManagedBuildManager.getBuildInfo(project);	
 		mbsInfo.getDefaultConfiguration().getBuildData().setBuilderCWD(buildPath);

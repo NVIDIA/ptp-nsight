@@ -33,6 +33,8 @@ import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceModelManager;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
+import org.eclipse.ptp.rdt.services.core.ProjectNotConfiguredException;
+import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.rdt.services.ui.NewServiceModelWidget;
 import org.eclipse.ptp.rdt.ui.help.IRHelpContextIds;
@@ -103,7 +105,13 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
     	boolean c = false;
     	a = !project.isHidden();    	
 		try {
-			b = !project.hasNature(RemoteNature.REMOTE_NATURE_ID);
+			//b = !project.hasNature(RemoteNature.REMOTE_NATURE_ID);
+			try {
+				ServiceModelManager.getInstance().getConfigurations(project);
+			}
+			catch(ProjectNotConfiguredException e) {
+				b = true;
+			}
 			c = !project.hasNature("org.eclipse.rse.ui.remoteSystemsTempNature"); //$NON-NLS-1$
 		} catch (CoreException e) {
 			RDTLog.logError(e);

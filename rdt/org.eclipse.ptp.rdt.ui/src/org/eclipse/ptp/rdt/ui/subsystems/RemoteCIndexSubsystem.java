@@ -23,7 +23,6 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CProjectNature;
-import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModelUtil;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -31,6 +30,7 @@ import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IParent;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -77,7 +77,6 @@ import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.SubSystem;
-import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 
 /**
  * An RSE subsystem which is used to provide C/C++ indexing services from a Miner
@@ -94,7 +93,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
 	private Set<IProject> fInitializedProjects;
 	private ProjectChangeListener fProjectOpenListener;
-
+	
 	protected RemoteCIndexSubsystem(IHost host,
 			IConnectorService connectorService) {
 		super(host, connectorService);
@@ -233,6 +232,22 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
             	// need to know the scope
             	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
                	args.add(scopeElement);
+               	
+               	// scheme
+               	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getScheme());
+            	args.add(dataElement);
+            	
+            	// root path for scope on server
+            	DataElement rootPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getRootPath());
+            	args.add(rootPath);
+            	
+            	// path mappings for scope
+            	DataElement pathElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getMappedPath());
+            	args.add(pathElement);
+            	
+            	// need to know the scope config location
+            	DataElement indexLocationElement = dataStore.createObject(null, CDTMiner.T_SCOPE_CONFIG_LOCATION, indexLocation);
+               	args.add(indexLocationElement);
             	
             	String serializedProvider = null;
             	try {
@@ -243,10 +258,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				
 				DataElement providerElement = dataStore.createObject(null, CDTMiner.T_INDEX_SCANNER_INFO_PROVIDER, serializedProvider);
 				args.add(providerElement);
-            	
-				// need to know the scope config location
-            	DataElement indexLocationElement = dataStore.createObject(null, CDTMiner.T_SCOPE_CONFIG_LOCATION, indexLocation);
-               	args.add(indexLocationElement);
 				
                 DataElement status = dataStore.command(queryCmd, args, result);   
 
@@ -308,6 +319,20 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
                	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
                	args.add(scopeElement);
                	
+               	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getScheme());
+            	args.add(dataElement);
+            	
+               	// root path for scope on server
+            	DataElement rootPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getRootPath());
+            	args.add(rootPath);
+ 
+            	// mapped path for scope on local machine
+            	DataElement mappedPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getMappedPath());
+            	args.add(mappedPath);
+            	
+            	// host
+            	DataElement hostElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getHost());
+            	args.add(hostElement);
                	
                	String serializedProvider = null;
             	try {
@@ -438,6 +463,23 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
             	DataElement scopeElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
             	args.add(scopeElement);
             	
+            	// scheme for scope
+            	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getScheme());
+            	args.add(dataElement);
+            	
+            	// host
+            	DataElement hostElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getHost());
+            	args.add(hostElement);
+ 
+               	// root path for scope on server
+            	DataElement rootPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getRootPath());
+            	args.add(rootPath);
+ 
+            	
+            	// mapped path for scope on local machine
+            	DataElement mappedPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, scope.getMappedPath());
+            	args.add(mappedPath);
+            	
             	// need to know where to find the pdom file for the scope
             	DataElement configElement = dataStore.createObject(null, CDTMiner.T_SCOPE_CONFIG_LOCATION, configLocation);
             	args.add(configElement);
@@ -512,20 +554,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		}
 	}
 	
-	protected URI convertRemotePathToURI(String path) throws URISyntaxException {
-		return new URI("rse", _host.getHostName(), path, null); //$NON-NLS-1$
-	}
-	
 	protected String convertURIToRemotePath(URI locationURI) {
-		// RSE URIs are of the form rse://host/path
-		
-		// it had better be an RSE URI
-		assert(locationURI.getScheme().equals("rse")); //$NON-NLS-1$
-		
-		// the URI had better correspond to a location on the host that this subsystem is connected to
-		assert(_host.getHostName().equals(locationURI.getHost()));
-		
-		return locationURI.getPath();
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(locationURI);
+		return path;
 	}
 
 
@@ -602,7 +633,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	
 	public OpenDeclarationResult openDeclaration(Scope scope, ITranslationUnit unit, String selectedText, int selectionStart, int selectionLength, IProgressMonitor monitor) {
 		monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.9"), 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_NAVIGATION_OPEN_DECLARATION, new Object[] {scope, unit, selectedText, selectionStart, selectionLength}, monitor);
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_NAVIGATION_OPEN_DECLARATION, new Object[] {scope, unit, path, selectedText, selectionStart, selectionLength}, monitor);
 		if(result == null)
 			return OpenDeclarationResult.failureUnexpectedError();
 		return (OpenDeclarationResult)result;
@@ -614,7 +646,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
 	public CalledByResult getCallers(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.5") + subject, 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLERS, new Object[] { scope, getHostName(), subject }, null);
+    	String path = FileSystemUtilityManager.getDefault().getPathFromURI(subject.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLERS, new Object[] { scope, getHostName(), subject, path }, null);
 		if (result == null) {
 			return new CalledByResult();
 		}
@@ -626,7 +659,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 */
 	public CallsToResult getCallees(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.6") + subject, 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLS, new Object[] { scope, getHostName(), subject }, null);
+    	String path = FileSystemUtilityManager.getDefault().getPathFromURI(subject.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLS, new Object[] { scope, getHostName(), subject, path }, null);
 		if (result == null) {
 			return new CallsToResult();
 		}
@@ -638,7 +672,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 */
 	public ICElement[] getCHDefinitions(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.7") + subject, 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_ELEMENT, new Object[] { scope, getHostName(), subject }, null);
+    	String path = FileSystemUtilityManager.getDefault().getPathFromURI(subject.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_ELEMENT, new Object[] { scope, getHostName(), subject, path }, null);
 		if (result == null) {
 			return new ICElement[0];
 		}
@@ -647,7 +682,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	
 	public ICElement[] getCHDefinitions(Scope scope, ITranslationUnit unit, int selectionStart, int selectionLength, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RemoteCIndexSubsystem.7") + unit, 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_WORKING_COPY, new Object[] { scope, getHostName(), unit, selectionStart, selectionLength }, null);
+    	String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_WORKING_COPY, new Object[] { scope, getHostName(), unit, path, selectionStart, selectionLength }, null);
 		if (result == null) {
 			return new ICElement[0];
 		}
@@ -664,7 +700,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		return (List<RemoteSearchMatch>) result;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public List<Proposal> computeCompletionProposals(Scope scope, RemoteContentAssistInvocationContext context, ITranslationUnit unit) {
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
 		DataStore dataStore = getDataStore();
 	    if (dataStore == null)
 	    {
@@ -691,6 +729,11 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     	
     	// translation unit
     	args.add(createSerializableElement(dataStore, unit));
+    	
+    	// path to translation unit
+    	dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, path);
+    	args.add(dataElement);
+
     	
     	// execute the command
     	DataElement status = dataStore.command(queryCmd, args, dataStore.getDescriptorRoot());
@@ -727,7 +770,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	}
 	
 	public THGraph computeTypeGraph(Scope scope, ICElement input, IProgressMonitor monitor) {
-		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_COMPUTE_TYPE_GRAPH, new Object[] { scope, getHostName(), input }, monitor);
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(input.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_COMPUTE_TYPE_GRAPH, new Object[] { scope, getHostName(), input, path }, monitor);
 		if (result == null) {
 			return new THGraph();
 		}
@@ -735,7 +779,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	}
 	
 	public ICElement[] findTypeHierarchyInput(Scope scope, ICElement memberInput) {
-		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_FIND_INPUT1, new Object[] { scope, getHostName(), memberInput }, null);
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(memberInput.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_FIND_INPUT1, new Object[] { scope, getHostName(), memberInput, path }, null);
 		if (result == null) {
 			return new ICElement[] { null, null };
 		}
@@ -743,7 +788,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	}
 	
 	public ICElement[] findTypeHierarchyInput(Scope scope, ITranslationUnit unit, int selectionStart, int selectionLength) {
-		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_FIND_INPUT2, new Object[] { scope, getHostName(), unit, new Integer(selectionStart), new Integer(selectionLength)}, null);
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_TYPE_HIERARCHY_FIND_INPUT2, new Object[] { scope, getHostName(), unit, path, new Integer(selectionStart), new Integer(selectionLength)}, null);
 		if (result == null) {
 			return new ICElement[] { null, null };
 		}
@@ -778,8 +824,21 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
     	for (Object argument : arguments) {
     		if (argument instanceof Scope) {
+    			
     	    	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, ((Scope) argument).getName());
     	    	args.add(dataElement);
+    	    	
+    	    	dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, ((Scope) argument).getScheme());
+            	args.add(dataElement);
+            	
+            	// root path for scope on server
+            	DataElement rootPath = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, ((Scope) argument).getRootPath());
+            	args.add(rootPath);
+            	
+            	// path mappings for scope
+            	DataElement pathElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, ((Scope) argument).getMappedPath());
+            	args.add(pathElement);
+            	
     		} else if (argument instanceof String) {
             	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_INDEX_STRING_DESCRIPTOR, (String) argument);
             	args.add(dataElement);
@@ -867,6 +926,18 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		}	
 	}
 	
+	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor) {
+		String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
+		Object result = sendRequest(CDTMiner.C_MODEL_BUILDER, new Object[] {unit, path}, monitor);
+		if (result == null) 
+		{
+			return null;
+		}
+		
+		//the working copy	
+		return (ITranslationUnit) result;
+	}
+	
 	public void checkAllProjects(IProgressMonitor monitor) {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceRoot workspaceRoot = workspace.getRoot();
@@ -936,8 +1007,23 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			// collect the translation units
 			project.accept(fileCollector);
 
+			FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
+			
+			URI locationURI = project.getLocationURI();
+			
+			String mappedPath = fsUtilityManager.getMappedPath(locationURI);
+			String rootPath = fsUtilityManager.getPathFromURI(locationURI);
+			URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
+			String host = null;
+			
+			if(managedURI != null)
+				host = managedURI.getHost();
+			else
+				host = locationURI.getHost();
+
+			Scope scope = new Scope(project.getName(), project.getLocationURI().getScheme(), host, rootPath, mappedPath);
+			
 			String configLocation = ((IIndexServiceProvider)provider).getIndexLocation();
-			Scope scope = new Scope(project.getName());
 
 			// unregister the scope if there already is one
 			unregisterScope(scope, monitor);
@@ -947,19 +1033,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			
 			fInitializedProjects.add(project);
 		}
-	}
-
-
-	
-	public ITranslationUnit getModel(ITranslationUnit unit, IProgressMonitor monitor) {
-		Object result = sendRequest(CDTMiner.C_MODEL_BUILDER, new Object[] {unit}, monitor);
-		if (result == null) 
-		{
-			return null;
-		}
-		
-		//the working copy	
-		return (ITranslationUnit) result;
 	}
 	
 }

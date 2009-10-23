@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.ui.subsystems;
 
+import java.net.URI;
+
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -54,7 +57,22 @@ public class ProjectChangeListener implements IResourceChangeListener {
 					IResource resource = delta.getResource();
 					if (resource instanceof IProject) {
 						IProject project = (IProject) resource;
-						Scope scope = new Scope(project.getName());
+						FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
+						
+						URI locationURI = project.getLocationURI();
+						
+						String mappedPath = fsUtilityManager.getMappedPath(locationURI);
+						String rootPath = fsUtilityManager.getPathFromURI(locationURI);
+						URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
+						String host = null;
+						
+						if(managedURI != null)
+							host = managedURI.getHost();
+						else
+							host = locationURI.getHost();
+
+						
+						Scope scope = new Scope(project.getName(), project.getLocationURI().getScheme(), host, rootPath, mappedPath);
 						
 						switch (delta.getKind()) {
 						case IResourceDelta.ADDED:

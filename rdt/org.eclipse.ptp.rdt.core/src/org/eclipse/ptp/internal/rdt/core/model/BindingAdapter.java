@@ -124,6 +124,10 @@ public class BindingAdapter {
 			
 			if(unit != null) {
 				element.setLocationURI(unit.getLocationURI());
+				if(unit instanceof IHasManagedLocation) {
+					IHasManagedLocation hml = (IHasManagedLocation) element;
+					element.setManagedLocation(hml.getManagedLocation());
+				}
 				element.setPath(unit.getPath());
 			}
 			

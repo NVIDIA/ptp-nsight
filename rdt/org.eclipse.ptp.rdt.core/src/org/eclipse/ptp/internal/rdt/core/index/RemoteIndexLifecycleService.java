@@ -43,7 +43,6 @@ public class RemoteIndexLifecycleService extends AbstractRemoteService implement
 		super(host, connectorService);
 	}
 
-
 	public Scope getScope(String name) {
 		return fStringToScopeMap.get(name);
 	}

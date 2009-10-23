@@ -31,6 +31,7 @@ import org.eclipse.cdt.core.model.LanguageManager;
 import org.eclipse.cdt.core.parser.IScannerInfo;
 import org.eclipse.cdt.core.parser.IScannerInfoProvider;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -258,7 +259,7 @@ public class RemoteIndexerInfoProviderFactory {
 				// compute the scanner info, share identical scanner infos
 				IScannerInfo localScannerInfo = provider.getScannerInformation(tu.getResource());
 				RemoteScannerInfo remoteScannerInfo = cache.get(localScannerInfo);
-				String path = element.getLocationURI().getPath();
+				String path = FileSystemUtilityManager.getDefault().getPathFromURI(element.getLocationURI());
 				scannerInfoMap.put(path, remoteScannerInfo);
 		
 				// compute the language

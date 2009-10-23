@@ -33,12 +33,18 @@ public class THGraphNode implements Serializable {
 	private List<THGraphEdge> fOutgoing= Collections.emptyList();
 	private List<THGraphEdge> fIncoming= Collections.emptyList();
 	private ICElement fElement;
+	private String fPath;
 	private ICElement[] fMembers= null;
 	
-	public THGraphNode(ICElement element) {
+	public THGraphNode(ICElement element, String path) {
 		fElement= element;
+		fPath = path;
 	}
 	
+	public String getPath() {
+		return fPath;
+	}
+
 	public void startEdge(THGraphEdge outgoing) {
 		fOutgoing= addElement(fOutgoing, outgoing);
 	}
