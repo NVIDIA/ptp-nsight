@@ -332,10 +332,11 @@
 				<include name="lrparser.jar"/>
 				<include name="xlcparser.jar"/>
 			</fileset>
-			<file name="${rdtXLCPropertiesPath}/${rdtXLCProperties}"/>
-			<file name="${basedir}/../../eclipse/plugins/${lpgRuntimeJar}"/>
 		</copy>
-			
+		
+		<copy file="${rdtXLCPropertiesPath}/${rdtXLCProperties}" todir="${remoteServerTempDir}"/>
+		<copy file="${basedir}/../../eclipse/plugins/${lpgRuntimeJar}" todir="${remoteServerTempDir}"/>
+
 		<copy todir="${remoteServerTempDir}">
 			<fileset dir="${platformTempDir}/eclipse/plugins">
 				<include name="${coreRuntimeJar}"/>
