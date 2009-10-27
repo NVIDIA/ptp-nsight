@@ -54,4 +54,10 @@ Produces an Ant build file from the extracted contents of a jardesc file.
 			<include name="{text()}"/>
 		</fileset>
 	</xsl:template>
+	
+	<xsl:template match="grammar_file">
+		<fileset dir="{$basedir}/{@folder}/{$bindir}">
+			<include name="{text()}"/>
+		</fileset>
+	</xsl:template>
 </xsl:stylesheet>
