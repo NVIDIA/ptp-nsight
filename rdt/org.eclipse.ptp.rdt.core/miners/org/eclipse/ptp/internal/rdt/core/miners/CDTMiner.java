@@ -393,8 +393,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				int selectionStart = getInteger(theCommand, 8);
 				int selectionLength = getInteger(theCommand, 9);
 				
-				initializeTranslationUnit(unit);
-				
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting definitions...", _dataStore); //$NON-NLS-1$
 				
 				handleGetDefinitions(scopeName, hostName, unit, path, selectionStart, selectionLength, status);
@@ -436,7 +434,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				RemoteContentAssistInvocationContext context = (RemoteContentAssistInvocationContext) Serializer.deserialize(getString(theCommand, 2));
 				ITranslationUnit unit = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 3));
 				String path = getString(theCommand, 4);
-				initializeTranslationUnit(unit);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Computing completions...", _dataStore); //$NON-NLS-1$
 				
 				handleComputeCompletionProposals(scopeName, context, unit, path, status);
@@ -499,7 +496,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				String path = getString(theCommand, 7);
 				int selectionStart = getInteger(theCommand, 8);
 				int selectionLength = getInteger(theCommand, 9);
-				initializeTranslationUnit(unit);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finding type hierarchy input from text selection...", _dataStore); //$NON-NLS-1$
 				
 				
@@ -522,7 +518,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				String selectedText = getString(theCommand, 7);
 				int selectionStart = getInteger(theCommand, 8);
 				int selectionLength = getInteger(theCommand, 9);
-				initializeTranslationUnit(unit);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Open declaration...", _dataStore); //$NON-NLS-1$
 				
 				OpenDeclarationResult result = OpenDeclarationHandler.handleOpenDeclaration(scopeName, scheme, unit, path, selectedText, selectionStart, selectionLength, _dataStore);
@@ -543,7 +538,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				ITranslationUnit workingCopy = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 1));
 				String path = getString(theCommand, 2);
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Model Builder: building working copy: " + workingCopy.getElementName() + "...", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
-				initializeTranslationUnit(workingCopy);
 				handleGetModel(workingCopy, path, status);
 
 				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Finished building model.", _dataStore); //$NON-NLS-1$
@@ -558,19 +552,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 		return status;
 	}
 	
-	
-	/**
-	 * Must call this on a translation unit that has just been deserialized
-	 * if you want to use it to get an AST.
-	 */
-	public void initializeTranslationUnit(ITranslationUnit unit) { 
-		if(unit instanceof TranslationUnit) {
-			TranslationUnit tu = (TranslationUnit) unit;
-			String languageId = tu.getLanguageId();
-			Map<String,String> languageProperties = tu.getLanguageProperties();
-			tu.setLanguage(RemoteLanguageMapper.getLanguageById(languageId, languageProperties, _dataStore));
-		}
-	}
 	
 	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
 		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation, _dataStore);
@@ -969,7 +950,6 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				if (subject instanceof ISourceReference) {
 					ISourceReference input = (ISourceReference) subject;
 					ITranslationUnit tu = input.getTranslationUnit();
-					initializeTranslationUnit(tu);
 					
 					if (needToFindDefinition(subject)) {
 						IBinding binding= IndexQueries.elementToBinding(index, subject, path);
