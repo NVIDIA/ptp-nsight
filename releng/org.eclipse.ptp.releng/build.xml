@@ -181,7 +181,10 @@
 		</antcall>		
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt-feature"/>
-		</antcall>		
+		</antcall>	
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt.xlc-feature"/>
+		</antcall>	
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/cell/org.eclipse.ptp.cell-feature"/>
 		</antcall>		
@@ -395,6 +398,18 @@
 			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.doc.user"/>
 		</antcall>
 		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.xlc"/>
+		</antcall>
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.tests"/>
+		</antcall>
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.services.test"/>
+		</antcall>
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.ui.test"/>
+		</antcall>
+		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.aix.ppc"/>
 		</antcall>
 		<antcall target="tagone">
@@ -417,12 +432,6 @@
 		</antcall>
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/perf/org.eclipse.ptp.perf.tau.papitest"/>
-		</antcall>
-		<antcall target="tagone">
-			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core.tests"/>
-		</antcall>
-		<antcall target="tagone">
-			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.services.test"/>
 		</antcall>
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/cell/org.eclipse.ptp.cell"/>
