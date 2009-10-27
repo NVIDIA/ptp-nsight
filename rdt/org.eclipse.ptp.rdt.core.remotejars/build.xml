@@ -17,10 +17,7 @@
 
 <project name="RDT Remote JARs" default="server.all" basedir=".">
 	<property name="ptpVersion" value="2.1.4"/>
-	<property name="copyToDir" value="/home/www/tools/ptp/builds/test"/>
-	<!--
 	<property name="copyToDir" value="/home/www/tools/ptp/builds/${ptpVersion}/latest"/>
-	-->
 	
 	<property name="serverBaseName" value="rdt-server"/>
 	<property name="serverJar" value="${basedir}/${serverBaseName}"/>
@@ -222,7 +219,6 @@
 	</target>
 	
 	<target name="clean.except.jars">
-		<!--
 		<delete dir="${basedir}" failonerror="false">
 			<include name="build.cdtminer.xml"/>
 			<include name="build.cdtmodel.xml"/>
@@ -237,7 +233,7 @@
 			<include name="lrparser.files.xml"/>
 			<include name="xlcparser.files.xml"/>
 		</delete>
-		-->
+
 		<delete dir="${remoteServerTempDir}"/>
 		<delete dir="${platformTempDir}"/>
 	</target>
