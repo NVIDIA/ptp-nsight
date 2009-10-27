@@ -138,21 +138,21 @@
 		/>
 	</target>
 	
-	<target name="get.cdt.lrparser.bin">
-		<!--Get cdt.core from PTP build-->
+	<target name="get.cdt.core.lrparser.bin">
+		<!--Get cdt.core.lrparser from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtLRParserJar}"
 			dest="${basedir}/../org.eclipse.cdt.core.lrparser/build"
 		/>
 	</target>
 	
-	<target name="get.cdt.lrparser.xlc.bin">
-		<!--Get cdt.core from PTP build-->
+	<target name="get.cdt.core.lrparser.xlc.bin">
+		<!--Get cdt.core.lrparser.xlc from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtLRParserXLCJar}"
 			dest="${basedir}/../org.eclipse.cdt.core.lrparser.xlc/build"
 		/>
 	</target>
 	
-	<target name="generate.file.lists" depends="compile.all, get.cdt.bin, get.cdt.lrparser.bin, get.cdt.lrparser.xlc.bin">
+	<target name="generate.file.lists" depends="compile.all, get.cdt.bin, get.cdt.core.lrparser.bin, get.cdt.core.lrparser.xlc.bin">
 		<java
 			fork="true"
 			classname="org.eclipse.ptp.internal.rdt.core.jardesc.JarDescElementExtractor"
