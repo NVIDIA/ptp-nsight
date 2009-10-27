@@ -94,6 +94,9 @@ public class CDTMiner extends Miner {
 	public static final String C_MOVE_INDEX_FILE = "C_MOVE_INDEX_FILE"; //$NON-NLS-1$
 	public static final String T_MOVE_INDEX_FILE_RESULT = "Type.Index.MoveResult";  //$NON-NLS-1$
 	
+	// indexing errors/warnings
+	public static final String T_INDEXING_ERROR = "Type.Indexing.Error"; //$NON-NLS-1$
+	
 	// indexer progress
 	public static final String T_INDEXER_PROGRESS_INFO = "Type.Indexer.ProgressInfo"; //$NON-NLS-1$
 		
@@ -842,7 +845,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 		try {
 //			statusWorking(status);
 			
-			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore);
+			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore, status);
 			ScopeManager scopeManager = ScopeManager.getInstance();
 			
 			// update the scope if required
@@ -1215,7 +1218,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 
 	protected void handleIndexStart(String scopeName, IRemoteIndexerInfoProvider provider, DataElement status) {
 		try {
-			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore);
+			StandaloneFastIndexer indexer = RemoteIndexManager.getInstance().getIndexerForScope(scopeName, provider, _dataStore, status);
 			Set<String> sources = ScopeManager.getInstance().getFilesForScope(scopeName);
 			List<String> sourcesList = new LinkedList<String>(sources);
 
@@ -1236,7 +1239,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 	protected void handleReindex(String scopeName, String newIndexLocation, IRemoteIndexerInfoProvider provider, DataElement status) {
 		RemoteIndexManager indexManager = RemoteIndexManager.getInstance();
 		indexManager.setIndexFileLocation(scopeName, newIndexLocation);
-		StandaloneFastIndexer indexer = indexManager.getIndexerForScope(scopeName, provider, _dataStore);
+		StandaloneFastIndexer indexer = indexManager.getIndexerForScope(scopeName, provider, _dataStore, status);
 		Set<String> sources = ScopeManager.getInstance().getFilesForScope(scopeName);
 		
 		List<String> sourcesList = new LinkedList<String>(sources);
@@ -1245,7 +1248,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 			indexer.setTraceStatistics(true);
 			indexer.setShowProblems(true);
 			indexer.setShowActivity(true);
-			indexer.rebuild(sourcesList, getProgressMonitor());
+			indexer.rebuild(sourcesList, getProgressMonitor(indexer, status));
 		} catch (IOException e) {
 			UniversalServerUtilities.logError(LOG_TAG, "I/O Exception while reindexing", e, _dataStore); //$NON-NLS-1$
 		}
