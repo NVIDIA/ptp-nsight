@@ -17,6 +17,23 @@
       <topic href="html/concepts/c_indexing_service.html" label="C Indexing Service"/>
       <topic href="html/reference/remote_c_new_project_wizard_3.html" label="New Remote C Project Wizard"/>
    </context>
+   <context id="service_model_context">
+      <description>This dialog allows you to configure remote services.</description>
+	  <topic href="html/concepts/c_indexing_service.html" label="C Indexing Service"/>
+      <topic href="html/concepts/build_service.html" label="Build Service"/>
+      <topic href="html/concepts/service_model.html" label="Service Model"/>
+      <topic href="html/concepts/services.html" label="Services"/>
+      <topic href="html/concepts/providers.html" label="Providers"/>
+   </context>
+   <context id="service_model_properties_context">
+      <description>This dialog allows you to configure remote services.</description>
+	  <topic href="html/reference/remote_services.html" label="Remote Services Properties"/>
+	  <topic href="html/concepts/c_indexing_service.html" label="C Indexing Service"/>
+      <topic href="html/concepts/build_service.html" label="Build Service"/>
+      <topic href="html/concepts/service_model.html" label="Service Model"/>
+      <topic href="html/concepts/services.html" label="Services"/>
+      <topic href="html/concepts/providers.html" label="Providers"/>
+   </context>
    <context id="remote_call_hierarchy_view_context">
       <topic href="html/reference/remote_call_hierarchy.html" label="Remote Call Hierarchy View"/>
    </context>

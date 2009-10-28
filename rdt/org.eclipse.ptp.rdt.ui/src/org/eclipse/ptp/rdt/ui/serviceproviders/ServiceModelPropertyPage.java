@@ -24,9 +24,11 @@ import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.rdt.services.ui.NewServiceModelWidget;
 import org.eclipse.ptp.rdt.ui.UIPlugin;
+import org.eclipse.ptp.rdt.ui.help.IRHelpContextIds;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PropertyPage;
 
 /**
@@ -59,6 +61,8 @@ public class ServiceModelPropertyPage extends PropertyPage {
 		}
 		
 		fModelWidget.setServiceConfiguration(config, natures);
+
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(fModelWidget, IRHelpContextIds.SERVICE_MODEL_PROPERTIES);
 		return fModelWidget;
 	}
 
