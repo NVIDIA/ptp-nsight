@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.core.resources;
 
+import org.eclipse.cdt.build.core.scannerconfig.ScannerConfigBuilder;
 import org.eclipse.cdt.make.core.IMakeBuilderInfo;
 import org.eclipse.cdt.make.core.IMakeCommonBuildInfo;
 import org.eclipse.cdt.make.core.MakeCorePlugin;
@@ -115,6 +116,7 @@ public class RemoteMakeNature implements IProjectNature {
 	 * @param builderID
 	 * @param mon
 	 * @throws CoreException
+	 * @deprecated
 	 */
 	public static void addToBuildSpec(IProject project, String builderID, IProgressMonitor mon) throws CoreException {
 		IProjectDescription description = project.getDescription();
@@ -149,9 +151,16 @@ public class RemoteMakeNature implements IProjectNature {
 	public static void updateProjectDescription(IProject project, String builderID, IProgressMonitor mon) throws CoreException {
 		// setup builder
 		IProjectDescription description = project.getDescription();
-		ICommand[] commands = new ICommand[1];
+		ICommand[] commands = new ICommand[2];
+		
+		// setup remote makefile builder
 		commands[0] = description.newCommand();
 		commands[0].setBuilderName(builderID);
+		
+		// setup scanner config builder
+		commands[1] = description.newCommand();
+		commands[1].setBuilderName(ScannerConfigBuilder.BUILDER_ID);
+		
 		description.setBuildSpec(commands);
 		
 		// add nature
