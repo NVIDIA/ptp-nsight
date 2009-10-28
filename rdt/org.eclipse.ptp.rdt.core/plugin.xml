@@ -22,6 +22,9 @@
       <builder
             id="org.eclipse.ptp.rdt.core.remoteMakeBuilder">
       </builder>
+      <builder
+            id="org.eclipse.cdt.managedbuilder.core.ScannerConfigBuilder">
+      </builder>
    </extension>
    <extension
          id="org.eclipse.ptp.rdt.core.remoteMakeBuilder"
@@ -51,7 +54,7 @@
          <run
                command="gcc"
                arguments="-E -P -v -dD ${specs_file_path}"
-               class="org.eclipse.ptp.rdt.core.remotemake.RemoteGCCSpecsRunSIProvider"/>
+               class="org.eclipse.ptp.rdt.core.remotemake.RemoteSpecsRunSIProvider"/>
          <scannerInfoConsoleParser class="org.eclipse.cdt.make.internal.core.scannerconfig.gnu.GCCSpecsConsoleParser"/>
       </scannerInfoProvider>
    </extension>

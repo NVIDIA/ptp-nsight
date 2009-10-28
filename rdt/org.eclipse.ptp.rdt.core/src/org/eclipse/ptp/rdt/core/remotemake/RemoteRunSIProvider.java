@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,14 +20,18 @@ import org.eclipse.cdt.internal.core.ConsoleOutputSniffer;
 import org.eclipse.cdt.make.core.scannerconfig.IExternalScannerInfoProvider;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerConfigBuilderInfo2;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector2;
 import org.eclipse.cdt.make.core.scannerconfig.InfoContext;
 import org.eclipse.cdt.make.internal.core.StreamMonitor;
 import org.eclipse.cdt.make.internal.core.scannerconfig.ScannerInfoConsoleParserFactory;
 import org.eclipse.cdt.make.internal.core.scannerconfig2.SCMarkerGenerator;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.ptp.internal.rdt.core.remotemake.RemoteProcessClosure;
 import org.eclipse.ptp.rdt.core.RDTLog;
@@ -39,6 +43,7 @@ import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
+import org.eclipse.ptp.remote.core.IRemoteFileManager;
 import org.eclipse.ptp.remote.core.IRemoteProcess;
 import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
@@ -56,7 +61,12 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 	 */
 	protected abstract List<String> getCommand(IProject project, String providerId, IScannerConfigBuilderInfo2 buildInfo);
 
-	
+	/**
+	 * Subclasses need to provide the working directory that the command will run in.
+	 * 
+	 * @return String
+	 */
+	protected abstract IPath getWorkingDirectory(IProject project);
 	
 	public boolean invokeProvider(IProgressMonitor monitor, IResource resource,
 			String providerId, IScannerConfigBuilderInfo2 buildInfo,
@@ -96,6 +106,11 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 		
 		IProject project = resource.getProject();
 		
+		if(collector instanceof IScannerInfoCollector2) {
+			IScannerInfoCollector2 s2 = (IScannerInfoCollector2) collector;
+			s2.setProject(project);
+		}
+		
 		IRemoteExecutionServiceProvider executionProvider = getExecutionServiceProvider(project);
 		if(executionProvider == null || monitor.isCanceled())
 			return false;
@@ -113,6 +128,15 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 		
 		IRemoteServices remoteServices = executionProvider.getRemoteServices();
 		IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(connection, runCommand);
+		
+		// get the configuration directory for the provider... this is where the build
+		// should execute
+		String configPath = executionProvider.getConfigLocation();
+		IRemoteFileManager remoteFileManager = remoteServices.getFileManager(connection);
+		IFileStore workingDir = remoteFileManager.getResource(new Path(configPath), monitor);
+
+		// set the working directory for the process to be the config directory
+		processBuilder.directory(workingDir);
 		
 		monitor.worked(1);
 		

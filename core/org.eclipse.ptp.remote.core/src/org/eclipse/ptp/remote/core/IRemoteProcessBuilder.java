@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007 IBM Corporation and others.
+ * Copyright (c) 2007, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,6 +62,13 @@ public interface IRemoteProcessBuilder {
 	 * @return an IFileStore reference to the working directory
 	 */
 	public abstract IFileStore directory();
+	
+	/**
+	 * Returns the user's home directory on the target system.
+	 * 
+	 * @return IFileStore corresponding to the location, or <code>null</code> if the home directory cannot be determined.
+	 */
+	public abstract IFileStore getHomeDirectory();
 
 	/**
 	 * Sets this process builder's working directory.

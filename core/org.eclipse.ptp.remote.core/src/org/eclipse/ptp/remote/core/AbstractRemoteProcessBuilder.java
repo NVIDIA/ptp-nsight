@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007 IBM Corporation and others.
+ * Copyright (c) 2007, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -77,6 +77,13 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 */
 	public IFileStore directory() {
 		return remoteDir;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#getHomeDirectory()
+	 */
+	public IFileStore getHomeDirectory() {
+		return null;
 	}
 
 	/* (non-Javadoc)

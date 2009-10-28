@@ -19,13 +19,24 @@ import java.util.Map.Entry;
 
 import org.eclipse.cdt.utils.spawner.ProcessFactory;
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteProcess;
 
 public class LocalProcessBuilder extends AbstractRemoteProcessBuilder {
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder#getHomeDirectory()
+	 */
+	@Override
+	public IFileStore getHomeDirectory() {
+		String pathString = System.getProperty("user.home");
+		return EFS.getLocalFileSystem().getStore(new Path(pathString));
+	}
+
 	private ProcessFactory localProcessBuilder;
 
 	private Map<String, String> remoteEnv = new HashMap<String, String>();

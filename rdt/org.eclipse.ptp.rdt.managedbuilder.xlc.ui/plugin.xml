@@ -7,7 +7,6 @@
             fileVersion="4.0.0">
       </managedBuildRevision>
       <builder
-            commandLauncher="org.eclipse.ptp.rdt.core.remotemake.RemoteCommandLauncher"
             id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.builder1"
             isAbstract="false"
             isVariableCaseSensitive="false"
@@ -29,12 +28,13 @@
       		errorParsers="org.eclipse.cdt.errorparsers.xlc.XlcErrorParser"
 			id="org.eclipse.ptp.rdt.managedbuild.config.xlc.exe.debug">
 			<toolChain
-                  archList="all"
-                  configurationEnvironmentSupplier="org.eclipse.cdt.managedbuilder.xlc.aix.AixConfigurationEnvironmentSupplier"
-                  id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.exe.debug"
-                  name="%ToolChainName.Dbg"
-                  osList="all"
-                  targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.debug;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.debug">
+         archList="all"
+         configurationEnvironmentSupplier="RemoteConfigurationEnvironmentSupplier"
+         id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.exe.debug"
+         name="%ToolChainName.Dbg"
+         osList="all"
+         scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile"
+         targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.debug;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.debug">
 			      <targetPlatform
 					  id="org.eclipse.ptp.rdt.managedbuild.target.xlc.platform.exe.debug"
 				 	  name="%PlatformName.Dbg"
@@ -48,7 +48,7 @@
 			      </builder>
 			      <tool
                       id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.exe.debug"
-                      superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.base">
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.cpp">
                       <option
                           id="org.eclipse.ptp.rdt.xlc.cpp.compiler.exe.debug.option.optimization.level"
                           defaultValue="xlc.c.compiler.optimization.level.none"
@@ -62,7 +62,7 @@
                   </tool>
                   <tool
 					  id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.debug"
-                      superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.base">
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.c">
 					  <option
 						  id="org.eclipse.ptp.rdt.xlc.c.compiler.exe.debug.option.optimization.level"
 						  defaultValue="xlc.c.optimization.level.none"
@@ -95,11 +95,13 @@
 			errorParsers="org.eclipse.cdt.errorparsers.xlc.XlcErrorParser"
 			id="org.eclipse.ptp.rdt.managedbuild.config.xlc.exe.release">
 			<toolChain
-                  archList="all"
-                  id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.exe.release"
-                  name="%ToolChainName.Rel"
-                  osList="all"
-                  targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.release;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.release">
+         archList="all"
+         configurationEnvironmentSupplier="RemoteConfigurationEnvironmentSupplier"
+         id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.exe.release"
+         name="%ToolChainName.Dbg"
+         osList="all"
+         scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile"
+         targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.release;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.release">
 		          <targetPlatform
 		              id="org.eclipse.ptp.rdt.managedbuild.target.xlc.platform.exe.release"
 		              name="%PlatformName.Rel"		             
@@ -113,7 +115,7 @@
 				  </builder> 
 				  <tool
                       id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.exe.release"
-                      superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.base">                     
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.cpp">                     
 					  <option
 						  id="org.eclipse.ptp.rdt.xlc.cpp.compiler.exe.release.option.optimization.level"
 						  defaultValue="xlc.c.optimization.level.Level5"
@@ -127,7 +129,7 @@
                   </tool>
                   <tool
                       id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.release"
-                      superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.base">                          
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.c">                          
 					  <option
 						  id="org.eclipse.ptp.rdt.xlc.c.compiler.exe.release.option.optimization.level"
 						  defaultValue="xlc.c.optimization.level.Level5"
@@ -156,23 +158,24 @@
 		</configuration>
 	</projectType>	
 	<toolChain
-                  archList="all"
-                  configurationEnvironmentSupplier="RemoteConfigurationEnvironmentSupplier"
-                  id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.base"
-                  name="%ToolChainName.Dbg"
-                  osList="all"
-                  targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.debug;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.debug">
+       archList="all"
+       configurationEnvironmentSupplier="RemoteConfigurationEnvironmentSupplier"
+       id="org.eclipse.ptp.rdt.managedbuild.toolchain.xlc.base"
+       name="%ToolChainName.Dbg"
+       osList="all"
+       scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile"
+       targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.debug;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.debug">
 			  	  <builder
 					  superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.builder1"
 					  id="org.eclipse.ptp.rdt.managedbuilder.xlc.builder.base">		              
 			      </builder>
 			      <tool
                       id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.base"
-                      superClass="cdt.managedbuild.tool.xlc.cpp.compiler">
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.cpp">
                   </tool>
                   <tool
 					  id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.base"
-                      superClass="cdt.managedbuild.tool.xlc.c.compiler">
+                      superClass="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.c">
                   </tool>
                   <tool
                       id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.base"
@@ -186,23 +189,63 @@
 					  id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.assembler.exe.base"
 					  superClass="cdt.managedbuild.tool.xlc.assembler">
 				  </tool>
-			 </toolChain>        		
+			 </toolChain>
+ <tool
+       id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.cpp"
+       isAbstract="false"
+       name="Remote XL C++ Compiler"
+       superClass="cdt.managedbuild.tool.xlc.cpp.compiler.abstract">
+           <inputType
+          id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.cpp.c.compiler.input"
+          primaryInput="true"
+          scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile|org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerFileProfile"
+          superClass="cdt.managedbuild.tool.xlc.c.compiler.input">
+          </inputType>
+    <inputType
+          id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.cpp.compiler.input"
+          primaryInput="true"
+          scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile|org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerFileProfile"
+          superClass="cdt.managedbuild.tool.xlc.cpp.compiler.input">
+    </inputType>
+    <outputType
+			outputs="o"
+            buildVariable="OBJS"
+            id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.cpp.compiler.output">
+            </outputType>
+ </tool>
+ <tool
+       id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.compiler.c"
+       isAbstract="false"
+       name="Remote XL C Compiler"
+       superClass="cdt.managedbuild.tool.xlc.c.compiler.abstract">
+    <inputType
+          id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.c.compiler.input"
+          primaryInput="true"
+          scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerProjectProfile|org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerFileProfile"
+          superClass="cdt.managedbuild.tool.xlc.c.compiler.input">
+    </inputType>
+        <outputType
+			outputs="o"
+            buildVariable="OBJS"
+            id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.c.compiler.output">
+            </outputType>
+ </tool>        		
    </extension>
    <extension
          id="RemoteXLCPerProjectProfile"
          name="%extension.name"
          point="org.eclipse.cdt.make.core.ScannerConfigurationDiscoveryProfile">
      <scannerInfoCollector
-            class="org.eclipse.ptp.rdt.core.remotemake.ProjectDescriptionCollector"
+            class="org.eclipse.cdt.make.xlc.core.scannerconfig.PerProjectXLCScannerInfoCollector"
             scope="project"/>
      		<!-- The ScannerInfoProvider search for the information needed by the profile and send it to the ScannerInfoCollector -->
-		<scannerInfoProvider providerId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.specsFile">
+		<scannerInfoProvider providerId="specsFile">
 			<!-- Specifies the compiler command that returns the information about standard include directories and standard definitions -->
 			<!-- The compiler command used will be always a C compiler command -->
 			<!-- The output for C or C++ projects will be different as the ScannerInfoProvider substitute the ${specs_file} variable below with a dummy "c" file or "cpp" file -->
 			<run
 					arguments="-E -v ${specs_file_path}"
-					command="${XL_compilerRoot}/xlC"
+					command="xlC"
 					class="org.eclipse.ptp.rdt.core.remotemake.RemoteSpecsRunSIProvider">
 			</run>
 			<!-- Specifies the parser for the output generated by the compiler with the above command line -->
@@ -210,6 +253,25 @@
 					class="org.eclipse.cdt.make.xlc.core.scannerconfig.XlCSpecsConsoleParser">
 			</scannerInfoConsoleParser>
 		</scannerInfoProvider>
+  <buildOutputProvider>
+     <scannerInfoConsoleParser
+           class="org.eclipse.cdt.make.xlc.core.scannerconfig.XLCPerProjectBuildOutputParser">
+     </scannerInfoConsoleParser>
+  </buildOutputProvider>
+   </extension>
+   <extension
+         id="RemoteXLCPerFileProfile"
+         name="Remote XL C/C++ Per File Profile"
+         point="org.eclipse.cdt.make.core.ScannerConfigurationDiscoveryProfile">
+      <scannerInfoCollector
+            class="org.eclipse.cdt.make.xlc.core.scannerconfig.PerFileXLCScannerInfoCollector"
+            scope="file">
+      </scannerInfoCollector>
+      <buildOutputProvider>
+         <scannerInfoConsoleParser
+               class="org.eclipse.cdt.make.xlc.core.scannerconfig.XLCPerFileBuildOutputParser">
+         </scannerInfoConsoleParser>
+      </buildOutputProvider>
    </extension>
 
 </plugin>

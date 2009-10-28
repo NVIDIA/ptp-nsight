@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,8 +19,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.cdt.build.core.scannerconfig.CfgInfoContext;
+import org.eclipse.cdt.build.core.scannerconfig.ICfgScannerConfigBuilderInfo2Set;
+import org.eclipse.cdt.build.internal.core.scannerconfig2.CfgScannerConfigProfileManager;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.ErrorParserManager;
+import org.eclipse.cdt.core.IMarkerGenerator;
+import org.eclipse.cdt.core.ProblemMarkerInfo;
 import org.eclipse.cdt.core.envvar.IEnvironmentVariable;
 import org.eclipse.cdt.core.model.ICModelMarker;
 import org.eclipse.cdt.core.resources.IConsole;
@@ -28,13 +33,29 @@ import org.eclipse.cdt.internal.core.ConsoleOutputSniffer;
 import org.eclipse.cdt.make.core.IMakeBuilderInfo;
 import org.eclipse.cdt.make.core.MakeBuilder;
 import org.eclipse.cdt.make.core.MakeCorePlugin;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerConfigBuilderInfo2;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector2;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector3;
+import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoConsoleParser;
+import org.eclipse.cdt.make.core.scannerconfig.InfoContext;
 import org.eclipse.cdt.make.internal.core.MakeMessages;
 import org.eclipse.cdt.make.internal.core.StreamMonitor;
 import org.eclipse.cdt.make.internal.core.scannerconfig.ScannerInfoConsoleParserFactory;
+import org.eclipse.cdt.make.internal.core.scannerconfig2.SCMarkerGenerator;
+import org.eclipse.cdt.make.internal.core.scannerconfig2.SCProfileInstance;
+import org.eclipse.cdt.make.internal.core.scannerconfig2.ScannerConfigProfile;
+import org.eclipse.cdt.make.internal.core.scannerconfig2.ScannerConfigProfileManager;
 import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.IFileInfo;
+import org.eclipse.cdt.managedbuilder.core.IFolderInfo;
+import org.eclipse.cdt.managedbuilder.core.IInputType;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
+import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
+import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuilderCorePlugin;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -206,8 +227,21 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				final OutputStream stdout = epm.getOutputStream();
 				final OutputStream stderr = epm.getOutputStream();
 				
-				ConsoleOutputSniffer sniffer = ScannerInfoConsoleParserFactory.getMakeBuilderOutputSniffer(
-						stdout, stderr, getProject(), workingDirectory, null, this, null);
+				String scannerDiscID = mbsInfo.getDefaultConfiguration().getToolChain().getScannerConfigDiscoveryProfileId();
+				
+				IScannerConfigBuilderInfo2 scBuilderInfo = ScannerConfigProfileManager.
+                createScannerConfigBuildInfo2(ManagedBuilderCorePlugin.getDefault().getPluginPreferences(),
+                        scannerDiscID, false);
+				int foo = 1;
+				IScannerInfoCollector collector = (IScannerInfoCollector) ScannerConfigProfileManager.getInstance().getSCProfileConfiguration(scannerDiscID).getScannerInfoCollectorElement().createScannerInfoCollector();
+				
+				if(collector instanceof IScannerInfoCollector2) {
+					IScannerInfoCollector2 s2 = (IScannerInfoCollector2) collector;
+					s2.setProject(currProject);
+				}
+				
+				SCMarkerGenerator markerGenerator = new SCMarkerGenerator();
+				ConsoleOutputSniffer sniffer = ScannerInfoUtility.createBuildOutputSniffer(stdout, stderr, currProject, mbsInfo.getDefaultConfiguration(), workingDirectory, markerGenerator , collector);
 				OutputStream consoleOut = (sniffer == null ? stdout : sniffer.getOutputStream());
 				OutputStream consoleErr = (sniffer == null ? stderr : sniffer.getErrorStream());
 				
@@ -353,6 +387,11 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				consoleOut.close();
 				consoleErr.close();
 				epm.reportProblems();
+				
+//				if(collector instanceof IScannerInfoCollector2) {
+//					IScannerInfoCollector2 s2 = (IScannerInfoCollector2) collector;
+//					s2.updateScannerConfiguration(monitor);
+//				}
 				cos.close();
 			}
 		} catch (Exception e) {
@@ -422,4 +461,6 @@ public class RemoteMakeBuilder extends MakeBuilder {
 		}
 		return makeArray(targets);
 	}
+	
+
 }

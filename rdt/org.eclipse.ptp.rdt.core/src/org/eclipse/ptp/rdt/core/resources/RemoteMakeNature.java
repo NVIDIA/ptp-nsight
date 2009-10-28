@@ -139,6 +139,36 @@ public class RemoteMakeNature implements IProjectNature {
 	}
 
 	/**
+	 * Adds a builder to the build spec for the project.
+	 * 
+	 * @param project
+	 * @param builderID
+	 * @param mon
+	 * @throws CoreException
+	 */
+	public static void updateProjectDescription(IProject project, String builderID, IProgressMonitor mon) throws CoreException {
+		// setup builder
+		IProjectDescription description = project.getDescription();
+		ICommand[] commands = new ICommand[1];
+		commands[0] = description.newCommand();
+		commands[0].setBuilderName(builderID);
+		description.setBuildSpec(commands);
+		
+		// add nature
+		String[] prevNatures= description.getNatureIds();
+		for (int i= 0; i < prevNatures.length; i++) {
+			if (NATURE_ID.equals(prevNatures[i]))
+				return;
+		}
+		String[] newNatures= new String[prevNatures.length + 1];
+		System.arraycopy(prevNatures, 0, newNatures, 0, prevNatures.length);
+		newNatures[prevNatures.length]= NATURE_ID;
+		description.setNatureIds(newNatures);
+		
+		project.setDescription(description, mon);
+	}
+	
+	/**
 	 * Removes a builder from the project's build spec.
 	 * 
 	 * @param project

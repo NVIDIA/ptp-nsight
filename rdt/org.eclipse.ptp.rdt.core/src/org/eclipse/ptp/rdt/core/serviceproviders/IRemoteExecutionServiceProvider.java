@@ -41,4 +41,11 @@ public interface IRemoteExecutionServiceProvider extends IServiceProvider {
 	 * @return IRemoteConnection
 	 */
 	public IRemoteConnection getConnection();
+	
+	/**
+	 * Gets the path to the configuration area on the the server.
+	 * 
+	 * @return String
+	 */
+	public String getConfigLocation();
 }
