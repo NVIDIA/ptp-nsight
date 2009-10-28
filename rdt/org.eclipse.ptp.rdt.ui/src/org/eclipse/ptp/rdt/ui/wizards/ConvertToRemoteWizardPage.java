@@ -29,6 +29,8 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.ptp.rdt.core.RDTLog;
+import org.eclipse.ptp.rdt.core.remotemake.RemoteMakeBuilder;
+import org.eclipse.ptp.rdt.core.resources.RemoteMakeNature;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceModelManager;
@@ -126,6 +128,7 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 		monitor.beginTask(Messages.getString("WizardProjectConversion.monitor.convertingToRemoteProject"), 3); //$NON-NLS-1$
 		try {
 			RemoteNature.addRemoteNature(project, monitor);
+			RemoteMakeNature.updateProjectDescription(project, RemoteMakeBuilder.BUILDER_ID, monitor);
 			configureServicesForRemoteProject(project);
 		} catch (InvocationTargetException e) {
 			RDTLog.logError(e);
@@ -144,6 +147,7 @@ public class ConvertToRemoteWizardPage extends ConvertProjectWizardPage {
 		monitor.beginTask(Messages.getString("WizardProjectConversion.monitor.convertingToRemoteProject"), 3); //$NON-NLS-1$
 		try {
 			RemoteNature.addRemoteNature(project, monitor);
+			RemoteMakeNature.updateProjectDescription(project, RemoteMakeBuilder.BUILDER_ID, monitor);
 			configureServicesForRemoteProject(project);
 		} catch (InvocationTargetException e) {
 			RDTLog.logError(e);

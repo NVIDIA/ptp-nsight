@@ -10,10 +10,17 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.ui.serviceproviders;
 
+import java.net.URI;
+
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.rdt.core.serviceproviders.IRemoteExecutionServiceProvider;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
+import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.PTPRemoteCorePlugin;
 import org.eclipse.ptp.rdt.services.core.ServiceProvider;
@@ -38,7 +45,41 @@ public class RemoteBuildServiceProvider extends ServiceProvider implements IRemo
 	public static final String NAME = Messages.getString("RemoteBuildServiceProvider.0"); //$NON-NLS-1$
 
 	private IRemoteConnection fRemoteConnection = null;
+	
+	private String fConfigLocation = null;
 
+
+	private String getDefaultPath(IRemoteServices remoteServices, IRemoteConnection connection) {
+		// get the user's home directory
+		IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(connection, ""); //$NON-NLS-1$
+		IFileStore homeStore = processBuilder.getHomeDirectory();
+		URI uri = homeStore.toURI();
+		String pathString = FileSystemUtilityManager.getDefault().getPathFromURI(uri);
+		IPath path = new Path(pathString);
+		path = path.append(".eclipsesettings"); //$NON-NLS-1$
+		return path.toString();
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.rdt.core.serviceproviders.IRemoteExecutionServiceProvider#getConfigLocation()
+	 */
+	public String getConfigLocation() {
+		if(isConfigured()) {
+			if(fConfigLocation != null)
+				return fConfigLocation;
+			else {
+				fConfigLocation = getDefaultPath(getRemoteServices(), getConnection());
+			}
+		}
+		
+		
+		return fConfigLocation; // most likely null
+	}
+
+	public void setConfigLocation(String configLocation) {
+		fConfigLocation = configLocation;
+	}
 
 	public String getConfigurationString() {
 		if (isConfigured()) {

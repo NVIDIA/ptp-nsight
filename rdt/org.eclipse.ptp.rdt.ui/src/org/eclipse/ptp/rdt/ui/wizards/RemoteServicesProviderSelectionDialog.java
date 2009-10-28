@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.rdt.ui.serviceproviders.RemoteBuildServiceProvider;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
+import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.PTPRemoteCorePlugin;
 import org.eclipse.ptp.remote.ui.IRemoteUIConnectionManager;
@@ -49,7 +50,6 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class RemoteServicesProviderSelectionDialog extends Dialog {
 
-	
 	private RemoteBuildServiceProvider fProvider;
 	
 	private Map<Integer, IRemoteServices> fComboIndexToRemoteServicesProviderMap = new HashMap<Integer, IRemoteServices>();
@@ -59,6 +59,10 @@ public class RemoteServicesProviderSelectionDialog extends Dialog {
 	private Map<Integer, IRemoteConnection> fComboIndexToRemoteConnectionMap = new HashMap<Integer, IRemoteConnection>();
 
 	private IRemoteConnection fSelectedConnection;
+	
+	private String fConfigLocation;
+
+	private RemoteBuildServiceFileLocationWidget fBuildConfigLocationWidget;
 
 	public RemoteServicesProviderSelectionDialog(IServiceProvider provider, Shell parentShell) {
 		super(parentShell);
@@ -127,6 +131,13 @@ public class RemoteServicesProviderSelectionDialog extends Dialog {
         final Button newConnectionButton = new Button(container, SWT.PUSH);
         newConnectionButton.setText(Messages.getString("RemoteServicesProviderSelectionDialog.1")); //$NON-NLS-1$
         updateNewConnectionButtonEnabled(newConnectionButton);
+        
+        String configPath = RemoteBuildServiceFileLocationWidget.getDefaultPath(fSelectedProvider, fSelectedConnection);
+        
+        fBuildConfigLocationWidget = new RemoteBuildServiceFileLocationWidget(container, SWT.NONE, fSelectedProvider, fSelectedConnection, configPath);
+        GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
+        data.horizontalSpan = 3;
+        fBuildConfigLocationWidget.setLayoutData(data); // set layout to grab horizontal space
         
         
         newConnectionButton.addSelectionListener(new SelectionListener() {
@@ -263,6 +274,7 @@ public class RemoteServicesProviderSelectionDialog extends Dialog {
 		// set the provider
 		fProvider.setRemoteToolsProviderID(fSelectedProvider.getId());
 		fProvider.setRemoteToolsConnection(fSelectedConnection);
+		fProvider.setConfigLocation(fBuildConfigLocationWidget.getConfigLocationPath());
 
 	}
 

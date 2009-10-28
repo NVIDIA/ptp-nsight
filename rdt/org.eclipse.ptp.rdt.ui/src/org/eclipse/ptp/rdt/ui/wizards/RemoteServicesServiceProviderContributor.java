@@ -42,6 +42,7 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 	private IRemoteServices fSelectedProvider;
 	private Map<Integer, IRemoteConnection> fComboIndexToRemoteConnectionMap = new HashMap<Integer, IRemoteConnection>();
 	private IRemoteConnection fSelectedConnection;
+	private RemoteBuildServiceFileLocationWidget fBuildConfigLocationWidget;
 
 	
 	public void configureServiceProvider(IServiceProvider provider, final Composite container) {
@@ -95,7 +96,15 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
         
         // populate the combo with a list of providers
         populateConnectionCombo(connectionCombo);
-           
+       
+        String configPath = RemoteBuildServiceFileLocationWidget.getDefaultPath(fSelectedProvider, fSelectedConnection);
+        
+        fBuildConfigLocationWidget = new RemoteBuildServiceFileLocationWidget(container, SWT.NONE, fSelectedProvider, fSelectedConnection, configPath);
+        GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
+        data.horizontalSpan = 3;
+        fBuildConfigLocationWidget.setLayoutData(data); // set layout to grab horizontal space
+        
+        
         // new connection button
         final Button newConnectionButton = new Button(container, SWT.PUSH);
         newConnectionButton.setText(Messages.getString("RemoteServicesProviderSelectionDialog.1")); //$NON-NLS-1$
@@ -174,6 +183,10 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 		// set the provider
 		fProvider.setRemoteToolsProviderID(fSelectedProvider.getId());
 		fProvider.setRemoteToolsConnection(fSelectedConnection);
+		if(fBuildConfigLocationWidget != null) {
+			fBuildConfigLocationWidget.setRemoteConnection(fSelectedProvider, fSelectedConnection);
+			fProvider.setConfigLocation(fBuildConfigLocationWidget.getConfigLocationPath());
+		}
 
 	}
 	

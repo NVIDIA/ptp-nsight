@@ -96,11 +96,12 @@ public class RemoteMakefileWizardHandler extends STDWizardHandler {
 		mngr.setProjectDescription(project, des);
 		
 		// remove all builders from the project... I really wish there was a less hacky way to do this that wasn't so damn slow
-		IProjectDescription projectDescription = project.getDescription();
-		projectDescription.setBuildSpec(new ICommand[0]);
-		project.setDescription(projectDescription, IProject.FORCE, new NullProgressMonitor());
-		RemoteMakeNature.addToBuildSpec(project, RemoteMakeBuilder.REMOTE_MAKE_BUILDER_ID, new NullProgressMonitor());
-		RemoteMakeNature.addNature(project, new NullProgressMonitor());
+//		IProjectDescription projectDescription = project.getDescription();
+//		projectDescription.setBuildSpec(new ICommand[0]);
+//		project.setDescription(projectDescription, IProject.FORCE, new NullProgressMonitor());
+//		RemoteMakeNature.addToBuildSpec(project, RemoteMakeBuilder.REMOTE_MAKE_BUILDER_ID, new NullProgressMonitor());
+		RemoteMakeNature.updateProjectDescription(project, RemoteMakeBuilder.REMOTE_MAKE_BUILDER_ID, new NullProgressMonitor());
+		//RemoteMakeNature.addNature(project, new NullProgressMonitor());
 		
 		// set the build directory by default to be that of the project... the usual workspace macro doesn't work as the workspace resides locally
 		// and the project resides remotely
