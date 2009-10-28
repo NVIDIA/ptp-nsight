@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem;
 import org.eclipse.ptp.rdt.core.RDTLog;
+import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 
 /**
  * Synchronizes state of remote indices by responding to changes to
@@ -57,22 +58,11 @@ public class ProjectChangeListener implements IResourceChangeListener {
 					IResource resource = delta.getResource();
 					if (resource instanceof IProject) {
 						IProject project = (IProject) resource;
-						FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
 						
-						URI locationURI = project.getLocationURI();
-						
-						String mappedPath = fsUtilityManager.getMappedPath(locationURI);
-						String rootPath = fsUtilityManager.getPathFromURI(locationURI);
-						URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
-						String host = null;
-						
-						if(managedURI != null)
-							host = managedURI.getHost();
-						else
-							host = locationURI.getHost();
-
-						
-						Scope scope = new Scope(project.getName(), project.getLocationURI().getScheme(), host, rootPath, mappedPath);
+						//the scope is only used when the project is deleted. We do not need to set the other
+						//information since it is not available when the project is deleted. In any case, this information is not needed for the
+						//unregisterScope and removeIndexFile calls below.
+						Scope scope = new Scope(project.getName(), null, null, null, null);
 						
 						switch (delta.getKind()) {
 						case IResourceDelta.ADDED:
@@ -87,15 +77,14 @@ public class ProjectChangeListener implements IResourceChangeListener {
 							
 						case IResourceDelta.CHANGED:
 							if ((delta.getFlags() & IResourceDelta.OPEN) != 0) {
-								if (project.isOpen()) {
+								//do not check project unless it has a remote nature
+								if (project.isOpen() && project.hasNature(RemoteNature.REMOTE_NATURE_ID)) {
 									// Project was just opened.
 									fSubsystem.checkProject(project, NULL_PROGRESS_MONITOR);
 								}
 							}
 							break;
-						}
-						
-						// We're not interested in the project's contents.
+						}	
 						return false;
 					}
 					return true;
