@@ -57,8 +57,10 @@ import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuilderCorePlugin;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
@@ -77,6 +79,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ptp.internal.rdt.core.remotemake.RemoteProcessClosure;
 import org.eclipse.ptp.rdt.core.RDTLog;
+import org.eclipse.ptp.rdt.core.activator.Activator;
 import org.eclipse.ptp.rdt.core.serviceproviders.IRemoteExecutionServiceProvider;
 import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.services.core.IService;
@@ -460,6 +463,34 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				break;
 		}
 		return makeArray(targets);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.cdt.make.core.MakeBuilder#shouldBuild(int, org.eclipse.cdt.make.core.IMakeBuilderInfo)
+	 */
+	@Override
+	protected boolean shouldBuild(int kind, IMakeBuilderInfo info) {
+		IProject project = getProject();
+		
+		IProjectDescription description = null;
+		try {
+			description = project.getDescription();
+		} catch (CoreException e) {
+			Activator.log(e);
+		}
+		
+		ICommand[] commands = description.getBuildSpec();
+		ICommand builderCommand = null;
+		
+		for(ICommand command : commands) {
+			if(command.getBuilderName().equals(REMOTE_MAKE_BUILDER_ID)) {
+				builderCommand = command;
+				break;
+			}
+		}
+		
+		return builderCommand.isBuilding(kind);
+	
 	}
 	
 
