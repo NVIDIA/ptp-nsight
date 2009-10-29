@@ -65,7 +65,7 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 		this.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		Group group = new Group(this, SWT.NONE);
-		group.setText(Messages.getString(Messages.getString("RemoteBuildServiceFileLocationWidget.1"))); //$NON-NLS-1$
+		group.setText(Messages.getString("RemoteBuildServiceFileLocationWidget.1")); //$NON-NLS-1$
 		group.setLayout(new GridLayout(2, false));
 		group.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
