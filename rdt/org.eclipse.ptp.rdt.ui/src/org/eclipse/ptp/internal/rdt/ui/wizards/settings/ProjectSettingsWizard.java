@@ -24,6 +24,9 @@ public abstract class ProjectSettingsWizard extends Wizard {
 	
 	public abstract ProjectSettingsWizardPage getPage(); 
 
+	private boolean finishedPressed;
+	
+	
 	@Override
 	public void addPages() {
 		super.addPages();
@@ -40,7 +43,12 @@ public abstract class ProjectSettingsWizard extends Wizard {
 
 	@Override
 	public boolean performFinish() {
+		finishedPressed = true;
 		return mainPage.finish();
+	}
+	
+	public boolean isFinishedPressed() {
+		return finishedPressed;
 	}
 	
 

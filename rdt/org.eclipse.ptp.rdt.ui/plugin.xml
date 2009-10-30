@@ -333,7 +333,7 @@
             weight="001">
       </tab>
       <tab
-            class="org.eclipse.cdt.ui.newui.SymbolTab"
+            class="org.eclipse.ptp.internal.rdt.ui.scannerinfo.RemoteSymbolTab"
             icon="icons/obj16/define_obj.gif"
             name="%SymbolTab.name"
             parent="org.eclipse.ptp.internal.rdt.ui.scannerinfo.RemoteScannerInfoPropertiesPage"
