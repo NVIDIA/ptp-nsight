@@ -37,8 +37,7 @@
          targetTool="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.linker.exe.debug;org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.linker.exe.debug">
 			      <targetPlatform
 					  id="org.eclipse.ptp.rdt.managedbuild.target.xlc.platform.exe.debug"
-				 	  name="%PlatformName.Dbg"
-                      binaryParser="org.eclipse.cdt.core.XCOFF32"            					  
+				 	  name="%PlatformName.Dbg"          					  
 					  osList="all"					  
 					  archList="all">
 				  </targetPlatform>
@@ -105,7 +104,6 @@
 		          <targetPlatform
 		              id="org.eclipse.ptp.rdt.managedbuild.target.xlc.platform.exe.release"
 		              name="%PlatformName.Rel"		             
-		              binaryParser="org.eclipse.cdt.core.XCOFF32"
 		              osList="all"
 		              archList="all">		              
 		          </targetPlatform>
