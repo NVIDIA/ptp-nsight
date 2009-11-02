@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-class ImportExportWizardButtons {
+public class ImportExportWizardButtons {
 
 	public static void createControls(final Composite parent, final IAdaptable selection) {
 		
