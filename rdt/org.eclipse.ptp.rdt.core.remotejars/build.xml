@@ -18,6 +18,7 @@
 <project name="RDT Remote JARs" default="server.all" basedir=".">
 	<property name="ptpVersion" value="2.1.4"/>
 	<property name="copyToDir" value="/home/www/tools/ptp/builds/${ptpVersion}/latest"/>
+	<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
 	
 	<property name="serverBaseName" value="rdt-server"/>
 	<property name="serverJar" value="${basedir}/${serverBaseName}"/>
@@ -345,6 +346,9 @@
 				<include name="${equinoxJar}"/>
 			</fileset>
 		</copy>
+		<touch file="${remoteServerTempDir}/rdtserver_version.dat"/>
+		<concat destfile="${remoteServerTempDir}/rdtserver_version.dat">${ptpVersion}-${timestamp}</concat>
+		
 	</target>
 	
 	<target name="tar.remote" depends="prepare.remote.tar, assemble.remote">
