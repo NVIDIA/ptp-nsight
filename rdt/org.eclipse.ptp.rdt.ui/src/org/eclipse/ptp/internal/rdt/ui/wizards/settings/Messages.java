@@ -71,5 +71,7 @@ class Messages extends NLS {
 		ProjectSettingsImportStrategy_fileOpenError,
 		ProjectSettingsImportStrategy_importError,
 		ProjectSettingsImportStrategy_saveError;
+
+	public static String ProjectSettingsWizardPage_noOpenProjects;
 	
 }
