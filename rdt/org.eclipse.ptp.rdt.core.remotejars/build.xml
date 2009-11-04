@@ -16,6 +16,7 @@
 -->
 
 <project name="RDT Remote JARs" default="server.all" basedir=".">
+	<tstamp/>
 	<property name="ptpVersion" value="2.1.4"/>
 	<property name="copyToDir" value="/home/www/tools/ptp/builds/${ptpVersion}/latest"/>
 	<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
