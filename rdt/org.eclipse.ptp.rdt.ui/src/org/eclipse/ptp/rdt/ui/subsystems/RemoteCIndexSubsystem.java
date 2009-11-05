@@ -293,18 +293,16 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
 				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String message = element.getAttribute(DE.A_NAME);
+				    		String message = element.getAttribute(DE.A_NAME)+ ".  " + Messages.getString("RemoteCIndexSubsystem.11");  //$NON-NLS-1$//$NON-NLS-2$
 				    		for (int j = 0; j < fErrorMessages.size(); j++) {
 				    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
 						    		RDTLog.logWarning(message);
 						    		reportProblem(scope, message);
 				    			}
-				    		}
-				    		break;				    
+				    		}				    
 				    	}
 					}
 				}
-				
 				monitor.done();
             }
 	    }
@@ -459,8 +457,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				if (status.getName().equals("done") || status.getName().equals("cancelled") || monitor.isCanceled()) { //$NON-NLS-1$//$NON-NLS-2$
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
-				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String message = element.getAttribute(DE.A_NAME);
+						if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
+				    		String message = element.getAttribute(DE.A_NAME)+ ".  " + Messages.getString("RemoteCIndexSubsystem.11");  //$NON-NLS-1$//$NON-NLS-2$
 				    		for (int j = 0; j < fErrorMessages.size(); j++) {
 				    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
 						    		RDTLog.logWarning(message);
