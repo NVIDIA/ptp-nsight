@@ -124,7 +124,10 @@ public class OpenDeclarationHandler {
 			IASTNode parent = searchName.getParent();
 			if (parent instanceof IASTPreprocessorIncludeStatement) {
 				String includedPath = ((IASTPreprocessorIncludeStatement) parent).getPath();
-				return OpenDeclarationResult.resultIncludePath(includedPath);
+				if (includedPath == null || includedPath.equals("")) //$NON-NLS-1$
+					return OpenDeclarationResult.failureIncludeLookup(selectedText);
+				else
+					return OpenDeclarationResult.resultIncludePath(includedPath);
 			}
 			
 			IBinding binding = searchName.resolveBinding();
@@ -168,7 +171,10 @@ public class OpenDeclarationHandler {
 			IASTNode node = nodeSelector.findEnclosingNode(selectionStart, selectionLength);
 			if (node instanceof IASTPreprocessorIncludeStatement) {
 				String includedPath = ((IASTPreprocessorIncludeStatement) node).getPath();
-				return OpenDeclarationResult.resultIncludePath(includedPath);
+				if (includedPath != "") //$NON-NLS-1$
+					return OpenDeclarationResult.resultIncludePath(includedPath);
+				else
+					return OpenDeclarationResult.failureIncludeLookup(selectedText);
 			}
 		}
 		
