@@ -29,6 +29,7 @@ import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IParent;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.internal.core.parser.ParserMessages;
 import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -43,6 +44,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.dstore.core.model.DE;
 import org.eclipse.dstore.core.model.DataElement;
 import org.eclipse.dstore.core.model.DataStore;
 import org.eclipse.dstore.core.model.DataStoreResources;
@@ -93,15 +95,19 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
 	private Set<IProject> fInitializedProjects;
 	private ProjectChangeListener fProjectOpenListener;
-	private String fRemoteLogLocation;
+	private List<String> fErrorMessages = new ArrayList<String>();
 	
 	protected RemoteCIndexSubsystem(IHost host,
 			IConnectorService connectorService) {
 		super(host, connectorService);
+		generateErrorMessages();
 		// TODO Auto-generated constructor stub
 	}
-
 	
+	private void generateErrorMessages() {				
+    	fErrorMessages.add(ParserMessages.getFormattedString("ScannerProblemFactory.error.preproc.inclusionNotFound", "")); //$NON-NLS-1$ //$NON-NLS-2$
+    	fErrorMessages.add(ParserMessages.getFormattedString("ScannerProblemFactory.error.preproc.definitionNotFound", "")); //$NON-NLS-1$ //$NON-NLS-2$
+	}	
 	
 	// index management
 	
@@ -287,10 +293,13 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
 				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String location = getRemoteLogLocation();
-				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName(), location); //$NON-NLS-1$
-				    		RDTLog.logWarning(message);
-				    		reportProblem(scope, message);
+				    		String message = element.getAttribute(DE.A_NAME);
+				    		for (int j = 0; j < fErrorMessages.size(); j++) {
+				    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
+						    		RDTLog.logWarning(message);
+						    		reportProblem(scope, message);
+				    			}
+				    		}
 				    		break;				    
 				    	}
 					}
@@ -327,12 +336,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		} catch (CoreException e) {
 			RDTLog.logError(e);
 		}
-	}
-
-	protected String getRemoteLogLocation() {
-		if (fRemoteLogLocation == null)
-			fRemoteLogLocation = sendRequestStringResult(CDTMiner.C_REMOTE_LOG_LOCATION, new Object[] {}, null);
-		return fRemoteLogLocation;
 	}
 
 	/* (non-Javadoc)
@@ -457,11 +460,13 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
 				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String location = getRemoteLogLocation();
-				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName(), location); //$NON-NLS-1$
-				    		RDTLog.logWarning(message);
-				    		reportProblem(scope, message);
-				    		break;				    
+				    		String message = element.getAttribute(DE.A_NAME);
+				    		for (int j = 0; j < fErrorMessages.size(); j++) {
+				    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
+						    		RDTLog.logWarning(message);
+						    		reportProblem(scope, message);
+				    			}
+				    		}				    
 				    	}
 					}
 				}
