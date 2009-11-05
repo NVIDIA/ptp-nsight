@@ -31,6 +31,7 @@ import org.eclipse.cdt.core.model.IParent;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
@@ -42,14 +43,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.dstore.core.model.DataElement;
 import org.eclipse.dstore.core.model.DataStore;
 import org.eclipse.dstore.core.model.DataStoreResources;
 import org.eclipse.dstore.core.model.DataStoreSchema;
-import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ptp.internal.rdt.core.IRemoteIndexerInfoProvider;
 import org.eclipse.ptp.internal.rdt.core.Serializer;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CalledByResult;
@@ -80,12 +77,6 @@ import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.SubSystem;
-import org.eclipse.rse.core.subsystems.SubSystem.DisplayErrorMessageJob;
-import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
-import org.eclipse.rse.ui.messages.SystemMessageDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.progress.WorkbenchJob;
 
 /**
  * An RSE subsystem which is used to provide C/C++ indexing services from a Miner
@@ -102,6 +93,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
 	private Set<IProject> fInitializedProjects;
 	private ProjectChangeListener fProjectOpenListener;
+	private String fRemoteLogLocation;
 	
 	protected RemoteCIndexSubsystem(IHost host,
 			IConnectorService connectorService) {
@@ -201,6 +193,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 */
 	public IStatus reindexScope(Scope scope, IRemoteIndexerInfoProvider provider, String indexLocation, IProgressMonitor monitor, RemoteIndexerTask task)
 	{
+		removeProblems(scope);
 		DataStore dataStore = getDataStore();
 		   
 	    if (dataStore != null)
@@ -294,9 +287,10 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
 				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName()); //$NON-NLS-1$
+				    		String location = getRemoteLogLocation();
+				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName(), location); //$NON-NLS-1$
 				    		RDTLog.logWarning(message);
-				    		displayMessage(message);
+				    		reportProblem(scope, message);
 				    		break;				    
 				    	}
 					}
@@ -309,57 +303,37 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	    return Status.OK_STATUS;
 
 	}
-
-	protected void displayMessage(String message) {
-		DisplayMessageJob job = new DisplayMessageJob(null, message);
-		job.setPriority(Job.INTERACTIVE);
-		job.setSystem(true);
-		job.schedule();
-	}
 	
-	public static class DisplayMessageJob extends WorkbenchJob {
-
-		private Shell shell;
-		private String message;
-		
-		/**
-		 * Constructor
-		 */
-		public DisplayMessageJob(Shell shell, String message)
-		{
-			super(""); //$NON-NLS-1$
-			this.shell = shell;
-			this.message = message;
+	protected void removeProblems(Scope scope) {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceRoot workspaceRoot = workspace.getRoot();
+		IProject project = workspaceRoot.getProject(scope.getName());
+		try {
+			project.deleteMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE);
+		} catch (CoreException e) {
+			RDTLog.logError(e);
 		}
-		
-		@Override
-		public IStatus runInUIThread(IProgressMonitor monitor) {
-			if ((shell != null) && (shell.isDisposed() || !shell.isEnabled() || !shell.isVisible()))
-				shell = null;
-			if (shell == null)
-			{
-				Shell[] shells = Display.getCurrent().getShells();
-				for (int i = 0; i < shells.length && shell == null; i++)
-					if (!shells[i].isDisposed() && shells[i].isVisible() && shells[i].isEnabled())
-						shell = shells[i];
-			}
-			if (shell != null){	
-				MessageDialog dialog = new MessageDialog(
-						shell, 
-						Messages.getString("RemoteCIndexSubsystem.12"), //$NON-NLS-1$
-						null,
-						message,
-						MessageDialog.WARNING,
-						new String[] {IDialogConstants.OK_LABEL},
-						0);
-				dialog.setBlockOnOpen(false);
-				dialog.open();
-			}
-			return Status.OK_STATUS;
-		}
-		
 	}
 
+
+	protected void reportProblem(Scope scope, String message) {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceRoot workspaceRoot = workspace.getRoot();
+		IProject project = workspaceRoot.getProject(scope.getName());
+		try {
+			IMarker marker =  project.createMarker(IMarker.PROBLEM);
+			marker.setAttribute(IMarker.MESSAGE, message);
+			marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
+		} catch (CoreException e) {
+			RDTLog.logError(e);
+		}
+	}
+
+	protected String getRemoteLogLocation() {
+		if (fRemoteLogLocation == null)
+			fRemoteLogLocation = sendRequestStringResult(CDTMiner.C_REMOTE_LOG_LOCATION, new Object[] {}, null);
+		return fRemoteLogLocation;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#indexDelta(org.eclipse.ptp.internal.rdt.core.model.Scope, java.util.List, java.util.List, java.util.List, org.eclipse.core.runtime.IProgressMonitor)
@@ -369,6 +343,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			List<ICElement> newElements, List<ICElement> changedElements,
 			List<ICElement> deletedElements, IProgressMonitor monitor,
 			RemoteIndexerTask task) {
+		removeProblems(scope);
 		DataStore dataStore = getDataStore();
 		   
 	    if (dataStore != null)
@@ -482,9 +457,10 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 					for (int i = 0; i < status.getNestedSize(); i ++ ){
 						DataElement element = status.get(i);
 				    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName()); //$NON-NLS-1$
+				    		String location = getRemoteLogLocation();
+				    		String message = Messages.getString("RemoteCIndexSubsystem.11", scope.getName(), location); //$NON-NLS-1$
 				    		RDTLog.logWarning(message);
-				    		displayMessage(message);
+				    		reportProblem(scope, message);
 				    		break;				    
 				    	}
 					}

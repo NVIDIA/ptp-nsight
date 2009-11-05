@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.DOMException;
@@ -41,10 +40,8 @@ import org.eclipse.cdt.core.model.ISourceReference;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.internal.core.indexer.StandaloneFastIndexer;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.dstore.core.miners.Miner;
 import org.eclipse.dstore.core.model.DE;
 import org.eclipse.dstore.core.model.DataElement;
@@ -63,7 +60,6 @@ import org.eclipse.ptp.internal.rdt.core.index.IndexQueries;
 import org.eclipse.ptp.internal.rdt.core.model.CModelBuilder2;
 import org.eclipse.ptp.internal.rdt.core.model.CProject;
 import org.eclipse.ptp.internal.rdt.core.model.RemoteCProjectFactory;
-import org.eclipse.ptp.internal.rdt.core.model.TranslationUnit;
 import org.eclipse.ptp.internal.rdt.core.model.WorkingCopy;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
@@ -95,6 +91,8 @@ public class CDTMiner extends Miner {
 	public static final String T_MOVE_INDEX_FILE_RESULT = "Type.Index.MoveResult";  //$NON-NLS-1$
 	
 	// indexing errors/warnings
+	public static final String C_REMOTE_LOG_LOCATION = "C_REMOTE_LOG_LOCATION"; //$NON-NLS-1$
+	public static final String T_REMOTE_LOG_LOCATION = "Type.Remote.Log.Location"; //$NON-NLS-1$
 	public static final String T_INDEXING_ERROR = "Type.Indexing.Error"; //$NON-NLS-1$
 	
 	// indexer progress
@@ -133,6 +131,8 @@ public class CDTMiner extends Miner {
 	public static String LINE_SEPARATOR;
 	
 	public static final String DELIMITER = ";;;"; //$NON-NLS-1$
+	
+	//model builder
 	public static final String C_MODEL_BUILDER = "C_MODEL_BUILDER"; //$NON-NLS-1$;
 	public static final String C_MODEL_RESULT= "C_MODEL_RESULT"; //$NON-NLS-1$;
 
@@ -551,11 +551,21 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}			
 		}
+		else if (name.equals(C_REMOTE_LOG_LOCATION)) {
+			handleGetRemoteLogLocation(status);
+		}
 		
 		return status;
 	}
 	
 	
+	protected void handleGetRemoteLogLocation(DataElement status) {
+		String location = UniversalServerUtilities.getUserPreferencesDirectory(status.getDataStore());
+		status.getDataStore().createObject(status, T_REMOTE_LOG_LOCATION, location);		
+		statusDone(status);
+		
+	}
+
 	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
 		String actualLocation = RemoteIndexManager.getInstance().moveIndexFile(scopeName, newIndexLocation, _dataStore);
 		status.getDataStore().createObject(status, T_MOVE_INDEX_FILE_RESULT, actualLocation);
@@ -928,6 +938,9 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 		
 		//get model
 		createCommandDescriptor(schemaRoot, "Get model", C_MODEL_BUILDER, false); //$NON-NLS-1$
+		
+		//get remote log location
+		createCommandDescriptor(schemaRoot, "Get remote log location", C_REMOTE_LOG_LOCATION, false); //$NON-NLS-1$
 		
 		_dataStore.refresh(schemaRoot);
 	}
