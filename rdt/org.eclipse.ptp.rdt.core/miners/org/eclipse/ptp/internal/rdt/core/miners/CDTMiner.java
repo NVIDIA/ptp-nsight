@@ -60,6 +60,7 @@ import org.eclipse.ptp.internal.rdt.core.index.IndexQueries;
 import org.eclipse.ptp.internal.rdt.core.model.CModelBuilder2;
 import org.eclipse.ptp.internal.rdt.core.model.CProject;
 import org.eclipse.ptp.internal.rdt.core.model.RemoteCProjectFactory;
+import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.model.WorkingCopy;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
@@ -581,10 +582,28 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 			
 			if (unit instanceof WorkingCopy) {
 				workingCopy = (WorkingCopy) unit;
-			
+
 				CModelBuilder2 builder = new CModelBuilder2(workingCopy, new NullProgressMonitor());
 				
-				IASTTranslationUnit ast = workingCopy.getAST();
+				IIndex index = RemoteIndexManager.getInstance().getIndexForScope(Scope.WORKSPACE_ROOT_SCOPE_NAME, _dataStore);
+				
+				IASTTranslationUnit ast;
+				try {
+					index.acquireReadLock();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Got Read lock", _dataStore); //$NON-NLS-1$
+				} catch (InterruptedException ie) {
+					UniversalServerUtilities.logWarning(LOG_TAG, "Unable to aquire read lock during model building", _dataStore); //$NON-NLS-1$
+					index = null;
+				}
+					
+				try {
+					ast = workingCopy.getAST(index, ITranslationUnit.AST_SKIP_ALL_HEADERS | ITranslationUnit.AST_SKIP_FUNCTION_BODIES);
+				}
+				finally {
+					index.releaseReadLock();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Lock released", _dataStore);   //$NON-NLS-1$
+				}
+				
 				builder.parse(ast);
 	
 				// create the result object
