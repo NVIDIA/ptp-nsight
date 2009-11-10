@@ -17,6 +17,7 @@ import java.util.Properties;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.resources.IConsole;
 import org.eclipse.cdt.internal.core.ConsoleOutputSniffer;
+import org.eclipse.cdt.make.core.MakeCorePlugin;
 import org.eclipse.cdt.make.core.scannerconfig.IExternalScannerInfoProvider;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerConfigBuilderInfo2;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector;
@@ -56,6 +57,9 @@ import org.eclipse.ptp.remote.core.IRemoteServices;
 public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvider {
 	
 	
+	private static final String EXTERNAL_SI_PROVIDER_CONSOLE_ID = MakeCorePlugin.getUniqueIdentifier() + ".ExternalScannerInfoProviderConsole"; //$NON-NLS-1$;
+
+
 	/**
 	 * Subclasses need to provide the actual command to run.
 	 */
@@ -140,10 +144,11 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 		
 		monitor.worked(1);
 		
-		// the output of the command goes to the console
-		IConsole console = CCorePlugin.getDefault().getConsole();
-		console.start(project);
-		OutputStream cos = new StreamMonitor(new SubProgressMonitor(monitor, 70), console.getOutputStream(), 100);
+		// scanner config goes to its own console so that it doesn't stomp on the user's
+		// build output
+		IConsole console = CCorePlugin.getDefault().getConsole(EXTERNAL_SI_PROVIDER_CONSOLE_ID);
+        console.start(project);
+ 		OutputStream cos = new StreamMonitor(new SubProgressMonitor(monitor, 70), console.getOutputStream(), 100);
 		SCMarkerGenerator markerGenerator = new SCMarkerGenerator();
 		
 		// the sniffer parses the results of the command and adds them to the collector
