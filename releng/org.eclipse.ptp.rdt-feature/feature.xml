@@ -46,13 +46,15 @@
       <import plugin="org.eclipse.rse.connectorservice.dstore" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.rse.services" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.cdt.managedbuilder.ui" version="5.0.1" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.ptp.rdt.services" version="1.0.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.rse.services.dstore" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.rse.subsystems.files.core" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.remote.ui" version="2.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.console" version="3.3.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ptp.rdt.services" version="1.0.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.rse.files.ui"/>
       <import feature="org.eclipse.ptp.remote.rse" version="2.1.1" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.rse.services.dstore" version="3.0.3" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.cdt.make.ui"/>
    </requires>
 
    <plugin
@@ -81,5 +83,12 @@
          download-size="0"
          install-size="0"
          version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.ptp.rdt.make.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
 
 </feature>
