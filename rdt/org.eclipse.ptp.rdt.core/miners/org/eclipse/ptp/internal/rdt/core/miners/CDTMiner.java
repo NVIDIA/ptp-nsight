@@ -301,10 +301,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 		else if(name.equals(C_MOVE_INDEX_FILE)) {
 			try {
 				String scopeName = getString(theCommand, 1);
-				String scheme = getString(theCommand, 2);
-				String rootPath = getString(theCommand, 3);
-				String mappedPath = getString(theCommand, 4);
-				String newIndexLocation = getString(theCommand, 5);
+				String newIndexLocation = getString(theCommand, 2);
 				
 				handleIndexFileMove(scopeName, newIndexLocation, status);
 				
