@@ -59,7 +59,7 @@ public class RemoteCIndexServiceProviderContributer implements IServiceProviderC
 		container.setLayout(new GridLayout(1, false));
 		
 		Group connectionGroup = new Group(container, SWT.NONE);
-		connectionGroup.setText("Connection"); //$NON-NLS-1$
+		connectionGroup.setText(Messages.getString("RemoteServicesProviderSelectionDialog.0")); //$NON-NLS-1$
 		connectionGroup.setLayout(new GridLayout(1, false));
 		connectionGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
@@ -131,7 +131,7 @@ public class RemoteCIndexServiceProviderContributer implements IServiceProviderC
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
         data.horizontalSpan = 3;
         scopeWidget.setLayoutData(data); // set layout to grab horizontal space
-        scopeWidget.addPathListener(new IIndexFilePathChangeListener() {
+        scopeWidget.addPathListener(new IFilePathChangeListener() {
 			public void pathChanged(String newPath) {
 				configPath = newPath;
 				updateProvider();

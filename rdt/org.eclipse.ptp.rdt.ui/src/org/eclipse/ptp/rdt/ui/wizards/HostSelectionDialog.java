@@ -146,7 +146,7 @@ public class HostSelectionDialog extends Dialog {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
         data.horizontalSpan = 3;
         scopeWidget.setLayoutData(data); // set layout to grab horizontal space
-        scopeWidget.addPathListener(new IIndexFilePathChangeListener() {
+        scopeWidget.addPathListener(new IFilePathChangeListener() {
 			public void pathChanged(String newPath) {
 				configPath = newPath;
 			}

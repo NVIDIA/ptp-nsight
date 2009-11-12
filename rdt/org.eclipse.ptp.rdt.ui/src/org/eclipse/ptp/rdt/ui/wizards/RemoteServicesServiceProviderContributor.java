@@ -97,13 +97,20 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
         // populate the combo with a list of providers
         populateConnectionCombo(connectionCombo);
        
-        String configPath = RemoteBuildServiceFileLocationWidget.getDefaultPath(fSelectedProvider, fSelectedConnection);
         
+        String configPath = fProvider.getConfigLocation();
+        if(configPath == null)
+        	configPath = RemoteBuildServiceFileLocationWidget.getDefaultPath(fSelectedProvider, fSelectedConnection);
+
         fBuildConfigLocationWidget = new RemoteBuildServiceFileLocationWidget(container, SWT.NONE, fSelectedProvider, fSelectedConnection, configPath);
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
         data.horizontalSpan = 3;
         fBuildConfigLocationWidget.setLayoutData(data); // set layout to grab horizontal space
-        
+        fBuildConfigLocationWidget.addPathListener(new IFilePathChangeListener() {
+			public void pathChanged(String newPath) {
+				updateProvider();
+			}
+		});
         
         // new connection button
         final Button newConnectionButton = new Button(container, SWT.PUSH);
@@ -119,6 +126,7 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 				}
 				// refresh list of connections
 				populateConnectionCombo(connectionCombo);
+				updateProvider();
 			}
         });
         
@@ -128,6 +136,7 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 				fSelectedProvider = fComboIndexToRemoteServicesProviderMap.get(selectionIndex);
 				populateConnectionCombo(connectionCombo);
 				updateNewConnectionButtonEnabled(newConnectionButton);
+				updateProvider();
 			}
         });
         
@@ -176,18 +185,13 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
         // set selected connection to be the first one if we're not restoring from settings
         connectionCombo.select(toSelect);
         fSelectedConnection = fComboIndexToRemoteConnectionMap.get(toSelect);
-        updateProvider();
 	}
     
 	protected void updateProvider() {
 		// set the provider
 		fProvider.setRemoteToolsProviderID(fSelectedProvider.getId());
 		fProvider.setRemoteToolsConnection(fSelectedConnection);
-		if(fBuildConfigLocationWidget != null) {
-			fBuildConfigLocationWidget.setRemoteConnection(fSelectedProvider, fSelectedConnection);
-			fProvider.setConfigLocation(fBuildConfigLocationWidget.getConfigLocationPath());
-		}
-
+		fProvider.setConfigLocation(fBuildConfigLocationWidget.getConfigLocationPath());		
 	}
 	
 

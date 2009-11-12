@@ -16,7 +16,7 @@ package org.eclipse.ptp.rdt.ui.wizards;
  *
  * @see IndexFileLocationWidget
  */
-public interface IIndexFilePathChangeListener {
+public interface IFilePathChangeListener {
 
 	public void pathChanged(String newPath);
 }

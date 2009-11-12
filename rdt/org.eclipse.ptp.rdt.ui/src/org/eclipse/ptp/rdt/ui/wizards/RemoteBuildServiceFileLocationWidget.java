@@ -19,6 +19,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.ptp.internal.rdt.ui.RSEUtils;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
@@ -48,15 +49,16 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 	//private final Button validateButton;
 	private final Button defaultButton;
 	
+	private ListenerList pathListeners = new ListenerList();
+	
+	
 	private Map<String,String> previousSelections = new HashMap<String,String>();
-	private String fPath;
 		
 	public RemoteBuildServiceFileLocationWidget(Composite parent, int style, final IRemoteServices remoteServices, IRemoteConnection initialConnection, String defaultPath) {
 		super(parent, style);
 		
 		fRemoteServices = remoteServices;
 		fRemoteConnection = initialConnection;
-		fPath = defaultPath;
 		
 		GridLayout layout = new GridLayout(1, false);
 		layout.marginHeight = 0;
@@ -80,7 +82,9 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 				
 				previousSelections.put(key(remoteServices, fRemoteConnection), path);
 				
-				fPath = path;
+				for(Object listener : pathListeners.getListeners()) {
+					((IFilePathChangeListener)listener).pathChanged(path);
+				}
 			}
 		});
 		
@@ -112,21 +116,21 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 	}
 
 	
-	public void setRemoteConnection(IRemoteServices remoteServices, IRemoteConnection connection) {
-		if(connection == null || remoteServices == null)
-			throw new IllegalArgumentException();
-		
-		fRemoteConnection = connection;
-		fRemoteServices = remoteServices;
-
-		String path = previousSelections.get(key(remoteServices, connection));
-		if(path == null)
-			path = getDefaultPath(remoteServices, connection);
-		if(path == null)
-			path = ""; //$NON-NLS-1$
-		
-		text.setText(path); // modify event listener updates map
-	}
+//	public void setRemoteConnection(IRemoteServices remoteServices, IRemoteConnection connection) {
+//		if(connection == null || remoteServices == null)
+//			throw new IllegalArgumentException();
+//		
+//		fRemoteConnection = connection;
+//		fRemoteServices = remoteServices;
+//
+//		String path = previousSelections.get(key(remoteServices, connection));
+//		if(path == null)
+//			path = getDefaultPath(remoteServices, connection);
+//		if(path == null)
+//			path = ""; //$NON-NLS-1$
+//		
+//		text.setText(path); // modify event listener updates map
+//	}
 	
 	
 	public static String getDefaultPath(IRemoteServices remoteServices, IRemoteConnection connection) {
@@ -136,7 +140,7 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 		URI uri = homeStore.toURI();
 		String pathString = FileSystemUtilityManager.getDefault().getPathFromURI(uri);
 		IPath path = new Path(pathString);
-		path = path.append(".eclipsesettings"); //$NON-NLS-1$
+		path = path.append(RSEUtils.DEFAULT_CONFIG_DIR_NAME); 
 		return path.toString();
 		
 	}
@@ -149,21 +153,26 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 	public String getConfigLocationPath() {
 		return text.getText();
 	}
+	
+	
+	public void addPathListener(IFilePathChangeListener listener) {
+		pathListeners.add(listener);
+	}
+	
+	public void removePathListener(IFilePathChangeListener listener) {
+		pathListeners.remove(listener);
+	}
 		
 	private void browse() {
-			IRemoteUIServices uiServices = PTPRemoteUIPlugin.getDefault().getRemoteUIServices(fRemoteServices);
-			IPath remotePath = uiServices.getUIFileManager().browseDirectory(this.getShell(), Messages.getString("RemoteBuildServiceFileLocationWidget.0"), fPath); //$NON-NLS-1$
-			if(remotePath != null)
-				fPath = remotePath.toString();
-			
-			text.setText(fPath);
-		
+		IRemoteUIServices uiServices = PTPRemoteUIPlugin.getDefault().getRemoteUIServices(fRemoteServices);
+		IPath remotePath = uiServices.getUIFileManager().browseDirectory(this.getShell(), Messages.getString("RemoteBuildServiceFileLocationWidget.0"), text.getText()); //$NON-NLS-1$
+		if(remotePath != null)
+			text.setText(remotePath.toString());
 	}
 
 	private void restoreDefault() {
 		String defaultPath = getDefaultPath(fRemoteServices, fRemoteConnection);
-		fPath = defaultPath;
-		text.setText(fPath);
+		text.setText(defaultPath);
 	}
 	
 

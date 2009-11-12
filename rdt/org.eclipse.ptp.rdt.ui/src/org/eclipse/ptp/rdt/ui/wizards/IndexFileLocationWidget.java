@@ -63,12 +63,6 @@ public class IndexFileLocationWidget extends Composite {
 		group.setLayout(new GridLayout(2, false));
 		group.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-//		label = new Label(this, SWT.NONE);
-//		label.setText("Scope Config Location");
-//		GridData data = new GridData();
-//		data.horizontalSpan = 4;
-//		label.setLayoutData(data);
-		
 		text = new Text(group, SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		//data.widthHint = 300;
@@ -81,7 +75,7 @@ public class IndexFileLocationWidget extends Composite {
 				previousSelections.put(key(host), path);
 				
 				for(Object listener : pathListeners.getListeners()) {
-					((IIndexFilePathChangeListener)listener).pathChanged(path);
+					((IFilePathChangeListener)listener).pathChanged(path);
 				}
 			}
 		});
@@ -95,19 +89,6 @@ public class IndexFileLocationWidget extends Composite {
 			}
 		});
 		
-//		new Label(group, SWT.NONE).setText(""); //$NON-NLS-1$
-		
-//		validateButton = new Button(group, SWT.NONE);
-//		validateButton.setText("Validate...");  //$NON-NLS-1$
-//		validateButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		validateButton.addSelectionListener(new SelectionAdapter() {
-//			public void widgetSelected(SelectionEvent e) {
-//				validate();
-//			}
-//		});
-//		
-//		new Label(group, SWT.NONE).setText(""); //$NON-NLS-1$
-		
 		defaultButton = new Button(group, SWT.NONE);
 		defaultButton.setText(Messages.getString("IndexFileLocationWidget.2"));  //$NON-NLS-1$
 		defaultButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -116,12 +97,6 @@ public class IndexFileLocationWidget extends Composite {
 				restoreDefault();
 			}
 		});
-		
-//		Label warnLabel = new Label(group, SWT.NONE);
-//		data = new GridData();
-//		data.horizontalSpan = 2;
-//		warnLabel.setLayoutData(data);
-//		warnLabel.setText("Please reindex the project for changes to take effect."); //$NON-NLS-1$
 		
 		setHost(initialHost);
 		if(defaultPath != null)
@@ -158,11 +133,11 @@ public class IndexFileLocationWidget extends Composite {
 	}
 	
 	
-	public void addPathListener(IIndexFilePathChangeListener listener) {
+	public void addPathListener(IFilePathChangeListener listener) {
 		pathListeners.add(listener);
 	}
 	
-	public void removePathListener(IIndexFilePathChangeListener listener) {
+	public void removePathListener(IFilePathChangeListener listener) {
 		pathListeners.remove(listener);
 	}
 	
@@ -178,31 +153,6 @@ public class IndexFileLocationWidget extends Composite {
 		}
 	}
 
-	
-//	private void validate() {
-//		Shell shell = getShell();
-//		String title = "Path Validation"; 
-//		
-//		String path = text.getText();
-//		if(path == null || path.length() == 0) {
-//			MessageDialog.openError(shell, title, "Please enter a path"); 
-//			return;
-//		}
-//		
-//		
-//		VerifyResult result = RSEUtils.verifyRemoteConfigDirectory(host, path);
-//		switch(result) {
-//		case ERROR:
-//			MessageDialog.openError(shell, title, "Could not contact remote host to verify path"); 
-//			break;
-//		case INVALID:
-//			MessageDialog.openWarning(shell, title, "The path does not exist or is not writable"); 
-//			break;
-//		case VERIFIED:
-//			MessageDialog.openInformation(shell, title, "The path exists and is writable");
-//			break;
-//		}
-//	}
 	
 	private void restoreDefault() {
 		text.setText(RSEUtils.getDefaultConfigDirectory(host));
