@@ -19,13 +19,19 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
+import org.eclipse.ptp.rdt.ui.messages.Messages;
 
 /**
  * Synchronizes state of remote indices by responding to changes to
@@ -41,6 +47,19 @@ public class ProjectChangeListener implements IResourceChangeListener {
 
 	private IProgressMonitor NULL_PROGRESS_MONITOR = new NullProgressMonitor();
 	private ICIndexSubsystem fSubsystem;
+	
+	private class ProjectInitializationJob extends Job {
+		private IProject fProject;
+		public ProjectInitializationJob(IProject project) {
+			super(Messages.getString("ProjectChangeListener.0")); //$NON-NLS-1$
+			fProject = project;
+		}
+
+		public IStatus run(IProgressMonitor monitor) {
+			fSubsystem.checkProject(fProject, monitor);
+			return Status.OK_STATUS;	
+		}
+	}
 
 	public ProjectChangeListener(ICIndexSubsystem subsystem) {
 		fSubsystem = subsystem;
@@ -80,7 +99,16 @@ public class ProjectChangeListener implements IResourceChangeListener {
 								//do not check project unless it has a remote nature
 								if (project.isOpen() && project.hasNature(RemoteNature.REMOTE_NATURE_ID)) {
 									// Project was just opened.
-									fSubsystem.checkProject(project, NULL_PROGRESS_MONITOR);
+									
+									// we have to push off initialization into a workspace job because the project may
+									// not be done loading yet, and if we try to access its data, it will trigger a concurrent
+									// load of the project data, which will then deadlock the UI thread from which the project is
+									// being opened
+									
+									ProjectInitializationJob job = new ProjectInitializationJob(project);
+									job.setRule(project);
+									job.schedule();
+									
 								}
 							}
 							break;
