@@ -151,15 +151,16 @@ public class RemoteMakeNature implements IProjectNature {
 	public static void updateProjectDescription(IProject project, String builderID, IProgressMonitor mon) throws CoreException {
 		// setup builder
 		IProjectDescription description = project.getDescription();
-		ICommand[] commands = new ICommand[2];
+		ICommand[] commands = new ICommand[1];
 		
 		// setup remote makefile builder
 		commands[0] = description.newCommand();
 		commands[0].setBuilderName(builderID);
 		
-		// setup scanner config builder
-		commands[1] = description.newCommand();
-		commands[1].setBuilderName(ScannerConfigBuilder.BUILDER_ID);
+		// Scanner config builder does not need to be explicitly added,
+		// it will get implicitly called by the scanner discovery nature.
+		// If we explicitly add it here, it will get called twice, so
+		// the code that added it has been removed.
 		
 		description.setBuildSpec(commands);
 		

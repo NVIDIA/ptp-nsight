@@ -22,9 +22,6 @@
       <builder
             id="org.eclipse.ptp.rdt.core.remoteMakeBuilder">
       </builder>
-      <builder
-            id="org.eclipse.cdt.managedbuilder.core.ScannerConfigBuilder">
-      </builder>
    </extension>
    <extension
          id="org.eclipse.ptp.rdt.core.remoteMakeBuilder"
