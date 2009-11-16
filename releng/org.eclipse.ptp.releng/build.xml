@@ -125,6 +125,7 @@
 		</antcall>
 		
 		<!--Features-->
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp-feature"/>
 		</antcall>
@@ -133,16 +134,20 @@
 		</antcall>
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.core-feature"/>
-		</antcall>		
+		</antcall>	
+		-->	
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.remote-feature"/>
 		</antcall>
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.remote.remotetools-feature"/>
 		</antcall>
+		-->
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.remote.rse-feature"/>
 		</antcall>		
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.remotetools-feature"/>
 		</antcall>
@@ -180,18 +185,21 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.perf.tau.fortran-feature"/>
 		</antcall>		
-		
+		-->
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt-feature"/>
 		</antcall>	
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt.xlc-feature"/>
 		</antcall>	
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/cell/org.eclipse.ptp.cell-feature"/>
 		</antcall>		
+		-->
 		
 		<!--Plugins-->
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp"/>
 		</antcall>
@@ -207,15 +215,18 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.proxy.protocol"/>
 		</antcall>
+		-->
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.remote.core"/>
 		</antcall>		
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.remote.remotetools.core"/>
 		</antcall>
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.remote.remotetools.ui"/>
 		</antcall>		
+		-->
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.remote.rse.core"/>
 		</antcall>		
@@ -225,6 +236,7 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/core/org.eclipse.ptp.remote.ui"/>
 		</antcall>
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/rms/org.eclipse.ptp.rm.core"/>
 		</antcall>		
@@ -381,6 +393,7 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/perf/org.eclipse.ptp.perf.toolopts"/>
 		</antcall>
+		-->
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.core"/>
 		</antcall>
@@ -417,6 +430,7 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.ui.test"/>
 		</antcall>
+		<!--
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.aix.ppc"/>
 		</antcall>
@@ -546,5 +560,6 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/cell/org.eclipse.ptp.cell.utils"/>
 		</antcall>
+		-->
 	</target>
 </project>
