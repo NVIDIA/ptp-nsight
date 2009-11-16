@@ -170,7 +170,7 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.pldt.lapi-feature"/>
 		</antcall>
-		<!--
+		
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.perf-feature"/>
 		</antcall>
@@ -180,7 +180,7 @@
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.perf.tau.fortran-feature"/>
 		</antcall>		
-		-->
+		
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt-feature"/>
 		</antcall>	
