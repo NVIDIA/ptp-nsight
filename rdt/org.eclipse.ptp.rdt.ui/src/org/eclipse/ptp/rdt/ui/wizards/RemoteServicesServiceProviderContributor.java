@@ -137,6 +137,7 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 				populateConnectionCombo(connectionCombo);
 				updateNewConnectionButtonEnabled(newConnectionButton);
 				updateProvider();
+				fBuildConfigLocationWidget.update(fSelectedProvider, fSelectedConnection);
 			}
         });
         
@@ -146,6 +147,7 @@ public class RemoteServicesServiceProviderContributor implements IServiceProvide
 				fSelectedConnection = fComboIndexToRemoteConnectionMap.get(selectionIndex);
 				updateNewConnectionButtonEnabled(newConnectionButton);
 				updateProvider();
+				fBuildConfigLocationWidget.update(fSelectedProvider, fSelectedConnection);
 			}
         });
         

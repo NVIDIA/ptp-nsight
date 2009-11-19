@@ -52,6 +52,9 @@ public class RemoteBuildServiceProvider extends ServiceProvider implements IRemo
 
 
 	private static String getDefaultPath(IRemoteServices remoteServices, IRemoteConnection connection) {
+		if (remoteServices == null || connection == null) {
+			return null;
+		}
 		// get the user's home directory
 		IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(connection, ""); //$NON-NLS-1$
 		IFileStore homeStore = processBuilder.getHomeDirectory();

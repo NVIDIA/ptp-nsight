@@ -19,7 +19,6 @@ import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.rdt.ui.serviceproviders.RemoteBuildServiceProvider;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
-import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.PTPRemoteCorePlugin;
 import org.eclipse.ptp.remote.ui.IRemoteUIConnectionManager;
@@ -174,7 +173,7 @@ public class RemoteServicesProviderSelectionDialog extends Dialog {
 				
 				populateConnectionCombo(connectionCombo);
 				updateNewConnectionButtonEnabled(newConnectionButton);
-				
+				fBuildConfigLocationWidget.update(fSelectedProvider, fSelectedConnection);
 			}
         	
         });
@@ -190,6 +189,7 @@ public class RemoteServicesProviderSelectionDialog extends Dialog {
 				int selectionIndex = connectionCombo.getSelectionIndex();
 				fSelectedConnection = fComboIndexToRemoteConnectionMap.get(selectionIndex);
 				updateNewConnectionButtonEnabled(newConnectionButton);
+				fBuildConfigLocationWidget.update(fSelectedProvider, fSelectedConnection);
 			}
         	
         });

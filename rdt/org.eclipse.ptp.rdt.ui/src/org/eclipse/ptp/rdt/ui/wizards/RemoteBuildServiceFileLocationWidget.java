@@ -175,5 +175,11 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 		text.setText(defaultPath);
 	}
 	
+	public void update(IRemoteServices services, IRemoteConnection connection) {
+		fRemoteServices = services;
+		fRemoteConnection = connection;
+		String defaultPath = getDefaultPath(fRemoteServices, fRemoteConnection);
+		text.setText(defaultPath);
+	}	
 
 }
