@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * Copyright (c) 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -83,27 +83,37 @@ public class RemoteIndexerTask implements IPDOMIndexerTask {
 	public void run(IProgressMonitor monitor) throws InterruptedException {
 		IIndexLifecycleService service = fIndexServiceProvider.getIndexLifeCycleService();
 		IProject project = fIndexer.getProject().getProject();
-		String name = project.getName();
+		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();		
 		
-		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
-		
-		URI locationURI = project.getLocationURI();
-		
+		URI locationURI = project.getLocationURI();		
 		String mappedPath = fsUtilityManager.getMappedPath(locationURI);
-		String rootPath = fsUtilityManager.getPathFromURI(locationURI);
-		
+		String rootPath = fsUtilityManager.getPathFromURI(locationURI);		
 		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
-		String host = null;
 		
+		String host = null;
 		if(managedURI != null)
 			host = managedURI.getHost();
 		else
 			host = locationURI.getHost();
 		
-		if (fUpdate)
-			service.update(new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath), Arrays.<ICElement>asList(fAdded), Arrays.<ICElement>asList(fChanged), Arrays.<ICElement>asList(fRemoved), monitor, this);
-		else
-			service.reindex(new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath), fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement>asList(fAdded), monitor, this);
+		Scope scope = new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath);
+		if (fUpdate) {
+			// notify listeners
+			for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {
+				listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(IRemoteFastIndexerUpdateEvent.EventType.EVENT_UPDATE, this, scope));
+			}
+			
+			// perform the indexer update
+			service.update(scope, Arrays.<ICElement>asList(fAdded), Arrays.<ICElement>asList(fChanged), Arrays.<ICElement>asList(fRemoved), monitor, this);
+		} else {
+			// notify listeners
+			for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {
+				listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(IRemoteFastIndexerUpdateEvent.EventType.EVENT_REINDEX, this, scope));
+			}
+			
+			// perform the re-index
+			service.reindex(scope, fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement>asList(fAdded), monitor, this);
+		}
 	}
 
 }
