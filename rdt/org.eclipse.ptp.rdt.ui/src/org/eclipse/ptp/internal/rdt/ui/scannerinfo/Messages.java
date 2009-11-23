@@ -21,6 +21,7 @@ public class Messages extends NLS {
 	public static String RemoteIncludeDialog_languages;
 	public static String RemoteIncludeDialog_ok;
 	public static String RemoteIncludeDialog_select;
+	public static String RemoteIncludeDialog_vars;
 	public static String RemoteIncludeTab_export;
 	public static String RemoteIncludeTab_import;
 	public static String RemoteIncludeTab_title;

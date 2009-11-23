@@ -27,7 +27,7 @@ public class RemoteIncludeTab extends IncludeTab {
 	@Override
 	public ICLanguageSettingEntry doAdd() {
 		
-		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, false);
+		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, false, getResDesc().getConfiguration());
 		
 		if(dlg.open() && dlg.getDirectory().trim().length() > 0 ) {
 			toAllCfgs = dlg.isAllConfigurations();
@@ -42,7 +42,7 @@ public class RemoteIncludeTab extends IncludeTab {
 	@Override
 	public ICLanguageSettingEntry doEdit(ICLanguageSettingEntry ent) {
 		
-		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, true);
+		RemoteIncludeDialog dlg = new RemoteIncludeDialog(usercomp.getShell(), Messages.RemoteIncludeTab_title, true, getResDesc().getConfiguration());
 		dlg.setPathText(ent.getValue());
 		
 		if(dlg.open()) {
