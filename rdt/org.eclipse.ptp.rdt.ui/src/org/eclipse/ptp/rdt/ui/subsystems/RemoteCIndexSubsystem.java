@@ -1081,22 +1081,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			// collect the translation units
 			project.accept(fileCollector);
 
-			FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
-			
-			URI locationURI = project.getLocationURI();
-			
-			String mappedPath = fsUtilityManager.getMappedPath(locationURI);
-			String rootPath = fsUtilityManager.getPathFromURI(locationURI);
-			URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
-			String host = null;
-			
-			if(managedURI != null)
-				host = managedURI.getHost();
-			else
-				host = locationURI.getHost();
-
-			Scope scope = new Scope(project.getName(), project.getLocationURI().getScheme(), host, rootPath, mappedPath);
-			
+			Scope scope = new Scope(project);
 			String configLocation = ((IIndexServiceProvider)provider).getIndexLocation();
 
 			// unregister the scope if there already is one

@@ -12,6 +12,10 @@
 package org.eclipse.ptp.internal.rdt.core.model;
 
 import java.io.Serializable;
+import java.net.URI;
+
+import org.eclipse.cdt.utils.FileSystemUtilityManager;
+import org.eclipse.core.resources.IProject;
 
 /**
  * Describes the context in which a service-based operation will be
@@ -49,6 +53,24 @@ public class Scope implements Serializable {
 		fRootPath = rootPath;
 		fMappedPath = mappedPath;
 	}
+	
+	/**
+	 * Create a scope for a project.
+	 * @throws NullPointerException if project is null
+	 */
+	public Scope(IProject project) {
+		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
+		URI locationURI = project.getLocationURI();
+		
+		fName = project.getName();
+		fScheme = locationURI.getScheme();
+		fMappedPath = fsUtilityManager.getMappedPath(locationURI);
+		fRootPath = fsUtilityManager.getPathFromURI(locationURI);
+		
+		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
+		fHost = managedURI == null ? locationURI.getHost() : managedURI.getHost();
+	}
+	
 	
 	/**
 	 * Returns the name of this scope.

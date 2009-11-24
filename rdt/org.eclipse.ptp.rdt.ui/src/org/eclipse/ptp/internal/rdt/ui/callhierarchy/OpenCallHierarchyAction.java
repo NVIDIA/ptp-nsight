@@ -31,8 +31,6 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.ICallHierarchyService;
-import org.eclipse.ptp.internal.rdt.core.callhierarchy.LocalCallHierarchyService;
-import org.eclipse.ptp.internal.rdt.core.index.RemoteFastIndexer;
 import org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider;
 import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.services.core.IService;

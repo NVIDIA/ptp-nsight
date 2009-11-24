@@ -83,20 +83,8 @@ public class RemoteIndexerTask implements IPDOMIndexerTask {
 	public void run(IProgressMonitor monitor) throws InterruptedException {
 		IIndexLifecycleService service = fIndexServiceProvider.getIndexLifeCycleService();
 		IProject project = fIndexer.getProject().getProject();
-		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();		
-		
-		URI locationURI = project.getLocationURI();		
-		String mappedPath = fsUtilityManager.getMappedPath(locationURI);
-		String rootPath = fsUtilityManager.getPathFromURI(locationURI);		
-		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
-		
-		String host = null;
-		if(managedURI != null)
-			host = managedURI.getHost();
-		else
-			host = locationURI.getHost();
-		
-		Scope scope = new Scope(project.getName(), locationURI.getScheme(), host, rootPath, mappedPath);
+
+		Scope scope = new Scope(project);
 		if (fUpdate) {
 			// notify listeners
 			for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {

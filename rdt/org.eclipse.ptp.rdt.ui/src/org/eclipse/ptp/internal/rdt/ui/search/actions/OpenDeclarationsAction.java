@@ -131,22 +131,7 @@ public class OpenDeclarationsAction extends SelectionParseAction {
 		}
 		
 		
-		FileSystemUtilityManager fsUtilityManager = FileSystemUtilityManager.getDefault();
-		
-		URI locationURI = project.getLocationURI();
-		
-		String mappedPath = fsUtilityManager.getMappedPath(locationURI);
-		String rootPath = fsUtilityManager.getPathFromURI(locationURI);
-		URI managedURI = fsUtilityManager.getManagedURI(locationURI); 
-		String host = null;
-		
-		if(managedURI != null)
-			host = managedURI.getHost();
-		else
-			host = locationURI.getHost();
-
-		
-		Scope scope = new Scope(workingCopy.getCProject().getProject().getName(), workingCopy.getLocationURI().getScheme(), host, rootPath, mappedPath);
+		Scope scope = new Scope(workingCopy.getCProject().getProject());
 		int selectionStart  = fTextSelection.getOffset();
 		int selectionLength = fTextSelection.getLength();
 		
