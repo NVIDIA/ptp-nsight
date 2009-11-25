@@ -727,7 +727,7 @@ UniversalServerUtilities.logDebugMessage(LOG_TAG, "Indexing complete.", _dataSto
 				IProgressMonitor monitor = new NullProgressMonitor();
 				THGraph graph = new THGraph();
 				graph.setLocationConverter(getLocationConverter(scheme, hostName));
-				final RemoteCProjectFactory projectFactory = new RemoteCProjectFactory();
+				final RemoteCProjectFactory projectFactory = new RemoteCProjectFactory(input.getCProject());
 				graph.defineInputNode(index, input, projectFactory, path);
 				graph.addSuperClasses(index, monitor, projectFactory);
 				graph.addSubClasses(index, monitor, projectFactory);
