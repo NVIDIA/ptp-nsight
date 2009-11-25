@@ -23,6 +23,7 @@ public class RemoteSymbolTab extends SymbolTab {
 	@Override
 	public void createControls(final Composite parent) {
 		super.createControls(parent);
+		showBIButton.setSelection(true);
 		ImportExportWizardButtons.createControls(usercomp, page.getElement());
 	}
 	
