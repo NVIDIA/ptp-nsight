@@ -109,7 +109,7 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 	 * @param monitor 
 	 * @throws IOException 
 	 */
-	private static IFileStore createSpecsFile(IProject project, String specsFileName, IProgressMonitor monitor) throws CoreException, IOException  {
+	protected static IFileStore createSpecsFile(IProject project, String specsFileName, IProgressMonitor monitor) throws CoreException, IOException  {
 		ServiceModelManager smm = ServiceModelManager.getInstance();
 		IServiceConfiguration serviceConfig = smm.getActiveConfiguration(project);
 		IService buildService = smm.getService(IRDTServiceConstants.SERVICE_BUILD);
@@ -174,7 +174,7 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 	}
 	
 	
-	private static String getSpecsFileName(IProject project) {
+	protected static String getSpecsFileName(IProject project) {
 		try {
 			if(project.hasNature(CCProjectNature.CC_NATURE_ID))
 	            return GCCScannerConfigUtil.CPP_SPECS_FILE;

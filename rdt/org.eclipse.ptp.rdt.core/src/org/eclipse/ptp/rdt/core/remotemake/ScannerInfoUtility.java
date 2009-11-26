@@ -12,8 +12,10 @@ package org.eclipse.ptp.rdt.core.remotemake;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.cdt.build.core.scannerconfig.CfgInfoContext;
 import org.eclipse.cdt.build.core.scannerconfig.ICfgScannerConfigBuilderInfo2Set;
@@ -33,6 +35,7 @@ import org.eclipse.cdt.managedbuilder.core.IFolderInfo;
 import org.eclipse.cdt.managedbuilder.core.IInputType;
 import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
 import org.eclipse.cdt.managedbuilder.core.ITool;
+import org.eclipse.cdt.managedbuilder.internal.core.InputType;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 
@@ -107,24 +110,48 @@ public class ScannerInfoUtility {
 				info.isAutoDiscoveryEnabled() &&
 				info.isBuildOutputParserEnabled()) {
 			
-			String id = info.getSelectedProfileId();
-			ScannerConfigProfile profile = ScannerConfigProfileManager.getInstance().getSCProfileConfiguration(id);
-			if(profile.getBuildOutputProviderElement() != null){
-				// get the make builder console parser 
-				SCProfileInstance profileInstance = ScannerConfigProfileManager.getInstance().
-						getSCProfileInstance(project, ic, id);
-				
-				IScannerInfoConsoleParser clParser = profileInstance.createBuildOutputParser();
-                if (collector == null) {
-                    collector = profileInstance.getScannerInfoCollector();
-                }
-                if(clParser != null){
-					clParser.startup(project, workingDirectory, collector,
-                            info.isProblemReportingEnabled() ? markerGenerator : null);
-					parserList.add(clParser);
-					added = true;
-                }
+			Set<String> profileIDSet = new HashSet<String>();
 			
+			// add profiles from tool
+			ITool tool = context.getTool();
+			if(tool != null) {
+				IInputType[] inputTypes = tool.getInputTypes();
+				
+				for(IInputType inputType : inputTypes) {
+					InputType realInputType = (InputType) inputType;
+					String profileIDString = realInputType.getDiscoveryProfileIdAttribute();
+					
+					String[] profileIDs = profileIDString.split("\\|"); //$NON-NLS-1$
+					
+					for(String profileID : profileIDs) {
+						profileIDSet.add(profileID);
+					}
+				}
+			
+			}
+
+			
+			for (String id : profileIDSet) {
+
+				// String id = info.getSelectedProfileId();
+				ScannerConfigProfile profile = ScannerConfigProfileManager.getInstance().getSCProfileConfiguration(id);
+				if (profile.getBuildOutputProviderElement() != null) {
+					// get the make builder console parser
+					SCProfileInstance profileInstance = ScannerConfigProfileManager.getInstance().getSCProfileInstance(
+							project, ic, id);
+
+					IScannerInfoConsoleParser clParser = profileInstance.createBuildOutputParser();
+					if (collector == null) {
+						collector = profileInstance.getScannerInfoCollector();
+					}
+					if (clParser != null) {
+						clParser.startup(project, workingDirectory, collector,
+								info.isProblemReportingEnabled() ? markerGenerator : null);
+						parserList.add(clParser);
+						added = true;
+					}
+
+				}
 			}
 		}
 

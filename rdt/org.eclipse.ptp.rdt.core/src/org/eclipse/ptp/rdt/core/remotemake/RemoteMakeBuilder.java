@@ -19,13 +19,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.cdt.build.core.scannerconfig.CfgInfoContext;
-import org.eclipse.cdt.build.core.scannerconfig.ICfgScannerConfigBuilderInfo2Set;
-import org.eclipse.cdt.build.internal.core.scannerconfig2.CfgScannerConfigProfileManager;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.ErrorParserManager;
-import org.eclipse.cdt.core.IMarkerGenerator;
-import org.eclipse.cdt.core.ProblemMarkerInfo;
 import org.eclipse.cdt.core.envvar.IEnvironmentVariable;
 import org.eclipse.cdt.core.model.ICModelMarker;
 import org.eclipse.cdt.core.resources.IConsole;
@@ -36,33 +31,24 @@ import org.eclipse.cdt.make.core.MakeCorePlugin;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerConfigBuilderInfo2;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector2;
-import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector3;
-import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoConsoleParser;
-import org.eclipse.cdt.make.core.scannerconfig.InfoContext;
 import org.eclipse.cdt.make.internal.core.MakeMessages;
 import org.eclipse.cdt.make.internal.core.StreamMonitor;
-import org.eclipse.cdt.make.internal.core.scannerconfig.ScannerInfoConsoleParserFactory;
 import org.eclipse.cdt.make.internal.core.scannerconfig2.SCMarkerGenerator;
-import org.eclipse.cdt.make.internal.core.scannerconfig2.SCProfileInstance;
-import org.eclipse.cdt.make.internal.core.scannerconfig2.ScannerConfigProfile;
 import org.eclipse.cdt.make.internal.core.scannerconfig2.ScannerConfigProfileManager;
 import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
-import org.eclipse.cdt.managedbuilder.core.IFileInfo;
-import org.eclipse.cdt.managedbuilder.core.IFolderInfo;
 import org.eclipse.cdt.managedbuilder.core.IInputType;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
-import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
 import org.eclipse.cdt.managedbuilder.core.ITool;
+import org.eclipse.cdt.managedbuilder.core.IToolChain;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
-import org.eclipse.cdt.managedbuilder.core.ManagedBuilderCorePlugin;
+import org.eclipse.cdt.managedbuilder.internal.core.InputType;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
@@ -112,8 +98,10 @@ public class RemoteMakeBuilder extends MakeBuilder {
 	protected void clean(IProgressMonitor monitor) throws CoreException {
 		final IMakeBuilderInfo info = MakeCorePlugin.createBuildInfo(getProject(), REMOTE_MAKE_BUILDER_ID);
 		if (shouldBuild(CLEAN_BUILD, info)) {
-			IResourceRuleFactory ruleFactory= ResourcesPlugin.getWorkspace().getRuleFactory();
-			final ISchedulingRule rule = ruleFactory.modifyRule(getProject());
+						 
+			// have to use the workspace as the rule as the scanner config update needs the workspace lock
+			final ISchedulingRule rule = ResourcesPlugin.getWorkspace().getRoot();
+			
 			Job backgroundJob = new Job("Standard Make Builder"){  //$NON-NLS-1$
 				/* (non-Javadoc)
 				 * @see org.eclipse.core.runtime.jobs.Job#run(org.eclipse.core.runtime.IProgressMonitor)
@@ -230,23 +218,61 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				final OutputStream stdout = epm.getOutputStream();
 				final OutputStream stderr = epm.getOutputStream();
 				
-				String scannerDiscID = mbsInfo.getDefaultConfiguration().getToolChain().getScannerConfigDiscoveryProfileId();
+				OutputStream consoleOut = null;
+				OutputStream currentStdOut = stdout;
+				OutputStream currentStdErr = stderr;
+				OutputStream consoleErr = null;
 				
-				IScannerConfigBuilderInfo2 scBuilderInfo = ScannerConfigProfileManager.
-                createScannerConfigBuildInfo2(ManagedBuilderCorePlugin.getDefault().getPluginPreferences(),
-                        scannerDiscID, false);
-				int foo = 1;
-				IScannerInfoCollector collector = (IScannerInfoCollector) ScannerConfigProfileManager.getInstance().getSCProfileConfiguration(scannerDiscID).getScannerInfoCollectorElement().createScannerInfoCollector();
+				// add a scanner info sniffer for the inputs of each tool in the toolchain
+				IToolChain tc = mbsInfo.getDefaultConfiguration().getToolChain();
 				
-				if(collector instanceof IScannerInfoCollector2) {
-					IScannerInfoCollector2 s2 = (IScannerInfoCollector2) collector;
-					s2.setProject(currProject);
+				ITool[] tools = tc.getTools();
+				
+				for (ITool tool : tools) {
+
+					IInputType[] inputTypes = tool.getInputTypes();
+
+					for (IInputType inputType : inputTypes) {
+						
+						InputType realInputType = (InputType) inputType;
+						
+						// get scanner disc IDs
+						String scannerIDString = realInputType.getDiscoveryProfileIdAttribute();
+						
+						if(scannerIDString == null)
+							continue;
+						
+						// IDs are delimited by the | character
+						String[] scannerIDs = scannerIDString.split("\\|"); //$NON-NLS-1$
+						
+						for (String id : scannerIDs) {
+
+							//IScannerConfigBuilderInfo2 scBuilderInfo = ScannerConfigProfileManager
+							//		.createScannerConfigBuildInfo2(ManagedBuilderCorePlugin.getDefault()
+							//				.getPluginPreferences(), id, false);
+							IScannerConfigBuilderInfo2 scBuilderInfo = ScannerConfigProfileManager.createScannerConfigBuildInfo2(currProject, id);
+							IScannerInfoCollector collector = (IScannerInfoCollector) ScannerConfigProfileManager
+									.getInstance().getSCProfileConfiguration(id)
+									.getScannerInfoCollectorElement().createScannerInfoCollector();
+
+							if (collector instanceof IScannerInfoCollector2) {
+								IScannerInfoCollector2 s2 = (IScannerInfoCollector2) collector;
+								s2.setProject(currProject);
+							}
+
+							SCMarkerGenerator markerGenerator = new SCMarkerGenerator();
+							ConsoleOutputSniffer sniffer = ScannerInfoUtility.createBuildOutputSniffer(currentStdOut,
+									currentStdErr, currProject, mbsInfo.getDefaultConfiguration(), workingDirectory,
+									markerGenerator, collector);
+							currentStdOut = (sniffer == null ? currentStdOut : sniffer.getOutputStream());
+							currentStdErr = (sniffer == null ? currentStdErr : sniffer.getErrorStream());
+						}
+					}
 				}
 				
-				SCMarkerGenerator markerGenerator = new SCMarkerGenerator();
-				ConsoleOutputSniffer sniffer = ScannerInfoUtility.createBuildOutputSniffer(stdout, stderr, currProject, mbsInfo.getDefaultConfiguration(), workingDirectory, markerGenerator , collector);
-				OutputStream consoleOut = (sniffer == null ? stdout : sniffer.getOutputStream());
-				OutputStream consoleErr = (sniffer == null ? stderr : sniffer.getErrorStream());
+				// hook the console up to the last sniffer created, or to the stdout/stderr of the process if none were created
+				consoleOut = (currentStdOut == null ? stdout : currentStdOut);
+				consoleErr = (currentStdErr == null ? stderr : currentStdErr);
 				
 				// Determine the service model for this configuration, and use the provider of the build
 				// service to execute the build command.
