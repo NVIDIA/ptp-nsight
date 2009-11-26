@@ -89,7 +89,7 @@ public class CallHierarchyUtil {
 	    	Job job= new Job(CHMessages.CallHierarchyUI_label) {
 	    		protected IStatus run(IProgressMonitor monitor) {
 	    			Scope scope = new Scope(input.getCProject().getProject());
-	    			final ICElement[] elems= service.findDefinitions(Scope.WORKSPACE_ROOT_SCOPE, input, monitor);
+	    			final ICElement[] elems= service.findDefinitions(scope, input, monitor);
 					if (elems != null && elems.length > 0) {
 						display.asyncExec(new Runnable() {
 							public void run() {
