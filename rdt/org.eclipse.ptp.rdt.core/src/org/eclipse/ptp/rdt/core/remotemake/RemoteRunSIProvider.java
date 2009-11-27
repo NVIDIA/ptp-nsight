@@ -132,6 +132,7 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 		
 		IRemoteServices remoteServices = executionProvider.getRemoteServices();
 		IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(connection, runCommand);
+		processBuilder.redirectErrorStream(true);
 		
 		// get the configuration directory for the provider... this is where the build
 		// should execute
