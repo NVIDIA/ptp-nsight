@@ -25,6 +25,10 @@ import org.eclipse.core.runtime.Path;
  */
 public class ScopeManager {
 	
+	// TODO this is a horrible hack
+	private static final String DEFAULT_SCHEME = "rse"; //$NON-NLS-1$ 
+	
+	
 	public class ScopeData {
 		public String scheme;
 		public String host;
@@ -173,7 +177,7 @@ public class ScopeManager {
 	public String getSchemeForScope(String scopeName) {
 		ScopeData data = fScopeNamesToScopeDataMap.get(scopeName);
 		if(data == null)
-			return null;
+			return DEFAULT_SCHEME;
 		else
 			return data.scheme;
 	}
@@ -189,7 +193,7 @@ public class ScopeManager {
 		if(scope != null)
 			return getSchemeForScope(scope);
 		else
-			return null;
+			return DEFAULT_SCHEME;
 	}
 	
 	public String getMappedPathForFile(String filename) {
