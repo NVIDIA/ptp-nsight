@@ -28,6 +28,7 @@ PTP_FEATURES="\
 	org.eclipse.ptp.etfw-feature \
 	org.eclipse.ptp.etfw.tau-feature \
 	org.eclipse.ptp.etfw.tau.fortran-feature \
+	org.eclipse.ptp.isp-feature \
 	org.eclipse.ptp.pldt-feature \
 	org.eclipse.ptp.pldt.lapi-feature \
 	org.eclipse.ptp.pldt.upc-feature \
@@ -41,6 +42,8 @@ PTP_FEATURES="\
 	org.eclipse.ptp.rm.ibm.pe-feature \
 	org.eclipse.ptp.rm.mpich2-feature \
 	org.eclipse.ptp.rm.openmpi-feature \
+	org.eclipse.ptp.rm.slurm-feature \
+	org.eclipse.ptp.rm.pbs-feature \
 	org.eclipse.ptp.sdm-feature \
 	org.eclipse.ptp.services-feature \
 	org.eclipse.ptp.utils-feature"
