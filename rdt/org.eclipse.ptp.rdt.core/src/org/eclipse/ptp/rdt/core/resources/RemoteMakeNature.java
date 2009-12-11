@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2008, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.core.resources;
 
-import org.eclipse.cdt.build.core.scannerconfig.ScannerConfigBuilder;
 import org.eclipse.cdt.make.core.IMakeBuilderInfo;
 import org.eclipse.cdt.make.core.IMakeCommonBuildInfo;
 import org.eclipse.cdt.make.core.MakeCorePlugin;
@@ -20,6 +19,7 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IProjectNature;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.remotemake.RemoteMakeBuilder;
 
 /**
@@ -270,5 +270,17 @@ public class RemoteMakeNature implements IProjectNature {
 		fProject = project;
 	}
 	
+	/**
+	 * Returns true if the given project has the remote make nature.
+	 * @throws NullPointerException if project is null
+	 */
+	public static boolean hasNature(IProject project) {
+		try {
+			return project.hasNature(NATURE_ID);
+		} catch (CoreException e) {
+			RDTLog.logError(e);
+			return false;
+		}
+	}
 	
 }
