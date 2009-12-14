@@ -199,14 +199,17 @@ public class ToggleBreakpointAdapter implements IToggleBreakpointsTarget {
 		return root;
 	}
 
-	/** Get source handle
-	 * @param input
-	 * @return
+	/** 
+	 * Get the absolute path of the source file associated with the editor. Note that if the file is
+	 * remote, this is the path on the remote machine.
+	 * 
+	 * @param input input editor
+	 * @return path of source file
 	 * @throws CoreException
 	 */
 	private String getSourceHandle(IEditorInput input) throws CoreException {
 		if (input instanceof IFileEditorInput) {
-			return ((IFileEditorInput)input).getFile().getLocation().toOSString();
+			return ((IFileEditorInput)input).getFile().getLocationURI().getPath();
 		}
 		if (input instanceof IStorageEditorInput) {
 			return ((IStorageEditorInput)input).getStorage().getFullPath().toOSString();
