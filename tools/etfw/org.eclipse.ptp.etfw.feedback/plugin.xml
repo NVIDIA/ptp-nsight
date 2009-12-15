@@ -4,16 +4,6 @@
    <extension-point id="parser" name="%extension-point.name" schema="schema/feedback.exsd"/>
 
    <extension
-         point="org.eclipse.ui.views">
-      <view
-            category="org.eclipse.ptp.ui.views"
-            class="org.eclipse.ptp.etfw.feedback.views.FeedbackTreeTableMarkerView"
-            icon="icons/view16/feedback_view.gif"
-            id="org.eclipse.ptp.etfw.feedback.views.feedbackView"
-            name="%view.name">
-      </view>
-   </extension>
-   <extension
          point="org.eclipse.help.contexts">
       <contexts
             file="contexts.xml">
