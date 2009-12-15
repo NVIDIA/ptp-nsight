@@ -15,6 +15,12 @@ items of interest in an XML file and list the filename and line number (or range
 or character region) applicable to the item found.  A performance tool may note regions of
 interest with source code lines that are referenced.
 
+<p>The PTP ETFw Feedback view plug-in that is included with PTP 3.0 
+is the abstract code only, and does not contain any concrete data or views.
+To see a sample plug-in of a simple XML file and associated Feedback view,
+check out the sample project from the Eclipse repository, as described below.
+</p>
+
 <p>The PTP ETFw Feedback view allows a convenient way to expose this information in a way
 that allows the user to easily navigate to the source code lines in the user's source code. 
 <h1>Basic Tasks</h1>
@@ -33,11 +39,15 @@ that allows the user to easily navigate to the source code lines in the user's s
 <li>Create a basic C project (or almost any type of Eclipse project will do)
 <li>Put the  xml file in the project (e.g. use data/sample.xml in the above project)
 <li>Put source files referenced in the xml  file(s) in the same directory (e.g. use data/sample.c from the above project)
-as the xml file, unless you put specific code in your plug-in to find them.
+as the xml file.  In actual implementations, you could put specific code in your plug-in to find them.
 <li>Select the xml file in the Project Explorer view
-<li>Hit the (purple) button in the toolbar (Hover says "Show Feedback View for selected XML File")
+<li>Hit the feedback button 
+<img src="images/feedback_view.gif"></img>
+in the toolbar (Hover says "Show Feedback View for selected XML File")
 <li>The xml file is parsed by the SampleFeedbackParser class, IFeedbackItems are created, and
 markers are created for each of these, which appear in the Feedback view.
+<br/>
+<img src="images/feedback-wbench1.png"></img>
 <p>
 
 
