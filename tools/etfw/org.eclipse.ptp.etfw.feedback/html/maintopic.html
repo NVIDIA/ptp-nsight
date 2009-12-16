@@ -21,6 +21,9 @@ To see a sample plug-in of a simple XML file and associated Feedback view,
 check out the sample project from the Eclipse repository, as described below.
 </p>
 
+<p>This is a first release of the ETFw feedback view code. 
+These APIs should be considered provisional, and could change without notice.   </p>
+
 <p>The PTP ETFw Feedback view allows a convenient way to expose this information in a way
 that allows the user to easily navigate to the source code lines in the user's source code. 
 <h1>Basic Tasks</h1>
@@ -57,6 +60,11 @@ The items are initially all collapsed. You can expand individual parent nodes, o
 <li>To see more information on an item, rightMouse and select "Show Info", or select the item and hit
 the "Show Info" (icon "i") button in the view toolbar.
 </ol>
+<p>Another extension point allows for a user class to be invoked as an action when an item
+in the view is selected.  
+<br/>
+<img alt="" src="images/feedback-action.png"">
+</p>
 <p>For more information, see the <a href="http://wiki.eclipse.org/PTP/ETFw/PTP_External_Tools_Framework_Feedback_View">
 ETFw Feedback view </a> page on the PTP wiki.</p>
 </body>
