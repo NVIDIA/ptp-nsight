@@ -243,6 +243,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		IWorkspaceRoot workspaceRoot = workspace.getRoot();
 		IProject project = workspaceRoot.getProject(scope.getName());
 
+		
 		//parse for file name and line number
 		int fileStart = message.indexOf("in file: "); //$NON-NLS-1$
 		int fileEnd = message.indexOf(":", fileStart + 9); //$NON-NLS-1$
@@ -252,12 +253,18 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		int lineEnd = message.indexOf(".  Please", lineStart); //$NON-NLS-1$
 		String lineNumber = message.substring(lineStart + 1, lineEnd);
 		
+		IFile file = null;
 		String projectLocation = project.getLocationURI().getPath();
-		fileStart = fileName.indexOf(projectLocation);
-		fileName = fileName.substring(fileStart + projectLocation.length() + 1);
+		fileStart = fileName.indexOf(projectLocation);		
+		if(fileStart == -1) {
+			fileName = null;
+		}
+		else {
+			fileName = fileName.substring(fileStart + projectLocation.length() + 1);
+			IPath path = new Path(fileName);
+			file = project.getFile(path);
+		}
 		
-		IPath path = new Path(fileName);
-		IFile file = project.getFile(path);
 		
 		if (file != null) {
 			try {
