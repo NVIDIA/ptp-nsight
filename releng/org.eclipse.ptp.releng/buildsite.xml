@@ -84,7 +84,7 @@
    <feature url="features/org.eclipse.photran.xlf_5.0.1.@timeStamp@.jar" id="org.eclipse.photran.xlf" version="5.0.1.@timeStamp@">
       <category name="Fortran Development Tools (Photran)"/>
    </feature>
-   <feature url="features/org.eclipse.rephraserengine_5.0.1.@timeStamp@.jar" id="org.eclipse.rephraserengine" version="5.0.1.@timeStamp@">
+   <feature url="features/org.eclipse.rephraserengine_1.0.1.@timeStamp@.jar" id="org.eclipse.rephraserengine" version="1.0.1.@timeStamp@">
       <category name="Fortran Development Tools (Photran)"/>
    </feature>
    <category-def name="Parallel Tools Platform" label="Parallel Tools Platform"/>
