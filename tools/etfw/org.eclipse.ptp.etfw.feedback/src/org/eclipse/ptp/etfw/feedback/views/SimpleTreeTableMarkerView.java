@@ -175,6 +175,7 @@ public class SimpleTreeTableMarkerView extends ViewPart {
 	private String iconName_ = "icons/feedback.png";
 
 	private String viewName_;
+	private String viewID_;
 
 	private String markerID_;
 
@@ -368,9 +369,10 @@ public class SimpleTreeTableMarkerView extends ViewPart {
 						iconName_ = iconName;
 					}
 					this.viewName_ = name;
+					this.viewID_=cElement.getAttribute("id");
 					if (markerID_ == null) {
 						// use plugin id for marker id, if not specified
-						markerID_ = cElement.getAttribute("id");
+						markerID_ = this.viewID_;
 					}
 				}
 			}
@@ -1624,7 +1626,9 @@ public class SimpleTreeTableMarkerView extends ViewPart {
 	 */
 	protected void makeExtensionAction() {
 		FeedbackActionCreator creator=new FeedbackActionCreator();
-		feedbackAction= creator.findFeedbackAction();
+		String ps=thePlugin_.toString();//??
+		// do we also want ability to have a view id such that the action ONLY gets attached to that view?
+		feedbackAction= creator.findFeedbackAction(this.viewID_);
 		if (feedbackAction != null) {
 			extensionAction = new Action() {
 				public void run() {
