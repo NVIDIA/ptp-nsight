@@ -28,9 +28,10 @@ public class FeedbackActionCreator {
 
 	/**
 	 * Find the eclipse extension (if any) that specifies an optional feedback action
+	 * @param viewID id of the view that action can be added to.  Some action extensions may specify a viewID, in which case they are ONLY added to that view.
 	 * 
 	 */
-	public AbstractFeedbackAction findFeedbackAction() {
+	public AbstractFeedbackAction findFeedbackAction(String viewID) {
 		final String pid = Activator.PLUGIN_ID;
 		final String extid = Activator.FEEDBACK_ACTION_EXTENSION_ID;
 		IExtensionRegistry ier = Platform.getExtensionRegistry();
@@ -47,14 +48,25 @@ public class FeedbackActionCreator {
 				// specifically: an action. We assume one or none found for now.
 				// Could have multiple later??
 				if (traceOn)System.out.println(ice.getAttributeNames());
-				String id = ice.getAttribute("id");
+				String id = ice.getAttribute("id");// is this the plugin id? no
 				String className = ice.getAttribute(ATTR_CLASSNAME);
 				String name = ice.getAttribute(ATTR_NAME);
 				String icon = ice.getAttribute(ATTR_ICON);
+				String actionViewID = ice.getAttribute("viewID");
+				if(actionViewID!=null) {
+					// if available, viewID specifies that the action extension is only to be added
+					// to the view whose view ID is this.
+					if(!actionViewID.equals(viewID))
+						continue;				
+				}
+				String [] ans=ice.getAttributeNames();
 				if (traceOn)System.out.println("class=" + className + "   name=" + name);
+				// Determine if this action extension is for the view in the current plugin
+				String nsi = ice.getNamespaceIdentifier();// identifies which plugin this extension comes from
+				Object parent = ice.getParent();
 				Object obj = null;
 				try {
-					obj = ice.createExecutableExtension(ATTR_CLASSNAME);
+					obj = ice.createExecutableExtension(ATTR_CLASSNAME);//err
 					if (obj instanceof AbstractFeedbackAction) {
 						AbstractFeedbackAction fa = (AbstractFeedbackAction) obj;
 						fa.addIcon(icon);
