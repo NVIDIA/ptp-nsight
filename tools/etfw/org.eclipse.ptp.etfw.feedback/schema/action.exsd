@@ -83,6 +83,13 @@
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="viewID" type="string">
+            <annotation>
+               <documentation>
+                  If provided, this action is only added to the view with the given viewID.  If omitted, the action will be added to every Feedback view.
+               </documentation>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 
