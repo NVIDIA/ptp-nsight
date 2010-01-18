@@ -16,6 +16,8 @@ import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.extension.CConfigurationData;
+import org.eclipse.cdt.internal.core.envvar.EnvironmentVariableManager;
+import org.eclipse.cdt.internal.core.envvar.UserDefinedEnvironmentSupplier;
 import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
@@ -28,6 +30,7 @@ import org.eclipse.cdt.managedbuilder.ui.wizards.CfgHolder;
 import org.eclipse.cdt.managedbuilder.ui.wizards.STDWizardHandler;
 import org.eclipse.cdt.ui.newui.UIMessages;
 import org.eclipse.cdt.utils.FileSystemUtilityManager;
+import org.eclipse.cdt.utils.envvar.StorableEnvironment;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -54,6 +57,8 @@ import org.eclipse.swt.widgets.Composite;
  */
 public class RemoteMakefileWizardHandler extends STDWizardHandler {
 
+	private static final UserDefinedEnvironmentSupplier fUserSupplier = EnvironmentVariableManager.fUserSupplier;
+	
 	public RemoteMakefileWizardHandler(Composite p, IWizard w) {
 		super(p, w);
 		// TODO Auto-generated constructor stub
@@ -114,6 +119,13 @@ public class RemoteMakefileWizardHandler extends STDWizardHandler {
 		
 		doTemplatesPostProcess(project);
 		doCustom(project);
+	
+		//turn off append local environment variables for remote projects
+		StorableEnvironment vars = fUserSupplier.getWorkspaceEnvironmentCopy();
+		vars.setAppendContributedEnvironment(false);
+		vars.setAppendEnvironment(false);
+		EnvironmentVariableManager.fUserSupplier.setWorkspaceEnvironment(vars);
+		
 	}
 
 
