@@ -733,7 +733,7 @@
              pattern="org\.eclipse\.cdt\.ui/org\.eclipse\.cdt\.ui\.indexer">
        </activityPatternBinding>
        
-              <activity
+       <activity
        		 id="com.ibm.etools.aix.ui.EnvironmentPreferencePageActivity"
        		 name="%CDTEnvironmentPref.name">
        </activity>
@@ -758,6 +758,7 @@
        		 activityId="com.ibm.etools.aix.ui.EnvironmentPropertiesPageActivity"
        		 pattern="org.eclipse.cdt.managedbuilder.ui/org.eclipse.cdt.managedbuilder.ui.properties.Page_Environment">
        </activityPatternBinding>
+
      </extension>
      <extension
            id="indexerproblemmarker"
