@@ -786,11 +786,11 @@
                             
        <activity
        		 id="com.ibm.etools.aix.ui.EnvironmentPreferencePageActivity"
-       		 name="%Environment">
+       		 name="%CDTEnvironmentPref.name">
        </activity>
        <categoryActivityBinding
        		 activityId="com.ibm.etools.aix.ui.EnvironmentPreferencePageActivity"
-       		 catgeoryId="org.eclipse.ptp.rdt.ui.rdtCategory">
+       		 categoryId="org.eclipse.ptp.rdt.ui.rdtCategory">
        </categoryActivityBinding>
        <activityPatternBinding
        		 activityId="com.ibm.etools.aix.ui.EnvironmentPreferencePageActivity"
@@ -799,11 +799,11 @@
             
         <activity
        		 id="com.ibm.etools.aix.ui.EnvironmentPropertiesPageActivity"
-       		 name="%Environment">
+       		 name="%CDTEnvironmentProp.name">
        </activity>
        <categoryActivityBinding
        		 activityId="com.ibm.etools.aix.ui.EnvironmentPropertiesPageActivity"
-       		 catgeoryId="org.eclipse.ptp.rdt.ui.rdtCategory">
+       		 categoryId="org.eclipse.ptp.rdt.ui.rdtCategory">
        </categoryActivityBinding>
        <activityPatternBinding
        		 activityId="com.ibm.etools.aix.ui.EnvironmentPropertiesPageActivity"
