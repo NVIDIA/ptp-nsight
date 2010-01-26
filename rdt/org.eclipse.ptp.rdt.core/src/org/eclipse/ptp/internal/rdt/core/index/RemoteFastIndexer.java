@@ -51,7 +51,7 @@ public class RemoteFastIndexer extends AbstractPDOMIndexer {
 	}
 
 	
-	private boolean isReindex() {
+	protected static boolean isReindex() {
 		// Uses reflection to determine if createTask() is being called from PDOMRebuildTask.
 		String pdomRebuildTask = PDOMRebuildTask.class.getName();
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();

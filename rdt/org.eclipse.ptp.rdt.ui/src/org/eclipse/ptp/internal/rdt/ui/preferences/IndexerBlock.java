@@ -431,7 +431,7 @@ public class IndexerBlock extends AbstractCOptionPage {
                 	if (config.getName() != null && !WorkbenchActivityHelper.filterItem(config)) {
                 		IProject proj = getProject();
                 		if (proj != null && RemoteNature.hasRemoteNature(proj)) {
-                			if (id.equalsIgnoreCase("org.eclipse.ptp.rdt.core.RemoteFastIndexer") || id.equalsIgnoreCase("org.eclipse.cdt.core.nullindexer")) { //$NON-NLS-1$ //$NON-NLS-2$
+                			if (id.startsWith("org.eclipse.ptp.rdt.core.RemoteFastIndexer") || id.equalsIgnoreCase("org.eclipse.cdt.core.nullindexer")) { //$NON-NLS-1$ //$NON-NLS-2$
                 				fIndexerConfigMap.put(id, config);
                 			}
                 		} else {
