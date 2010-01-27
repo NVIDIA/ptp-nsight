@@ -21,17 +21,17 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.ptp.remotetools.RemotetoolsPlugin;
 import org.eclipse.ptp.remotetools.core.IRemoteCopyTools;
 import org.eclipse.ptp.remotetools.core.IRemoteDownloadExecution;
 import org.eclipse.ptp.remotetools.core.IRemoteUploadExecution;
 import org.eclipse.ptp.remotetools.exception.CancelException;
 import org.eclipse.ptp.remotetools.exception.RemoteConnectionException;
-import org.eclipse.ptp.remotetools.exception.RemoteExecutionException;
 import org.eclipse.ptp.remotetools.exception.RemoteOperationException;
 import org.eclipse.ptp.remotetools.internal.common.Debug;
 import org.eclipse.ptp.utils.core.file.FileEnumeration;
 import org.eclipse.ptp.utils.core.file.FileRecursiveEnumeration;
+
+import com.jcraft.jsch.SftpException;
 
 public class CopyTools implements IRemoteCopyTools {
 	
@@ -126,16 +126,12 @@ public class CopyTools implements IRemoteCopyTools {
 		} catch (FileNotFoundException e) {
 			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doDownloadFileToFile_CannotWriteFile, e.getMessage()), e);
 		}
-		IRemoteDownloadExecution execution = executeDownload(remotePath, sink);
+		
 		try {
-			execution.waitForEndOfExecution();
-		} catch (RemoteExecutionException e) {
-			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doDownloadFileToFile_ExecutionFailed, e.getMessage()), e);
+			manager.getConnection().getDefaultSFTPChannel().get(remotePath, sink);
+		} catch (SftpException ex) {
+			throw new RemoteOperationException(ex);
 		}
-		if (execution.getReturnCode() != 0) {
-			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doDownloadFileToFile_CommandFailes, Integer.toString(execution.getReturnCode())));
-		}
-		execution.close();
 	}
 
 	private void doUploadFileToFile(File localFile, String remotePath) throws RemoteConnectionException, CancelException, RemoteOperationException {
@@ -145,16 +141,13 @@ public class CopyTools implements IRemoteCopyTools {
 		} catch (FileNotFoundException e) {
 			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doUploadFileFromFile_CannotReadFile, e.getMessage()), e);
 		}
-		IRemoteUploadExecution execution = executeUpload(remotePath, source);
+		
 		try {
-			execution.waitForEndOfExecution();
-		} catch (RemoteExecutionException e) {
-			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doUploadFileFromFile_ExecutionFailed, e.getMessage()), e);
+			manager.getConnection().getDefaultSFTPChannel().put(source,remotePath);
+		} catch (SftpException ex) {
+			throw new RemoteOperationException(ex);
 		}
-		if (execution.getReturnCode() != 0) {
-			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doUploadFileFromFile_CommandFailed, Integer.toString(execution.getReturnCode())));
-		}
-		execution.close();
+		
 	}
 	
 	public void downloadDirToDir(String remotePath, File localDir, boolean recursive) throws RemoteConnectionException, RemoteOperationException, CancelException {
