@@ -95,7 +95,7 @@ import org.eclipse.rse.core.subsystems.SubSystem;
  */
 public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 
-	private Set<IProject> fInitializedProjects;
+	private Set<IProject> fInitializedProjects = new HashSet<IProject>();
 	private ProjectChangeListener fProjectOpenListener;
 	private List<String> fErrorMessages = new ArrayList<String>();
 	
@@ -122,7 +122,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	public void initializeSubSystem(IProgressMonitor monitor) {
 		super.initializeSubSystem(monitor);
 
-		fInitializedProjects = new HashSet<IProject>();
 		fProjectOpenListener = new ProjectChangeListener(this);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
 		

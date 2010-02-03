@@ -99,7 +99,7 @@ public class ModelBuilder {
 	 * @throws CModelException 
 	 */
 	public void buildLocalModel(org.eclipse.ptp.internal.rdt.core.model.TranslationUnit remoteTU) throws CModelException {
-		if (isCanceled()) {
+		if (isCanceled() || remoteTU == null) {
 			return;
 		}
 

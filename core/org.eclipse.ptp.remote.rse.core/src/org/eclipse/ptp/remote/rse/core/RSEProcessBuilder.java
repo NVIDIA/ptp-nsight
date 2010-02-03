@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteProcess;
+import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.ptp.remote.rse.core.messages.Messages;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.shells.IHostShell;
@@ -44,6 +45,14 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 	public RSEProcessBuilder(IRemoteConnection conn, List<String> command) {
 		super(conn, command);
 		this.connection = (RSEConnection)conn;
+		
+		if(!connection.isOpen()) {
+			try {
+				connection.open(new NullProgressMonitor());
+			} catch (RemoteConnectionException e) {
+				return;
+			}
+		}
 		
 		IShellService shellService = connection.getRemoteShellService();
 		
@@ -192,6 +201,9 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 		
 		// check HOME first for UNIX systems
 		String homeDir = envMap.get("HOME");
+		if(homeDir == null) {
+			homeDir = ""; //$NON-NLS-1$
+		}
 		
 		// if that didn't work, try %USERPROFILE% for Windows systems
 		if(homeDir == null) {

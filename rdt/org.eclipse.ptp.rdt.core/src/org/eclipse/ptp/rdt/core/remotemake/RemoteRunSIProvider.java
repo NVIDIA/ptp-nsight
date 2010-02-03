@@ -120,6 +120,10 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 			return false;
 		
 		IRemoteConnection connection = executionProvider.getConnection();
+		
+		if(connection == null)
+			return false;
+		
 		if(!connection.isOpen())
 			connection.open(monitor); // throws RemoteConnectionException
 		
