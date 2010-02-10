@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * Copyright (c) 2008, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,14 +12,12 @@ package org.eclipse.ptp.rdt.ui.subsystems;
 
 import java.io.IOException;
 import java.net.URI;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CProjectNature;
@@ -95,7 +93,7 @@ import org.eclipse.rse.core.subsystems.SubSystem;
  */
 public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 
-	private Set<IProject> fInitializedProjects = new HashSet<IProject>();
+	private Map<IProject, String> fInitializedProjects = new HashMap<IProject, String>();
 	private ProjectChangeListener fProjectOpenListener;
 	private List<String> fErrorMessages = new ArrayList<String>();
 	
@@ -121,7 +119,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	@Override
 	public void initializeSubSystem(IProgressMonitor monitor) {
 		super.initializeSubSystem(monitor);
-
 		fProjectOpenListener = new ProjectChangeListener(this);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
 		
@@ -133,7 +130,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		super.uninitializeSubSystem(monitor);
 		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(fProjectOpenListener);
-		fInitializedProjects = null;
+		//fInitializedProjects = null;
+		fInitializedProjects.clear();
 	}
 
 	/*
@@ -912,8 +910,18 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	}
 		
 	public void checkProject(IProject project, IProgressMonitor monitor) {
-		if (project == null || fInitializedProjects.contains(project)) {
+		if (project == null){ 
 			return;
+		}
+		
+		if(fInitializedProjects.containsKey(project)){
+			String projectURI = project.getLocationURI().toString();
+			if(projectURI.equals(fInitializedProjects.get(project))){
+				return;
+			}else{
+				//the project's uri is changed, so we need to initialize it again.
+				//no need to unregister its scope, since initializeScope handles it.
+			}
 		}
 		try {
 			initializeScope(project, monitor);
@@ -962,8 +970,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 
 			// register the new scope
 			registerScope(scope, cElements, configLocation, monitor);
-			
-			fInitializedProjects.add(project);
+			String projectURI = project.getLocationURI().toString();
+			fInitializedProjects.put(project, projectURI);
 		}
 	}
 	
