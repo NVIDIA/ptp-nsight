@@ -108,6 +108,18 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 			setManagedLocation(managedURI);
 		}
 		
+		if(element instanceof IHasRemotePath) {
+			IHasRemotePath hml = (IHasRemotePath) element;
+			setRemotePath(hml.getRemotePath());
+		}
+		
+		else {
+			// we are adapting a local TU to a remote TU
+			// we need to get a hold of the mapped path
+			String mappedPath = FileSystemUtilityManager.getDefault().getPathFromURI(element.getLocationURI());
+			setRemotePath(mappedPath);
+		}
+		
 		isHeaderUnit = element.isHeaderUnit();
 	}
 	
@@ -233,6 +245,7 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 	}
 
 	public CodeReader getCodeReader() {
+	
 		
 		URI uri = null;
 		
@@ -244,7 +257,7 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 		if(uri == null)
 			return null;
 		
-		String filePath = uri.getPath();
+		String filePath = fRemotePath != null ? fRemotePath : uri.getPath();
 		try {
 			return new CodeReader(filePath);
 		} catch (IOException e) {

@@ -44,7 +44,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.ptp.rdt.core.RDTLog;
 
-public abstract class CElement implements ICElement, Serializable, IHasManagedLocation {
+public abstract class CElement implements ICElement, Serializable, IHasManagedLocation, IHasRemotePath {
 	private static final long serialVersionUID = 1L;
 
 	private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -56,6 +56,7 @@ public abstract class CElement implements ICElement, Serializable, IHasManagedLo
 
 	protected URI fLocation;
 	protected URI fManagedLocation;
+	protected String fRemotePath;
 	protected IPath fWorkspacePath;
 
 	protected ICProject fCProject;
@@ -221,6 +222,8 @@ public abstract class CElement implements ICElement, Serializable, IHasManagedLo
 		return fManagedLocation;
 	}
 	
+	
+	
 	public void setPath(IPath path) {
 		if (path == null || path instanceof Path) {
 			fWorkspacePath = path;
@@ -274,5 +277,20 @@ public abstract class CElement implements ICElement, Serializable, IHasManagedLo
 			hash += 47 * fLocation.hashCode();
 		}
 		return hash;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.internal.rdt.core.model.IHasMappedLocation#getMappedLocation()
+	 */
+	public String getRemotePath() {
+		return fRemotePath;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.internal.rdt.core.model.IHasMappedLocation#setMappedLocation(java.lang.String)
+	 */
+	public void setRemotePath(String location) {
+		fRemotePath = location;
+		
 	}
 }

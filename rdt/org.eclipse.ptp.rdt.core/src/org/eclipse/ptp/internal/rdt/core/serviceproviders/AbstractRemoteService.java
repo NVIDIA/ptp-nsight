@@ -42,13 +42,16 @@ public class AbstractRemoteService {
 
 	protected ICIndexSubsystem getSubSystem() {
 		if (fIndexSubsystem == null) {
-	
-			ISubSystem[] subSystems = fConnectorService.getSubSystems();
-	
-			for (int k = 0; k < subSystems.length; k++) {
-				if (subSystems[k] instanceof ICIndexSubsystem)
-	
-					fIndexSubsystem = (ICIndexSubsystem) subSystems[k];
+
+			if (fConnectorService != null) {
+
+				ISubSystem[] subSystems = fConnectorService.getSubSystems();
+
+				for (int k = 0; k < subSystems.length; k++) {
+					if (subSystems[k] instanceof ICIndexSubsystem)
+
+						fIndexSubsystem = (ICIndexSubsystem) subSystems[k];
+				}
 			}
 		}
 		

@@ -189,8 +189,13 @@ private static URICreatorManager fInstance;
 	}
 	
 	public URI createURI(String scheme, String host, String path) throws URISyntaxException {
-				
 		ScopeManager scopeManager = ScopeManager.getInstance();
+		
+		String scopeName = scopeManager.getScopeForFile(path);
+		if(scopeName == null) {
+			return new URI("rse", host, path, null); //$NON-NLS-1$
+		}
+		
 		String mappedPath = scopeManager.getMappedPathForFile(path);
 		String fileHost = scopeManager.getHostForFile(path, host);
 		

@@ -167,6 +167,11 @@ public class ModelAdapter {
 			result.setManagedLocation(hml.getManagedLocation());
 		}
 		
+		if(element instanceof IHasRemotePath) {
+			IHasRemotePath hml = (IHasRemotePath) element;
+			result.setRemotePath(hml.getRemotePath());
+		}
+		
 		result.setPath(element.getPath());
 		
 		if (depth != 0) {

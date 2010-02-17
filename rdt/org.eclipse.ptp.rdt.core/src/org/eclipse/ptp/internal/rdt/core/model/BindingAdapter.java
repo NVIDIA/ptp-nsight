@@ -128,6 +128,11 @@ public class BindingAdapter {
 					IHasManagedLocation hml = (IHasManagedLocation) element;
 					element.setManagedLocation(hml.getManagedLocation());
 				}
+				
+				if(unit instanceof IHasRemotePath) {
+					IHasRemotePath hml = (IHasRemotePath) element;
+					element.setRemotePath(hml.getRemotePath());
+				}
 				element.setPath(unit.getPath());
 			}
 			

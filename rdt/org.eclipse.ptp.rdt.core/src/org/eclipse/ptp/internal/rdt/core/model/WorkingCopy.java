@@ -54,7 +54,7 @@ public class WorkingCopy extends TranslationUnit implements IRemoteWorkingCopy {
 		if(uri == null)
 			return null;
 		
-		String filePath = uri.getPath();
+		String filePath = fRemotePath != null ? fRemotePath : uri.getPath();
 		
 		return new CodeReader(filePath, getContents());
 		
