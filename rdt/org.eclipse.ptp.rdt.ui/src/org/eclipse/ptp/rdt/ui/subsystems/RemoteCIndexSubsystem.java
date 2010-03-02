@@ -28,6 +28,7 @@ import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IParent;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.internal.core.parser.ParserMessages;
 import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -79,6 +80,8 @@ import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.SubSystem;
+
+import com.ibm.icu.text.MessageFormat;
 
 /**
  * An RSE subsystem which is used to provide C/C++ indexing services from a Miner
@@ -195,13 +198,14 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				for (int i = 0; i < status.getNestedSize(); i ++ ){
 					DataElement element = status.get(i);
 			    	if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-			    		String message = element.getAttribute(DE.A_NAME)+ ".  " + Messages.getString("RemoteCIndexSubsystem.11");  //$NON-NLS-1$//$NON-NLS-2$
+			    		String message = element.getAttribute(DE.A_NAME)+ ".  " ;  //$NON-NLS-1$
+			    		String errorMessage = Messages.getString("RemoteCIndexSubsystem.11"); //$NON-NLS-1$
 			    		for (int j = 0; j < fErrorMessages.size(); j++) {
-			    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
-					    		RDTLog.logWarning(message);
-					    		reportProblem(scope, message);
+			    			if (message.indexOf(fErrorMessages.get(j)) > 0) {					    		
+					    		String msg = reportProblem(scope, message, errorMessage);
+					    		RDTLog.logWarning(msg);
 			    			}
-			    		}				    
+			    		}
 			    	}
 				}
 			}
@@ -235,11 +239,25 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	}
 
 
-	protected void reportProblem(Scope scope, String message) {
+	protected String reportProblem(Scope scope, String message, String errorMsg) {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceRoot workspaceRoot = workspace.getRoot();
 		IProject project = workspaceRoot.getProject(scope.getName());
-
+		
+		//parser for error message
+		int errorMessageStart = message.indexOf("Indexer: "); //$NON-NLS-1$
+		int errorMessageEnd = message.indexOf(": ",errorMessageStart + 9); //$NON-NLS-1$
+		String errorMessage = message.substring(errorMessageStart + 9, errorMessageEnd);
+		
+		boolean includeError = true;
+		if (errorMessage.indexOf("inclusion") < 0) //$NON-NLS-1$
+			includeError = false;
+		
+		//parser for include/macro name
+		int includeStart = message.indexOf(": \""); //$NON-NLS-1$
+		int includeEnd = message.indexOf("\"",includeStart + 3); //$NON-NLS-1$
+		String include = message.substring(includeStart + 2, includeEnd+1);
+				
 		
 		//parse for file name and line number
 		int fileStart = message.indexOf("in file: "); //$NON-NLS-1$
@@ -247,8 +265,18 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		String fileName = message.substring(fileStart + 9, fileEnd);
 		
 		int lineStart = fileEnd;
-		int lineEnd = message.indexOf(".  Please", lineStart); //$NON-NLS-1$
+		int lineEnd = message.indexOf(".  ", lineStart); //$NON-NLS-1$
 		String lineNumber = message.substring(lineStart + 1, lineEnd);
+		
+		//put error message back together
+		Object[] args = new Object[] { include, fileName, new Integer(lineNumber.replace(",", "")) }; //$NON-NLS-1$ //$NON-NLS-2$
+		String info = ParserMessages.getFormattedString("BaseProblemFactory.problemPattern", args); //$NON-NLS-1$
+		if (includeError)
+			info = ParserMessages.getFormattedString("ScannerProblemFactory.error.preproc.inclusionNotFound", info); //$NON-NLS-1$
+		else
+			info = ParserMessages.getFormattedString("ScannerProblemFactory.error.preproc.definitionNotFound", info); //$NON-NLS-1$
+		
+		String wholeMessage = MessageFormat.format(Messages.getString("RemoteCIndexSubsystem.12"), new Object[] {info}) + "  " + errorMsg; //$NON-NLS-1$ //$NON-NLS-2$
 		
 		IFile file = null;
 		String projectLocation = project.getLocationURI().getPath();
@@ -267,21 +295,21 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			try {
 				IMarker marker = file.createMarker("org.eclipse.ptp.rdt.ui.indexerproblemmarker"); //$NON-NLS-1$
 				marker.setAttribute(IMarker.LINE_NUMBER, Integer.parseInt(lineNumber.replace(",", ""))); //$NON-NLS-1$ //$NON-NLS-2$
-				marker.setAttribute(IMarker.MESSAGE, message);
+				marker.setAttribute(IMarker.MESSAGE, wholeMessage);
 				marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
-				return;
 			} catch (CoreException e) {
 				RDTLog.logError(e);
 			}
 		} else {
 			try {
 				IMarker marker =  project.createMarker("org.eclipse.ptp.rdt.ui.indexerproblemmarker"); //$NON-NLS-1$
-				marker.setAttribute(IMarker.MESSAGE, message);
+				marker.setAttribute(IMarker.MESSAGE, wholeMessage);
 				marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
 			} catch (CoreException e) {
 				RDTLog.logError(e);
 			}
 		}
+		return wholeMessage;
 	}
 
 	/* (non-Javadoc)
@@ -362,13 +390,14 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 				for (int i = 0; i < status.getNestedSize(); i ++ ){
 					DataElement element = status.get(i);
 					if (element != null && CDTMiner.T_INDEXING_ERROR.equals(element.getType())) { // Error occurred on the server
-			    		String message = element.getAttribute(DE.A_NAME)+ ".  " + Messages.getString("RemoteCIndexSubsystem.11");  //$NON-NLS-1$//$NON-NLS-2$
+						String message = element.getAttribute(DE.A_NAME)+ ".  " ;  //$NON-NLS-1$
+			    		String errorMessage = Messages.getString("RemoteCIndexSubsystem.11"); //$NON-NLS-1$
 			    		for (int j = 0; j < fErrorMessages.size(); j++) {
-			    			if (message.indexOf(fErrorMessages.get(j)) > 0) {
-					    		RDTLog.logWarning(message);
-					    		reportProblem(scope, message);
+			    			if (message.indexOf(fErrorMessages.get(j)) > 0) {					    		
+					    		String msg = reportProblem(scope, message, errorMessage);
+					    		RDTLog.logWarning(msg);
 			    			}
-			    		}				    
+			    		}
 			    	}
 				}
 			}
