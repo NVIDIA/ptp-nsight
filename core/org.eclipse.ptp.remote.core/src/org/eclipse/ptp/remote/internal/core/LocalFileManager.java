@@ -28,7 +28,7 @@ public class LocalFileManager implements IRemoteFileManager {
 	public IFileStore getResource(String pathStr) {
 		IPath path = new Path(pathStr);
 		if (!path.isAbsolute()) {
-			path = fWorkingDir.append(path);
+			path = getWorkingDirectoryPath().append(path);
 		}
 		return EFS.getLocalFileSystem().getStore(path);
 	}
@@ -37,10 +37,7 @@ public class LocalFileManager implements IRemoteFileManager {
 	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#getWorkingDirectory(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public String getWorkingDirectory() {
-		if (fWorkingDir == null) {
-			fWorkingDir = new Path(System.getProperty("user.home")); //$NON-NLS-1$
-		}
-		return fWorkingDir.toString();
+		return getWorkingDirectoryPath().toString();
 	}
 	
 	/* (non-Javadoc)
@@ -66,11 +63,23 @@ public class LocalFileManager implements IRemoteFileManager {
 	public URI toURI(IPath path) {
 		return URIUtil.toURI(path);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#toURI(java.lang.String)
 	 */
 	public URI toURI(String path) {
 		return URIUtil.toURI(path);
+	}
+
+	private IPath getWorkingDirectoryPath() {
+		if (fWorkingDir == null) {
+			String home = System.getProperty("user.home"); //$NON-NLS-1$
+			if (home != null) {
+				fWorkingDir = new Path(home);
+			} else {
+				fWorkingDir = new Path("."); //$NON-NLS-1$
+			}
+		}
+		return fWorkingDir;
 	}
 }
