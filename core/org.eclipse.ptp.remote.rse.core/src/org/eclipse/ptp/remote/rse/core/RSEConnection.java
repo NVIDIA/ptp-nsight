@@ -19,6 +19,7 @@ import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.ptp.remote.core.exception.UnableToForwardPortException;
 import org.eclipse.ptp.remote.rse.core.messages.Messages;
+import org.eclipse.rse.core.RSECorePlugin;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
 import org.eclipse.rse.core.subsystems.ICommunicationsListener;
@@ -196,6 +197,12 @@ public class RSEConnection implements IRemoteConnection {
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#open()
 	 */
 	public void open(final IProgressMonitor monitor) throws RemoteConnectionException {
+		try {
+			RSECorePlugin.waitForInitCompletion();
+		} catch (InterruptedException e) {
+			Activator.log(e);
+			return;
+		}
 		if (!subSystem.isConnected()) {
 			try {
 				subSystem.connect(monitor, false);

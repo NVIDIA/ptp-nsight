@@ -15,7 +15,9 @@ import org.eclipse.ptp.internal.rdt.ui.contentassist.IContentAssistService;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.RemoteContentAssistService;
 import org.eclipse.ptp.internal.rdt.ui.search.ISearchService;
 import org.eclipse.ptp.internal.rdt.ui.search.RemoteSearchService;
+import org.eclipse.ptp.rdt.core.activator.Activator;
 import org.eclipse.rse.connectorservice.dstore.DStoreConnectorService;
+import org.eclipse.rse.core.RSECorePlugin;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.model.SystemStartHere;
 import org.eclipse.rse.core.subsystems.IConnectorService;
@@ -70,6 +72,12 @@ public class RemoteCIndexServiceProvider extends AbstractRemoteCIndexServiceProv
 	}
 	
 	private void initializeHost() {
+		try {
+			RSECorePlugin.waitForInitCompletion();
+		} catch (InterruptedException e) {
+			Activator.log(e);
+			return;
+		}
 		if (fHost == null && getHostName() != null) {
 			IHost[] hosts = SystemStartHere.getConnections();
 			for (IHost host : hosts) {

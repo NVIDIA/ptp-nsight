@@ -15,8 +15,10 @@ import java.net.URI;
 import org.eclipse.cdt.utils.FileSystemUtilityManager;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.internal.rdt.ui.RSEUtils;
+import org.eclipse.ptp.rdt.core.activator.Activator;
 import org.eclipse.ptp.rdt.core.serviceproviders.IRemoteExecutionServiceProvider;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
@@ -24,6 +26,7 @@ import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
 import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.PTPRemoteCorePlugin;
+import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.ptp.rdt.services.core.ServiceProvider;
 
 /**
@@ -94,6 +97,15 @@ public class RemoteBuildServiceProvider extends ServiceProvider implements IRemo
 				IRemoteConnectionManager manager = services.getConnectionManager();
 				if (manager != null) {
 					fRemoteConnection = manager.getConnection(getRemoteConnectionName());
+					
+					if(fRemoteConnection != null && !fRemoteConnection.isOpen()) {
+						try {
+							fRemoteConnection.open(new NullProgressMonitor());
+						} catch (RemoteConnectionException e) {
+							Activator.log(e);
+							return null;
+						}
+					}
 				}
 			}
 		}

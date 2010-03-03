@@ -66,6 +66,7 @@ import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchQuery;
 import org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.THGraph;
 import org.eclipse.ptp.rdt.core.RDTLog;
+import org.eclipse.ptp.rdt.core.activator.Activator;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 import org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider;
 import org.eclipse.ptp.rdt.services.core.IService;
@@ -77,9 +78,11 @@ import org.eclipse.ptp.rdt.ui.serviceproviders.RemoteCIndexServiceProvider;
 import org.eclipse.rse.connectorservice.dstore.DStoreConnectorService;
 import org.eclipse.rse.connectorservice.dstore.util.StatusMonitor;
 import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
+import org.eclipse.rse.core.RSECorePlugin;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.SubSystem;
+import org.eclipse.rse.services.dstore.util.DStoreStatusMonitor;
 
 import com.ibm.icu.text.MessageFormat;
 
@@ -120,16 +123,26 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 * @see org.eclipse.rse.core.subsystems.SubSystem#initializeSubSystem(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public void initializeSubSystem(IProgressMonitor monitor) {
+	public synchronized void initializeSubSystem(IProgressMonitor monitor) {
 		super.initializeSubSystem(monitor);
 		fProjectOpenListener = new ProjectChangeListener(this);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
 		
-		getDataStore().activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
+		DataStore dataStore = getDataStore(monitor);
+		DataElement status = dataStore.activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
+		DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
+		
+		// wait for the miner to be fully initialized
+		try {
+			statusMonitor.waitForUpdate(status, monitor);
+		} catch (InterruptedException e) {
+			Activator.log(e);
+		}
+		
 	}
 
 	@Override
-	public void uninitializeSubSystem(IProgressMonitor monitor) {
+	public synchronized void uninitializeSubSystem(IProgressMonitor monitor) {
 		super.uninitializeSubSystem(monitor);
 		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(fProjectOpenListener);
@@ -143,11 +156,11 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 */
 	public IStatus reindexScope(Scope scope, IRemoteIndexerInfoProvider provider, String indexLocation, IProgressMonitor monitor, RemoteIndexerTask task) {
 		removeProblems(scope);
-		DataStore dataStore = getDataStore();
+		DataStore dataStore = getDataStore(monitor);
 		if(dataStore == null)
 			return Status.OK_STATUS;
 		
-    	DataElement result = getDataStore().createObject(null, CDTMiner.T_INDEX_STATUS_DESCRIPTOR, "index"); //$NON-NLS-1$
+    	DataElement result = getDataStore(monitor).createObject(null, CDTMiner.T_INDEX_STATUS_DESCRIPTOR, "index"); //$NON-NLS-1$
      	StatusMonitor smonitor = StatusMonitorFactory.getInstance().getStatusMonitorFor(getConnectorService(), dataStore);
      	monitor.beginTask("Rebuilding indexing...", 100); //$NON-NLS-1$
    
@@ -319,11 +332,11 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 			List<ICElement> changedElements, List<ICElement> deletedElements, IProgressMonitor monitor, RemoteIndexerTask task) {
 		
 		removeProblems(scope);
-		DataStore dataStore = getDataStore();
+		DataStore dataStore = getDataStore(monitor);
 		if(dataStore == null)
 			return Status.OK_STATUS;
 
-    	DataElement result = getDataStore().createObject(null, CDTMiner.T_INDEX_STATUS_DESCRIPTOR, "index"); //$NON-NLS-1$
+    	DataElement result = getDataStore(monitor).createObject(null, CDTMiner.T_INDEX_STATUS_DESCRIPTOR, "index"); //$NON-NLS-1$
      	StatusMonitor smonitor = StatusMonitorFactory.getInstance().getStatusMonitorFor(_connectorService, dataStore);
      	int workCount = newElements.size() + changedElements.size();
     	monitor.beginTask("Incrementally Indexing...", workCount); //$NON-NLS-1$
@@ -447,9 +460,10 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#registerScope(org.eclipse.ptp.internal.rdt.core.model.Scope, java.lang.String[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public IStatus registerScope(Scope scope, List<ICElement> elements, String configLocation, IProgressMonitor monitor)
+	public synchronized IStatus registerScope(Scope scope, List<ICElement> elements, String configLocation, IProgressMonitor monitor)
 	{
-		DataStore dataStore = getDataStore();
+		
+		DataStore dataStore = getDataStore(monitor);
 		   
 	    if (dataStore != null)
 	    {
@@ -462,7 +476,6 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	        DataElement queryCmd = dataStore.localDescriptorQuery(dataStore.getDescriptorRoot(), CDTMiner.C_SCOPE_REGISTER);
             if (queryCmd != null)
             {
-                      	
             	ArrayList<Object> args = new ArrayList<Object>();
             	            	
             	// need to know the scope
@@ -501,10 +514,11 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
             	try {
                 	smonitor.waitForUpdate(status, monitor);
                 }
-                catch (Exception e) {            
+                catch (Exception e) {
                 	RDTLog.logError(e);
                 }
             }
+            
 	    }
 	    
 	    return Status.OK_STATUS;
@@ -559,11 +573,11 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem#unregisterScope(org.eclipse.ptp.internal.rdt.core.model.Scope, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public IStatus unregisterScope(Scope scope, IProgressMonitor monitor) {
+	public synchronized IStatus unregisterScope(Scope scope, IProgressMonitor monitor) {
 	    IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(scope.getName());
 		fInitializedProjects.remove(project);
 		
-		DataStore dataStore = getDataStore();
+		DataStore dataStore = getDataStore(monitor);
 		   
 	    if (dataStore != null)
 	    {
@@ -693,8 +707,9 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	
 	@SuppressWarnings("unchecked")
 	public List<Proposal> computeCompletionProposals(Scope scope, RemoteContentAssistInvocationContext context, ITranslationUnit unit) {
+		checkAllProjects(new NullProgressMonitor());
 		String path = FileSystemUtilityManager.getDefault().getPathFromURI(unit.getLocationURI());
-		DataStore dataStore = getDataStore();
+		DataStore dataStore = getDataStore(null);
 	    if (dataStore == null)
 	    {
 	    	return Collections.emptyList();
@@ -798,7 +813,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 * @param deserializeResult If true the result will be deserialized, if false it will treat the result as a raw string.
 	 */
 	private Object sendRequest(String requestType, Object[] arguments, IProgressMonitor monitor, boolean deserializeResult) {
-		DataStore dataStore = getDataStore();
+		DataStore dataStore = getDataStore(monitor);
 	    if (dataStore == null)
 	    	return null;
 	    
@@ -889,12 +904,31 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     	}
 	}
 
-	protected DataStore getDataStore()
+	protected DataStore getDataStore(IProgressMonitor monitor)
 	{
+		if(monitor == null) {
+			monitor = new NullProgressMonitor();
+		}
+			
+		try {
+			RSECorePlugin.waitForInitCompletion();
+		} catch (InterruptedException e) {
+			Activator.log(e);
+			return null;
+		}
+			
 		IConnectorService connectorService = getConnectorService();
 		
 		if(connectorService instanceof DStoreConnectorService) {
-			return ((DStoreConnectorService) connectorService).getDataStore();
+			DStoreConnectorService dstoreConnectorService = (DStoreConnectorService) connectorService;
+			if(!dstoreConnectorService.isConnected()) {
+				try {
+					dstoreConnectorService.connect(monitor);
+				} catch (Exception e) {
+					Activator.log(e);
+				}
+			}
+			return dstoreConnectorService.getDataStore();
 
 		}
 		return null;
@@ -912,7 +946,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		return (ITranslationUnit) result;
 	}
 	
-	public void checkAllProjects(IProgressMonitor monitor) {
+	public synchronized void checkAllProjects(IProgressMonitor monitor) {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceRoot workspaceRoot = workspace.getRoot();
 
@@ -938,7 +972,24 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		}
 	}
 		
-	public void checkProject(IProject project, IProgressMonitor monitor) {
+	public synchronized void checkProject(IProject project, IProgressMonitor monitor) {
+	
+		try {
+			RSECorePlugin.waitForInitCompletion();
+		} catch (InterruptedException e) {
+			Activator.log(e);
+			return;
+		}
+		
+		IConnectorService connectorService = getConnectorService();
+		if(!connectorService.isConnected()) {
+			try {
+				connectorService.connect(monitor);
+			} catch (Exception e) {
+				Activator.log(e);
+			}
+		}
+		
 		if (project == null){ 
 			return;
 		}
@@ -959,7 +1010,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		}
 	}
 
-	private void initializeScope(IProject project, IProgressMonitor monitor) throws CoreException {
+	private synchronized void initializeScope(IProject project, IProgressMonitor monitor) throws CoreException {
 		// get the service model configuration for this project
 		final ServiceModelManager serviceModelManager = ServiceModelManager.getInstance();
 		IServiceConfiguration config = serviceModelManager.getActiveConfiguration(project);

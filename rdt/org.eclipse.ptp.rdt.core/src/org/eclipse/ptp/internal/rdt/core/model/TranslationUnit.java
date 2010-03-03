@@ -116,8 +116,8 @@ public class TranslationUnit extends Parent implements ITranslationUnit {
 		else {
 			// we are adapting a local TU to a remote TU
 			// we need to get a hold of the mapped path
-			String mappedPath = FileSystemUtilityManager.getDefault().getPathFromURI(element.getLocationURI());
-			setRemotePath(mappedPath);
+			String remotePath = FileSystemUtilityManager.getDefault().getPathFromURI(element.getLocationURI());
+			setRemotePath(remotePath);
 		}
 		
 		isHeaderUnit = element.isHeaderUnit();

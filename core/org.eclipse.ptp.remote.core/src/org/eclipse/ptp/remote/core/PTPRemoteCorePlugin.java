@@ -223,7 +223,15 @@ public class PTPRemoteCorePlugin extends Plugin {
 	 */
 	public synchronized IRemoteServices getRemoteServices(String id) {
 		retrieveRemoteServices();
-		return allRemoteServicesById.get(id);
+		IRemoteServices remoteServices = allRemoteServicesById.get(id);
+		
+		if(remoteServices != null)
+			return remoteServices;
+		else {
+			// initialization might have failed for that set of services previously... try to load it again
+			retrieveRemoteServices(id);
+			return allRemoteServicesById.get(id);
+		}
 	}
 
 	/**
@@ -288,4 +296,37 @@ public class PTPRemoteCorePlugin extends Plugin {
 			}
 		}
     }
+	
+	/**
+	 * Attempts to load the remote services with a given ID.  If no services are loaded, it
+	 * loads them all.
+	 * 
+	 * @param id
+	 */
+	private void retrieveRemoteServices(String id) {
+		if (allRemoteServicesById == null) {
+			retrieveRemoteServices();
+		} else {
+			IExtensionRegistry registry = Platform.getExtensionRegistry();
+			IExtensionPoint extensionPoint = registry.getExtensionPoint(PLUGIN_ID, EXTENSION_POINT_ID);
+			final IExtension[] extensions = extensionPoint.getExtensions();
+
+			for (IExtension ext : extensions) {
+				final IConfigurationElement[] elements = ext.getConfigurationElements();
+
+				for (IConfigurationElement ce : elements) {
+					RemoteServicesProxy proxy = new RemoteServicesProxy(ce);
+					if (proxy.getId().equals(id)) {
+						if (proxy.initialize()) {
+							allRemoteServicesById.put(proxy.getId(), proxy);
+							allRemoteServicesByScheme.put(proxy.getScheme(), proxy);
+							return;
+						} else {
+							log("Failed to initialize remote service: " + proxy.getId() + "(" + proxy.getName() + ")"); //$NON-NLS-1$  //$NON-NLS-2$  //$NON-NLS-3$
+						}
+					}
+				}
+			}
+		}
+	}
 }

@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.ui.serviceproviders;
 
+import org.eclipse.ptp.rdt.core.serviceproviders.IRemoteExecutionServiceProvider;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
 import org.eclipse.ptp.rdt.services.core.ServiceProvider;
 import org.eclipse.ptp.rdt.services.core.ServiceProviderDescriptor;
 import org.eclipse.ptp.rdt.ui.messages.Messages;
+import org.eclipse.ptp.remote.core.IRemoteConnection;
+import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ui.IMemento;
 
 /**
@@ -27,7 +30,7 @@ import org.eclipse.ui.IMemento;
  * @author vkong
  *
  */
-public class NullBuildServiceProvider extends ServiceProvider implements IServiceProvider {
+public class NullBuildServiceProvider extends ServiceProvider implements IServiceProvider, IRemoteExecutionServiceProvider {
 	
 	public static final String ID = "org.eclipse.ptp.rdt.ui.NullBuildServiceProvider"; //$NON-NLS-1$
 	public static final String SERVICE_ID = "org.eclipse.ptp.rdt.core.BuildService"; //$NON-NLS-1$
@@ -42,6 +45,21 @@ public class NullBuildServiceProvider extends ServiceProvider implements IServic
 
 	public boolean isConfigured() {
 		return true;
+	}
+
+
+	public String getConfigLocation() {
+		return null;
+	}
+
+
+	public IRemoteConnection getConnection() {
+		return null;
+	}
+
+
+	public IRemoteServices getRemoteServices() {
+		return null;
 	}
 
 

@@ -66,16 +66,18 @@ public class RSEServices implements IRemoteServicesDelegate {
 			return false;
 		}
 		
-		Job[] jobs = Job.getJobManager().find(null);
-		for(int i=0; i<jobs.length; i++) {
-		    if ("Initialize RSE".equals(jobs[i].getName())) { //$NON-NLS-1$
-		        try {
-					jobs[i].join();
-				} catch (InterruptedException e) {
-					// Ignore
-				}
-		        break;
-		    }
+		// The old code that tried to wait for RSE to initialize
+		// was wrong.  If the init job hadn't run yet, it wouldn't block.
+		// However, we can't block here anyway, because this can get called
+		// from the main thread on startup, before RSE is initialized.
+		// This would mean we deadlock ourselves.
+		
+		// So if RSE isn't initialized, report out initialization failed,
+		// and the next time someone tries to use the service, initialization
+		// will be attempted again.
+		
+		if(!RSECorePlugin.isInitComplete(RSECorePlugin.INIT_ALL)) {
+			return false;
 		}
 		
 		if (!RSECorePlugin.getThePersistenceManager().isRestoreComplete()) {

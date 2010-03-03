@@ -21,6 +21,7 @@ import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeEvent;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeListener;
 import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
+import org.eclipse.rse.core.RSECorePlugin;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.model.ISystemRegistry;
 
@@ -32,6 +33,12 @@ public class RSEConnectionManager implements IRemoteConnectionManager {
 	private Map<IHost, IRemoteConnection> connections = new HashMap<IHost,IRemoteConnection>();
 	
 	public RSEConnectionManager(ISystemRegistry registry) {
+		try {
+			RSECorePlugin.waitForInitCompletion();
+		} catch (InterruptedException e) {
+			Activator.log(e);
+			return;
+		}
 		this.registry = registry;
 		try {
 			this.fileSystem = EFS.getFileSystem("rse");

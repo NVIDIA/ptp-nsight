@@ -291,6 +291,9 @@ public class RemoteMakeBuilder extends MakeBuilder {
 					
 					IRemoteConnection connection = executionProvider.getConnection();
 					
+					if(connection == null)
+						return false;
+					
 					if(!connection.isOpen())
 						connection.open(monitor);
 					
