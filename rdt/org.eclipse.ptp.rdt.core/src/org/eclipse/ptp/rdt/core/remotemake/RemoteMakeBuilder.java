@@ -71,6 +71,7 @@ import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.services.core.IService;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
+import org.eclipse.ptp.rdt.services.core.ProjectNotConfiguredException;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteFileManager;
@@ -277,15 +278,15 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				// Determine the service model for this configuration, and use the provider of the build
 				// service to execute the build command.
 				ServiceModelManager smm = ServiceModelManager.getInstance();
-				IServiceConfiguration serviceConfig = smm.getActiveConfiguration(getProject());
-				IService buildService = smm.getService(IRDTServiceConstants.SERVICE_BUILD);
-				IServiceProvider provider = serviceConfig.getServiceProvider(buildService);
-				IRemoteExecutionServiceProvider executionProvider = null;
-				if(provider instanceof IRemoteExecutionServiceProvider) {
-					executionProvider = (IRemoteExecutionServiceProvider) provider;
-				}
 				
-				if (executionProvider != null) {
+				try{
+					IServiceConfiguration serviceConfig = smm.getActiveConfiguration(getProject());
+					IService buildService = smm.getService(IRDTServiceConstants.SERVICE_BUILD);
+					IServiceProvider provider = serviceConfig.getServiceProvider(buildService);
+					IRemoteExecutionServiceProvider executionProvider = null;
+					if(provider instanceof IRemoteExecutionServiceProvider) {
+						executionProvider = (IRemoteExecutionServiceProvider) provider;
+					}
 					
 					IRemoteServices remoteServices = executionProvider.getRemoteServices();
 					
@@ -327,7 +328,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 					// TODO FIXME:  this doesn't currently work for the RSE provider
 					processBuilder.redirectErrorStream(true);
 					
-
+	
 					
 					final IRemoteProcess p = processBuilder.start();
 					
@@ -335,7 +336,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 					// terminate the process if required
 					
 					Thread monitorThread = new Thread(new Runnable() {
-
+	
 						public void run() {
 							while(!monitor.isCanceled() && !p.isCompleted()) {
 								try {
@@ -353,13 +354,13 @@ public class RemoteMakeBuilder extends MakeBuilder {
 					}, MakeMessages.getString("Remote Make Monitor Thread")); //$NON-NLS-1$
 					
 					monitorThread.start();
-
+	
 					if (p != null) {
 						try {
 							// Close the input of the Process explicitly.
 							// We will never write to it.
 							p.getOutputStream().close();
-
+	
 							// Hook up the process output to the console.
 							// In theory, stderr is combined so no need to read stderr... we should set it to null.
 							// HOWEVER:  the RSE provider doesn't merge the streams... so if we want the stderr output, then
@@ -370,7 +371,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 						} catch (IOException e) {
 							// don't really care if this fails
 						}
-
+	
 	
 						// wait for the process to finish
 						while (!p.isCompleted()) {
@@ -392,9 +393,14 @@ public class RemoteMakeBuilder extends MakeBuilder {
 							// this should never happen because we should never be building from a
 							// state where ressource changes are disallowed
 						}
-					} 
-
+					}
 				}
+				catch (ProjectNotConfiguredException e){
+					//occurs when loading a project from RTC, this is forced to run before the project is configured, this is expected
+					//if not due to above reason, then legitimate error
+				}
+
+				
 				getProject().setSessionProperty(qName, !monitor.isCanceled() && !isClean ? new Integer(streamMon.getWorkDone()) : null);
 
 				if (errMsg != null) {

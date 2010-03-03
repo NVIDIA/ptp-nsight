@@ -42,6 +42,7 @@ import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.services.core.IService;
 import org.eclipse.ptp.rdt.services.core.IServiceConfiguration;
 import org.eclipse.ptp.rdt.services.core.IServiceProvider;
+import org.eclipse.ptp.rdt.services.core.ProjectNotConfiguredException;
 import org.eclipse.ptp.rdt.services.core.ServiceModelManager;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteFileManager;
@@ -186,16 +187,20 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 	
 	private static IRemoteExecutionServiceProvider getExecutionServiceProvider(IProject project) {
 		ServiceModelManager smm = ServiceModelManager.getInstance();
-		IServiceConfiguration serviceConfig = smm.getActiveConfiguration(project);
-		if(serviceConfig == null)
+		try{
+			IServiceConfiguration serviceConfig = smm.getActiveConfiguration(project);
+			
+			IService buildService = smm.getService(IRDTServiceConstants.SERVICE_BUILD);
+			IServiceProvider provider = serviceConfig.getServiceProvider(buildService);
+			
+			if(provider instanceof IRemoteExecutionServiceProvider)
+				return (IRemoteExecutionServiceProvider) provider;
+		}
+		catch (ProjectNotConfiguredException e){
+			//occurs when loading a project from RTC, this is forced to run before the project is configured, this is expected
+			//if not due to above reason, then legitimate error
 			return null;
-		
-		IService buildService = smm.getService(IRDTServiceConstants.SERVICE_BUILD);
-		IServiceProvider provider = serviceConfig.getServiceProvider(buildService);
-		
-		if(provider instanceof IRemoteExecutionServiceProvider)
-			return (IRemoteExecutionServiceProvider) provider;
-		
+		}
 		return null;
 	}
 }
