@@ -412,7 +412,8 @@ abstract public class ProjectSettingsWizardPage extends WizardPage implements IP
 		browseButton.setLayoutData(new GridData());
 		browseButton.addSelectionListener(new SelectionAdapter() {
 			@Override public void widgetSelected(SelectionEvent e) {
-				FileDialog fileDialog = new FileDialog(getShell(), SWT.SAVE);
+				int dialogType = strategy instanceof ProjectSettingsImportStrategy ? SWT.OPEN : SWT.SAVE; // kind of a hack, oh well
+				FileDialog fileDialog = new FileDialog(getShell(), dialogType);
 				fileDialog.setFilterExtensions(new String[] {"*." + FILENAME_EXTENSION}); //$NON-NLS-1$
 				String filePath = fileDialog.open();
 				if(filePath != null)
