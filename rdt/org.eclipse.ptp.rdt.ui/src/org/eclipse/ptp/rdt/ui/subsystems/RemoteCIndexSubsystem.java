@@ -130,13 +130,16 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		
 		DataStore dataStore = getDataStore(monitor);
 		DataElement status = dataStore.activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
-		DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
 		
-		// wait for the miner to be fully initialized
-		try {
-			statusMonitor.waitForUpdate(status, monitor);
-		} catch (InterruptedException e) {
-			Activator.log(e);
+		if (status != null) {
+			DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
+
+			// wait for the miner to be fully initialized
+			try {
+				statusMonitor.waitForUpdate(status, monitor);
+			} catch (InterruptedException e) {
+				Activator.log(e);
+			}
 		}
 		
 	}
