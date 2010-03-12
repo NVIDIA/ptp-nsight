@@ -103,6 +103,8 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	private ProjectChangeListener fProjectOpenListener;
 	private List<String> fErrorMessages = new ArrayList<String>();
 	
+	private boolean fIsInitializing = false;
+	
 	protected RemoteCIndexSubsystem(IHost host,
 			IConnectorService connectorService) {
 		super(host, connectorService);
@@ -124,24 +126,38 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 	 */
 	@Override
 	public synchronized void initializeSubSystem(IProgressMonitor monitor) {
-		super.initializeSubSystem(monitor);
-		fProjectOpenListener = new ProjectChangeListener(this);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
-		
-		DataStore dataStore = getDataStore(monitor);
-		DataElement status = dataStore.activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
-		
-		if (status != null) {
-			DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
-
-			// wait for the miner to be fully initialized
-			try {
-				statusMonitor.waitForUpdate(status, monitor);
-			} catch (InterruptedException e) {
-				Activator.log(e);
-			}
+		boolean isFirstCall = false;
+		if(!fIsInitializing) {
+			fIsInitializing = true;
+			isFirstCall = true;
 		}
-		
+
+		try {
+			super.initializeSubSystem(monitor);
+			fProjectOpenListener = new ProjectChangeListener(this);
+			ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
+
+			DataStore dataStore = getDataStore(monitor);
+			DataElement status = dataStore.activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
+
+			if (status != null) {
+				DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
+
+				// wait for the miner to be fully initialized
+				try {
+					statusMonitor.waitForUpdate(status, monitor);
+				} catch (InterruptedException e) {
+					Activator.log(e);
+				}
+			}
+
+		}
+
+		finally {
+			if(isFirstCall)
+				fIsInitializing = false;
+		}
+
 	}
 
 	@Override
@@ -906,7 +922,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
     	}
 	}
 
-	protected DataStore getDataStore(IProgressMonitor monitor)
+	protected synchronized DataStore getDataStore(IProgressMonitor monitor)
 	{
 		if(monitor == null) {
 			monitor = new NullProgressMonitor();
@@ -923,7 +939,7 @@ public class RemoteCIndexSubsystem extends SubSystem implements ICIndexSubsystem
 		
 		if(connectorService instanceof DStoreConnectorService) {
 			DStoreConnectorService dstoreConnectorService = (DStoreConnectorService) connectorService;
-			if(!dstoreConnectorService.isConnected()) {
+			if(!fIsInitializing && !dstoreConnectorService.isConnected()) {
 				try {
 					dstoreConnectorService.connect(monitor);
 				} catch (Exception e) {
