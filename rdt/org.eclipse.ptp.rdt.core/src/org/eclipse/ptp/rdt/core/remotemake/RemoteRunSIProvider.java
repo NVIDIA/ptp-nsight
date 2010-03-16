@@ -107,8 +107,6 @@ public abstract class RemoteRunSIProvider implements IExternalScannerInfoProvide
 			IScannerConfigBuilderInfo2 buildInfo,
 			IScannerInfoCollector collector, Properties env) throws Exception {
 		
-		System.out.println(Messages.RemoteRunSiProvider_taskName);
-		
 		IProject project = resource.getProject();
 		
 		if(collector instanceof IScannerInfoCollector2) {
