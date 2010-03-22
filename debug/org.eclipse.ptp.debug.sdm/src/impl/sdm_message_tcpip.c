@@ -458,7 +458,7 @@ sdm_get_active_sock_desc()
 		p = p->next;
 	}
 
-	if(fdmax < 0) {
+	if (fdmax < 0) {
 		// No children socket opened
 		return -2;
 	}
