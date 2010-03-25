@@ -162,9 +162,10 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				// remove all markers for this project
 				removeAllMarkers(currProject);
 
+				final IConfiguration configuration = mbsInfo.getDefaultConfiguration();
 				
-				
-				IPath workingDirectory = mbsInfo.getDefaultConfiguration().getBuildData().getBuilderCWD();
+				final IBuilder builder = configuration.getBuilder();
+				IPath workingDirectory = ManagedBuildManager.getBuildLocation(configuration, builder );
 				
 				String[] targets = getTargets(kind, info);
 				if (targets.length != 0 && targets[targets.length - 1].equals(info.getCleanBuildTarget()))
@@ -176,7 +177,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				HashMap<String, String> envMap = new HashMap<String, String>();
 				
 				// Add variables from build info
-				IEnvironmentVariable[] envVars = ManagedBuildManager.getEnvironmentVariableProvider().getVariables(mbsInfo.getDefaultConfiguration(), true);
+				IEnvironmentVariable[] envVars = ManagedBuildManager.getEnvironmentVariableProvider().getVariables(configuration, true);
 				
 				for (IEnvironmentVariable environmentVariable : envVars) {
 					envMap.put(environmentVariable.getName(), environmentVariable.getValue());
@@ -214,7 +215,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 					last = new Integer(100);
 				}
 				StreamMonitor streamMon = new StreamMonitor(new SubProgressMonitor(monitor, 100), cos, last.intValue());
-				ErrorParserManager epm = new ErrorParserManager(getProject(), workingDirectory, this, mbsInfo.getDefaultConfiguration().getErrorParserList());
+				ErrorParserManager epm = new ErrorParserManager(getProject(), workingDirectory, this, configuration.getErrorParserList());
 				epm.setOutputStream(streamMon);
 				final OutputStream stdout = epm.getOutputStream();
 				final OutputStream stderr = epm.getOutputStream();
@@ -225,7 +226,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 				OutputStream consoleErr = null;
 				
 				// add a scanner info sniffer for the inputs of each tool in the toolchain
-				IToolChain tc = mbsInfo.getDefaultConfiguration().getToolChain();
+				IToolChain tc = configuration.getToolChain();
 				
 				ITool[] tools = tc.getTools();
 				
@@ -263,7 +264,7 @@ public class RemoteMakeBuilder extends MakeBuilder {
 
 							SCMarkerGenerator markerGenerator = new SCMarkerGenerator();
 							ConsoleOutputSniffer sniffer = ScannerInfoUtility.createBuildOutputSniffer(currentStdOut,
-									currentStdErr, currProject, mbsInfo.getDefaultConfiguration(), workingDirectory,
+									currentStdErr, currProject, configuration, workingDirectory,
 									markerGenerator, collector);
 							currentStdOut = (sniffer == null ? currentStdOut : sniffer.getOutputStream());
 							currentStdErr = (sniffer == null ? currentStdErr : sniffer.getErrorStream());
