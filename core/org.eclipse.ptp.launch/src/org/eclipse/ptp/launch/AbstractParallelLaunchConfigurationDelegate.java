@@ -33,8 +33,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.IBinaryParser;
-import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.cdt.core.ICExtensionReference;
+import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IProject;
@@ -110,7 +110,7 @@ import org.eclipse.ptp.remote.core.IRemoteFileManager;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.PTPRemoteCorePlugin;
 import org.eclipse.ptp.rmsystem.IResourceManagerConfiguration;
-import org.eclipse.ptp.utils.core.ArgumentParser;
+import org.eclipse.ptp.utils.core.linux.ArgumentParser;
 
 /**
  *
@@ -661,7 +661,7 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 		assert (localServices != null);
 		IRemoteConnectionManager lconnMgr = localServices.getConnectionManager();
 		assert (lconnMgr != null);
-		IRemoteConnection lconn = lconnMgr.getConnection(""); //$NON-NLS-1$ // Since it's a local service, doesn't matter which parameter is passed 
+		IRemoteConnection lconn = lconnMgr.getConnection(null); // Since it's a local service, doesn't matter which parameter is passed
 		assert (lconn != null);
 		IRemoteFileManager localFileManager = localServices.getFileManager(lconn);
 		assert (localFileManager != null);
@@ -955,6 +955,9 @@ public abstract class AbstractParallelLaunchConfigurationDelegate extends
 	protected String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
 		String temp = getArguments(configuration);
 		if (temp != null && temp.length() > 0) {
+			// Replaced PTPs ArgumentParser with better ArgumentParser contributed with RemoteTools.
+//			ArgumentParser ap = new ArgumentParser(temp);
+//			List<String> args = ap.getArguments();
 			ArgumentParser ap = new ArgumentParser(temp);
 			List<String> args = ap.getTokenList();
 			if (args != null) {

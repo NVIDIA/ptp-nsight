@@ -16,8 +16,13 @@ import org.eclipse.ptp.proxy.messages.Messages;
 import org.eclipse.ptp.utils.core.RangeSet;
 
 public class ElementIDGenerator {
+	public static ElementIDGenerator getInstance() {
+		return instance;
+	}
+
 	private int baseIDoffset = 0;
 	private int base_ID;
+
 	private static ElementIDGenerator instance = null;
 
 	ElementIDGenerator(int base_ID) {
@@ -28,8 +33,8 @@ public class ElementIDGenerator {
 		instance = this;
 	}
 
-	public static ElementIDGenerator getInstance() {
-		return instance;
+	public int getBaseID() {
+		return base_ID;
 	}
 
 	public int getUniqueID() {
@@ -39,12 +44,9 @@ public class ElementIDGenerator {
 
 	public RangeSet getUniqueIDs(int size) {
 		baseIDoffset++;
-		RangeSet range = new RangeSet(base_ID + baseIDoffset, base_ID + baseIDoffset + size);
+		RangeSet range = new RangeSet(base_ID + baseIDoffset, base_ID
+				+ baseIDoffset + size);
 		baseIDoffset += size - 1;
 		return range;
-	}
-
-	public int getBaseID() {
-		return base_ID;
 	}
 }

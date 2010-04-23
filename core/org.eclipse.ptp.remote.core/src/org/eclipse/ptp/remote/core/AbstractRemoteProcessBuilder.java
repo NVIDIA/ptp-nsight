@@ -18,14 +18,14 @@ import java.util.Map;
 import org.eclipse.core.filesystem.IFileStore;
 
 public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuilder {
-	private List<String> fCommandArgs;
-	private IRemoteConnection fRemoteConnection;
-	private IFileStore fRemoteDir = null;
-	private boolean fRedirectErrorStream = false;
+	private List<String> commandArgs;
+	private IRemoteConnection remoteConnection;
+	private IFileStore remoteDir = null;
+	private boolean redirectErrorStream = false;
 	
 	public AbstractRemoteProcessBuilder(IRemoteConnection conn, List<String> command) {
-		fRemoteConnection = conn;
-		fCommandArgs = command;
+		remoteConnection = conn;
+		commandArgs = command;
 	}
 	
 	public AbstractRemoteProcessBuilder(IRemoteConnection conn, String... command) {
@@ -36,14 +36,14 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#connection()
 	 */
 	public IRemoteConnection connection() {
-		return fRemoteConnection;
+		return remoteConnection;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#connection(org.eclipse.ptp.remote.core.IRemoteConnection)
 	 */
 	public IRemoteProcessBuilder connection(IRemoteConnection conn) {
-		fRemoteConnection = conn;
+		remoteConnection = conn;
 		return this;
 	}
 
@@ -51,14 +51,14 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#command()
 	 */
 	public List<String> command() {
-		return fCommandArgs;
+		return commandArgs;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#command(java.util.List)
 	 */
 	public IRemoteProcessBuilder command(List<String> command) {
-		fCommandArgs = command;
+		commandArgs = command;
 		return this;
 	}
 
@@ -66,7 +66,7 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#command(java.lang.String)
 	 */
 	public IRemoteProcessBuilder command(String... command) {
-		fCommandArgs = Arrays.asList(command);
+		commandArgs = Arrays.asList(command);
 		return this;
 	}
 
@@ -74,14 +74,14 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#directory()
 	 */
 	public IFileStore directory() {
-		return fRemoteDir;
+		return remoteDir;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#directory(org.eclipse.core.filesystem.IFileStore)
 	 */
 	public IRemoteProcessBuilder directory(IFileStore directory) {
-		fRemoteDir = directory;
+		remoteDir = directory;
 		return this;
 	}
 
@@ -94,14 +94,14 @@ public abstract class AbstractRemoteProcessBuilder implements IRemoteProcessBuil
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#redirectErrorStream()
 	 */
 	public boolean redirectErrorStream() {
-		return fRedirectErrorStream;
+		return redirectErrorStream;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#redirectErrorStream(boolean)
 	 */
 	public IRemoteProcessBuilder redirectErrorStream(boolean redirectErrorStream) {
-		this.fRedirectErrorStream = redirectErrorStream;
+		this.redirectErrorStream = redirectErrorStream;
 		return this;
 	}
 	

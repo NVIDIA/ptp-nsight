@@ -12,6 +12,7 @@
 package org.eclipse.ptp.utils.core.file;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -19,60 +20,26 @@ import java.util.NoSuchElementException;
 import java.util.Stack;
 
 
-public class FileRecursiveEnumeration implements Enumeration<File> {
+public class FileRecursiveEnumeration implements Enumeration {
 
-	public static void main(String[] args) {
-		Enumeration<File> enumeration = new FileRecursiveEnumeration("c:/command/gs"); //$NON-NLS-1$
-		while (enumeration.hasMoreElements()) {
-			// System.out.println(enumeration.nextElement().toString());
-		}
+	Stack roots;
+	FileEnumeration currentDirectory;
+	File nextFile;
+	LinkedList exceptionList = new LinkedList();
+
+	public FileRecursiveEnumeration(String root) {
+		this(new File(root));
 	}
-	
-	private Stack<File> roots;
-	private FileEnumeration currentDirectory;
-	private File nextFile;
-	private LinkedList<Exception> exceptionList = new LinkedList<Exception>();
 	
 	public FileRecursiveEnumeration(File root) {
 		if (! root.exists()) {
 			throw new IllegalArgumentException();
 		}
-		roots = new Stack<File>();
+		roots = new Stack();
 		roots.add(root);
 		fetchNextFile();
 	}
 	
-	public FileRecursiveEnumeration(String root) {
-		this(new File(root));
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.util.Enumeration#hasMoreElements()
-	 */
-	public boolean hasMoreElements() {
-		return nextFile != null;
-	}
-	
-	public boolean hasMoreExceptions() {
-		return exceptionList.size() > 0;
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.util.Enumeration#nextElement()
-	 */
-	public File nextElement() {
-		File result = nextFile;
-		fetchNextFile();
-		return result;
-	}
-
-	public Exception nextException() {
-		if (exceptionList.size() == 0) {
-			throw new NoSuchElementException();
-		}
-		return (Exception) exceptionList.removeFirst();
-	}
-
 	private void fetchNextFile() {
 		nextFile = null;
 		while (true) {
@@ -98,5 +65,33 @@ public class FileRecursiveEnumeration implements Enumeration<File> {
 				}
 			}	
 		}		
+	}
+	
+	public boolean hasMoreExceptions() {
+		return exceptionList.size() > 0;
+	}
+	
+	public Exception nextException() {
+		if (exceptionList.size() == 0) {
+			throw new NoSuchElementException();
+		}
+		return (Exception) exceptionList.removeFirst();
+	}
+	
+	public boolean hasMoreElements() {
+		return nextFile != null;
+	}
+
+	public Object nextElement() {
+		File result = nextFile;
+		fetchNextFile();
+		return result;
+	}
+
+	public static void main(String[] args) {
+		Enumeration enumeration = new FileRecursiveEnumeration("c:/command/gs"); //$NON-NLS-1$
+		while (enumeration.hasMoreElements()) {
+			// System.out.println(enumeration.nextElement().toString());
+		}
 	}
 }

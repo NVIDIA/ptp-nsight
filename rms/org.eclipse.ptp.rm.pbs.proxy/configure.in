@@ -3,7 +3,7 @@ dnl
 
 AC_PREREQ([2.50])
 
-AC_INIT([org.eclipse.ptp.pbs], [4.0.0])
+AC_INIT([org.eclipse.ptp.pbs], [3.0.2])
 AC_CONFIG_SRCDIR([src/ptp_pbs_proxy.c])
 
 AM_INIT_AUTOMAKE([subdir-objects])
@@ -60,20 +60,16 @@ dnl
 
 AC_CHECK_LIB([utils], [bitset_new])
 AC_CHECK_LIB([proxysvr], [proxy_svr_init])
-AC_CHECK_LIB([torque],[pbs_connect],[],
-			[AC_MSG_NOTICE([PBS not installed, skipping...])
-	 		 AS_EXIT
-			])
+AC_CHECK_LIB([torque],[pbs_connect])
 
 dnl
 dnl Check for header files.
 dnl
 
 AC_HEADER_STDC
-AC_CHECK_HEADER([pbs_ifl.h], [], 
-	[AC_MSG_NOTICE([PBS not installed, skipping...])
-	 AS_EXIT
-	])
+AC_CHECK_HEADERS([pbs_ifl.h],[],
+				[AC_MSG_ERROR([pbs_ifl.h not found])])
+
 dnl
 dnl Check for types
 dnl

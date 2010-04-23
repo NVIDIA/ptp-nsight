@@ -147,28 +147,11 @@ public interface IRemoteConnection {
 	public String getProperty(String key);
 
 	/**
-	 * Get the remote services provider for this connection.
-	 * 
-	 * @return remote services provider
-	 */
-	public IRemoteServices getRemoteServices();
-	
-	/**
 	 * Gets the username for this connection
 	 * 
 	 * return username
 	 */
 	public String getUsername();
-	
-	/**
-	 * Get the working directory. Relative paths will be resolved using this path.
-	 * 
-	 * The remote connection does not need to be open to use this method, however a default 
-	 * directory path, rather than the actual working directory, may be returned in this case.
-	 * 
-	 * @return String representing the current working directory
-	 */
-	public String getWorkingDirectory();
 	
 	/**
 	 * Test if the connection is open.
@@ -200,7 +183,7 @@ public interface IRemoteConnection {
 	 * @param address
 	 */
 	public void setAddress(String address);
-
+	
 	/**
 	 * Set the name for this connection
 	 * 
@@ -214,15 +197,7 @@ public interface IRemoteConnection {
 	 * @param username
 	 */
 	public void setUsername(String username);
-	
-	/**
-	 * Set the working directory. Relative paths will be resolved using this path. The path
-	 * must be valid and absolute for any changes to be made.
-	 * 
-	 * param path String representing the current working directory
-	 */
-	public void setWorkingDirectory(String path);
-	
+
 	/**
 	 * Test if this connection supports forwarding of TCP connections
 	 * 

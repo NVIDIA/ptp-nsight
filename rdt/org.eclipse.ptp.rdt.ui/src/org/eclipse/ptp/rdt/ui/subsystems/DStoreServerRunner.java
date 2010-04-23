@@ -34,7 +34,7 @@ import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 
 public class DStoreServerRunner extends Job {
-	public enum DStoreServerState {STARTING, RUNNING, FINISHED}
+	public enum DStoreServerState {STARTING, RUNNING, FINISHED, ERROR}
 
 	private boolean DEBUG = true;
 	
@@ -115,7 +115,7 @@ public class DStoreServerRunner extends Job {
 				wait(500);
 			} catch (InterruptedException e) {
 				if (DStoreServerDefaults.DSTORE_TRACING) {
-					System.err.println("DSTORE RUNNER: InterruptedException " + e.getLocalizedMessage()); //$NON-NLS-1$
+					System.err.println("DSTORE SERVER: InterruptedException " + e.getLocalizedMessage()); //$NON-NLS-1$
 				}
 				return false;
 			}
@@ -126,22 +126,16 @@ public class DStoreServerRunner extends Job {
 				port = fRemoteConnection.forwardLocalPort("localhost", fPort, null); //$NON-NLS-1$
 			} catch (RemoteConnectionException e) {
 				if (DStoreServerDefaults.DSTORE_TRACING) {
-					System.err.println("DSTORE RUNNER: port fowarding failed " + e.getLocalizedMessage()); //$NON-NLS-1$
+					System.err.println("DSTORE SERVER: port fowarding failed " + e.getLocalizedMessage()); //$NON-NLS-1$
 				}
 				return false;
 			}
 			fDStoreConnection.setHost("localhost"); //$NON-NLS-1$
 			fDStoreConnection.setPort(Integer.toString(port));
-			if (DStoreServerDefaults.DSTORE_TRACING) {
-				System.out.println("DSTORE RUNNER CONNECTING..."); //$NON-NLS-1$
-			}
 			ConnectionStatus status = fDStoreConnection.connect(null, 0);
 			DataStore dataStore = fDStoreConnection.getDataStore();
 			dataStore.showTicket(null);
 			dataStore.registerLocalClassLoader(getClass().getClassLoader());
-			if (DStoreServerDefaults.DSTORE_TRACING) {
-				System.out.println("DSTORE RUNNER CONNECTED"); //$NON-NLS-1$
-			}
 			return status.isConnected();
 		}
 		return false;
@@ -198,7 +192,7 @@ public class DStoreServerRunner extends Job {
 						try {
 							String output;
 							while ((output = stdout.readLine()) != null) {
-								System.out.println("DSTORE SERVER: " + output); //$NON-NLS-1$
+								System.out.println("DSTORE SERVER stdout: " + output); //$NON-NLS-1$
 							}
 						} catch (IOException e) {
 							// Ignore
@@ -218,12 +212,12 @@ public class DStoreServerRunner extends Job {
 									fPort = Integer.parseInt(output);
 									setServerState(DStoreServerState.RUNNING);
 									if (DStoreServerDefaults.DSTORE_TRACING) {
-										System.out.println("DSTORE RUNNER got port " + output); //$NON-NLS-1$
+										System.err.println("DSTORE SERVER started on port " + output); //$NON-NLS-1$
 									}
 								}
 							}
 							if (DStoreServerDefaults.DSTORE_TRACING) {
-								System.err.println("DSTORE SERVER: " + output);  //$NON-NLS-1$
+								System.err.println("DSTORE SERVER stderr: " + output);  //$NON-NLS-1$
 							}
 						}
 					} catch (IOException e) {
@@ -251,8 +245,6 @@ public class DStoreServerRunner extends Job {
 				// Do nothing
 			}
 
-			setServerState(DStoreServerState.FINISHED);
-			
 			/*
 			 * Check if process terminated successfully (if not canceled).
 			 */
@@ -261,12 +253,13 @@ public class DStoreServerRunner extends Job {
 					throw new CoreException(new Status(IStatus.ERROR, UIPlugin.getPluginId(), NLS.bind("DStore server finished with exit code {0}", fRemoteProcess.exitValue()))); //$NON-NLS-1$
 				}
 			}
+			setServerState(DStoreServerState.FINISHED);
 			return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
 		} catch (CoreException e) {
-			setServerState(DStoreServerState.FINISHED);
+			setServerState(DStoreServerState.ERROR);
 			return e.getStatus();
 		} catch (IOException e) {
-			setServerState(DStoreServerState.FINISHED);
+			setServerState(DStoreServerState.ERROR);
 			return new Status(IStatus.ERROR, UIPlugin.getPluginId(), "failed to start dstore server", e); //$NON-NLS-1$
 		} finally {
 			synchronized (this) {
@@ -280,13 +273,11 @@ public class DStoreServerRunner extends Job {
 	}
 	
 	protected synchronized void setServerState(DStoreServerState state) {
-		if (fServerState != state) {
-			if (DStoreServerDefaults.DSTORE_TRACING) {
-				System.out.println("DSTORE RUNNER: " + state.toString()); //$NON-NLS-1$
-			}
-			fServerState = state;
-			this.notifyAll();
+		if (DStoreServerDefaults.DSTORE_TRACING) {
+			System.err.println("DSTORE SERVER new state: " + state.toString()); //$NON-NLS-1$
 		}
+		fServerState = state;
+		this.notifyAll();
 	}
 
 	protected synchronized void terminateServer() {

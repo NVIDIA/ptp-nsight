@@ -13,17 +13,15 @@ package org.eclipse.ptp.remote.rse.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.dstore.core.model.DataStore;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeEvent;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeListener;
-import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.ptp.remote.core.exception.UnableToForwardPortException;
 import org.eclipse.ptp.remote.rse.core.messages.Messages;
@@ -37,21 +35,18 @@ import org.eclipse.rse.core.subsystems.ISubSystem;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.dstore.IDStoreService;
 import org.eclipse.rse.services.shells.IShellService;
-import org.eclipse.rse.subsystems.files.core.model.RemoteFileUtility;
-import org.eclipse.rse.subsystems.files.core.servicesubsystem.IFileServiceSubSystem;
-import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFileSubSystem;
 import org.eclipse.rse.subsystems.shells.core.subsystems.servicesubsystem.IShellServiceSubSystem;
 
 public class RSEConnection implements IRemoteConnection {
-	private IShellService fShellService = null;
-	private ISubSystem fSubSystem = null;
+	private IShellService shellService = null;
+
+	private ISubSystem subSystem = null;
 	private Map<String, String> fEnv = null;
 	private Map<String, String> fProperties = null;
-	private IPath fWorkingDir = null;
+	private final IHost rseHost;
 	
-	private final IHost fRseHost;
+	private final IFileSystem fileSystem;
 	private final IRemoteConnection fConnection = this;
-	private final IRemoteServices fRemoteServices;
 	private final ListenerList fListeners = new ListenerList();
 	
 	private ICommunicationsListener commsListener = new ICommunicationsListener() {
@@ -75,32 +70,33 @@ public class RSEConnection implements IRemoteConnection {
 		public boolean isPassiveCommunicationsListener() {
 			return true;
 		}
+		
 	};
 	
-	public RSEConnection(IHost host, IRemoteServices services) {
-		fRseHost = host;
-		fRemoteServices = services;
+	public RSEConnection(IHost host, IFileSystem fileSystem) {
+		this.rseHost = host;
+		this.fileSystem = fileSystem;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#addConnectionChangeListener(org.eclipse.ptp.remote.core.IRemoteConnectionChangeListener)
 	 */
 	public void addConnectionChangeListener(IRemoteConnectionChangeListener listener) {
 		fListeners.add(listener);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#close()
 	 */
 	public void close() {
-		if (fSubSystem != null && fSubSystem.isConnected()) {
+		if (subSystem != null && subSystem.isConnected()) {
 			try {
-				fSubSystem.disconnect();
+				subSystem.disconnect();
 			} catch (Exception e) {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#forwardLocalPort(int, java.lang.String, int)
 	 */
@@ -116,7 +112,7 @@ public class RSEConnection implements IRemoteConnection {
 			IProgressMonitor monitor) throws RemoteConnectionException {
 		throw new UnableToForwardPortException(Messages.RSEConnection_noPortFwd);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#forwardRemotePort(int, java.lang.String, int)
 	 */
@@ -124,7 +120,7 @@ public class RSEConnection implements IRemoteConnection {
 			int fwdPort) throws RemoteConnectionException {
 		throw new UnableToForwardPortException(Messages.RSEConnection_noPortFwd);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#forwardRemotePort(java.lang.String, int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -132,14 +128,14 @@ public class RSEConnection implements IRemoteConnection {
 			IProgressMonitor monitor) throws RemoteConnectionException {
 		throw new UnableToForwardPortException(Messages.RSEConnection_noPortFwd);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#getAddress()
 	 */
 	public String getAddress() {
-		return fRseHost.getHostName();
+		return rseHost.getHostName();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getAttributes()
 	 */
@@ -154,13 +150,13 @@ public class RSEConnection implements IRemoteConnection {
 	 * @return connector service for DStores or null if this fConnection does not support DStore
 	 */
 	public DataStore getDataStore() {
-		IConnectorService connector = DStoreConnectorServiceManager.getInstance().getConnectorService(fRseHost, IDStoreService.class);
+		IConnectorService connector = DStoreConnectorServiceManager.getInstance().getConnectorService(rseHost, IDStoreService.class);
 		if (connector != null && connector instanceof DStoreConnectorService) {
 			return ((DStoreConnectorService) connector).getDataStore();
 		}
 		return null;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getEnv()
 	 */
@@ -169,7 +165,7 @@ public class RSEConnection implements IRemoteConnection {
 			fEnv = new HashMap<String, String>();
 			
 			try {
-				String[] env = fShellService.getHostEnvironment();
+				String[] env = shellService.getHostEnvironment();
 				for (String var : env) {
 					String[] kv = var.split("="); //$NON-NLS-1$
 					if (kv.length == 2) {
@@ -181,7 +177,7 @@ public class RSEConnection implements IRemoteConnection {
 		}
 		return fEnv;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getEnv(java.lang.String)
 	 */
@@ -191,6 +187,15 @@ public class RSEConnection implements IRemoteConnection {
 		}
 		return fEnv.get(name);
 	}
+	
+	/**
+	 * Get the file system for this fConnection
+	 * 
+	 * @return
+	 */
+	public IFileSystem getFileSystem() {
+		return fileSystem;
+	}
 
 	/**
 	 * Get RSE host object 
@@ -198,14 +203,14 @@ public class RSEConnection implements IRemoteConnection {
 	 * @return IHost
 	 */
 	public IHost getHost() {
-		return fRseHost;
+		return rseHost;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#getName()
 	 */
 	public String getName() {
-		return fRseHost.getAliasName();
+		return rseHost.getAliasName();
 	}
 	
 	/* (non-Javadoc)
@@ -215,13 +220,6 @@ public class RSEConnection implements IRemoteConnection {
 		loadProperties();
 		return fProperties.get(key);
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getRemoteServices()
-	 */
-	public IRemoteServices getRemoteServices() {
-		return fRemoteServices;
-	}
 
 	/**
 	 * Get the shell service for this fConnection
@@ -229,36 +227,21 @@ public class RSEConnection implements IRemoteConnection {
 	 * @return shell service
 	 */
 	public IShellService getRemoteShellService() {
-		return fShellService;
+		return shellService;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getUsername()
 	 */
 	public String getUsername() {
-		return fRseHost.getDefaultUserId();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.IRemoteFileManager#getWorkingDirectory(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public String getWorkingDirectory() {
-		if (fWorkingDir == null) {
-			IFileServiceSubSystem fileService = getFileServiceSubSystem(getHost());
-			if (fileService != null) {
-				fWorkingDir = new Path(fileService.getFileService().getUserHome().getAbsolutePath());
-			} else {
-				fWorkingDir = new Path("/"); //$NON-NLS-1$
-			}
-		}
-		return fWorkingDir.toString();
+		return rseHost.getDefaultUserId();
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#isOpen()
 	 */
 	public boolean isOpen() {
-		return fSubSystem != null && fSubSystem.isConnected();
+		return subSystem != null && subSystem.isConnected();
 	}
 	
 	/* (non-Javadoc)
@@ -269,15 +252,15 @@ public class RSEConnection implements IRemoteConnection {
 			monitor = new NullProgressMonitor();
 		}
 		
-		if (!fSubSystem.isConnected()) {
+		if (!subSystem.isConnected()) {
 			try {
 				SubMonitor subMon = SubMonitor.convert(monitor);
-				fSubSystem.connect(subMon.newChild(1), false);
+				subSystem.connect(subMon.newChild(1), false);
 			} catch (Exception e) {
 				throw new RemoteConnectionException(e.getMessage());
 			}
 			
-			if(!fSubSystem.isConnected()) {
+			if(!subSystem.isConnected()) {
 				throw new RemoteConnectionException(Messages.RSEConnection_noShellService);
 			}
 		}
@@ -289,45 +272,35 @@ public class RSEConnection implements IRemoteConnection {
 	public void removeConnectionChangeListener(IRemoteConnectionChangeListener listener) {
 		fListeners.remove(listener);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#setAddress(java.lang.String)
 	 */
 	public void setAddress(String address) {
-		fRseHost.setHostName(address);
+		rseHost.setHostName(address);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#setName(java.lang.String)
 	 */
 	public void setName(String name) {
-		fRseHost.setAliasName(name);
+		rseHost.setAliasName(name);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#setUsername(java.lang.String)
 	 */
 	public void setUsername(String username) {
-		fRseHost.setDefaultUserId(username);
+		rseHost.setDefaultUserId(username);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#setWorkingDirectory(java.lang.String)
-	 */
-	public void setWorkingDirectory(String pathStr) {
-		IPath path = new Path(pathStr);
-		if (path.isAbsolute()) {
-			fWorkingDir = path;
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.IRemoteConnection#supportsTCPPortForwarding()
 	 */
 	public boolean supportsTCPPortForwarding() {
 		return false;
 	}
-	
+
 	/**
 	 * Notify all fListeners when this fConnection's status changes.
 	 * 
@@ -347,22 +320,6 @@ public class RSEConnection implements IRemoteConnection {
 		}
 	}
 	
-	/**
-	 * Find the file service subsystem from the IHost
-	 * 
-	 * @param host
-	 * @return
-	 */
-	private IFileServiceSubSystem getFileServiceSubSystem(IHost host) {
-		IRemoteFileSubSystem[] fileSubsystems = RemoteFileUtility.getFileSubSystems(host);
-		for(IRemoteFileSubSystem subsystem : fileSubsystems) {
-			if(subsystem instanceof IFileServiceSubSystem && subsystem.isConnected()) {
-				return (IFileServiceSubSystem) subsystem;
-			}
-		}
-		return null;
-	}
-	
 	private void loadProperties() {
 		if (fProperties == null) {
 			fProperties = new HashMap<String, String>();
@@ -376,7 +333,7 @@ public class RSEConnection implements IRemoteConnection {
 	 * Called to release any resources
 	 */
 	protected void dispose() {
-		fSubSystem.getConnectorService().removeCommunicationsListener(commsListener);
+		subSystem.getConnectorService().removeCommunicationsListener(commsListener);
 	}
 	
 	/**
@@ -385,20 +342,20 @@ public class RSEConnection implements IRemoteConnection {
 	 * @return true if initialization succeeded
 	 */
 	protected boolean initialize() {
-		if (fSubSystem == null) {
-			ISubSystem[] subSystems = fRseHost.getSubSystems();
+		if (subSystem == null) {
+			ISubSystem[] subSystems = rseHost.getSubSystems();
 			for (ISubSystem sub : subSystems) {
 				if (sub instanceof IShellServiceSubSystem) {
-					fSubSystem = sub;
+					subSystem = sub;
 					break;
 				}
 			}
-			if (fSubSystem == null) {
+			if (subSystem == null) {
 				return false;
 			}
 			
-			fSubSystem.getConnectorService().addCommunicationsListener(commsListener);
-			fShellService = ((IShellServiceSubSystem)fSubSystem).getShellService();
+			subSystem.getConnectorService().addCommunicationsListener(commsListener);
+			shellService = ((IShellServiceSubSystem)subSystem).getShellService();
 		}
 		return true;
 	}

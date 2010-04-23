@@ -10,26 +10,32 @@
  *******************************************************************************/
 package org.eclipse.ptp.remote.rse.core;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileSystem;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
-import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.model.ISystemRegistry;
 
 
 public class RSEConnectionManager implements IRemoteConnectionManager {
-	private final ISystemRegistry fRegistry;
-	private final IRemoteServices fRemoteServices;
-	private final Map<String, RSEConnection> fConnections = new HashMap<String, RSEConnection>();
+	private IFileSystem fileSystem = null;
 	
-	public RSEConnectionManager(ISystemRegistry registry, IRemoteServices services) {
-		fRegistry = registry;
-		fRemoteServices = services;
+	private final ISystemRegistry registry;
+	private final Map<String, RSEConnection> connections = new HashMap<String, RSEConnection>();
+	
+	public RSEConnectionManager(ISystemRegistry registry) {
+		this.registry = registry;
+		try {
+			this.fileSystem = EFS.getFileSystem("rse"); //$NON-NLS-1$
+		} catch (CoreException e) {
+			// Could not find the rse filesystem!
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -38,23 +44,9 @@ public class RSEConnectionManager implements IRemoteConnectionManager {
 	public IRemoteConnection getConnection(String name) {
 		refreshConnections();
 		if (name != null) {
-			return fConnections.get(name);
+			return connections.get(name);
 		}
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteConnectionManager#getConnection(java.net.URI)
-	 */
-	public IRemoteConnection getConnection(URI uri) {
-		/*
-		 * See org.eclipse.rse.internal.efs.RSEFileSystem for definition
-		 */
-		String name = uri.getQuery();
-		if (name == null) {
-			name = uri.getHost();
-		}
-		return getConnection(name);
 	}
 	
 	/* (non-Javadoc)
@@ -62,7 +54,7 @@ public class RSEConnectionManager implements IRemoteConnectionManager {
 	 */
 	public IRemoteConnection[] getConnections() {
 		refreshConnections();
-		return fConnections.values().toArray(new IRemoteConnection[fConnections.size()]);
+		return connections.values().toArray(new IRemoteConnection[connections.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -75,23 +67,25 @@ public class RSEConnectionManager implements IRemoteConnectionManager {
 	}
 	
 	/**
-	 * Check for new fConnections
+	 * Check for new connections
 	 */
 	public void refreshConnections() {
-		Map<String, RSEConnection> newConns = new HashMap<String, RSEConnection>();
-		IHost[] hosts = fRegistry.getHostsBySubSystemConfigurationCategory("shells"); //$NON-NLS-1$
-		for (IHost host : hosts) {
-			RSEConnection conn = fConnections.get(host);
-			if (conn == null) {
-				conn = new RSEConnection(host, fRemoteServices);
-				if (!conn.initialize()) {
-					continue;
+		if (fileSystem != null) {
+			Map<String, RSEConnection> newConns = new HashMap<String, RSEConnection>();
+			IHost[] hosts = registry.getHostsBySubSystemConfigurationCategory("shells"); //$NON-NLS-1$
+			for (IHost host : hosts) {
+				RSEConnection conn = connections.get(host);
+				if (conn == null) {
+					conn = new RSEConnection(host, fileSystem);
+					if (!conn.initialize()) {
+						continue;
+					}
 				}
+				newConns.put(host.getAliasName(), conn);
 			}
-			newConns.put(host.getAliasName(), conn);
+			connections.clear();
+			connections.putAll(newConns);
 		}
-		fConnections.clear();
-		fConnections.putAll(newConns);
 	}
 
 	/* (non-Javadoc)
@@ -101,6 +95,6 @@ public class RSEConnectionManager implements IRemoteConnectionManager {
 		if (conn instanceof RSEConnection) {
 			((RSEConnection)conn).dispose();
 		}
-		fConnections.remove(conn.getName());
+		connections.remove(conn.getName());
 	}
 }

@@ -19,10 +19,8 @@ import java.util.Map.Entry;
 
 import org.eclipse.cdt.utils.spawner.ProcessFactory;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteProcess;
@@ -42,25 +40,13 @@ public class LocalProcessBuilder extends AbstractRemoteProcessBuilder {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder#directory()
-	 */
-	@Override
-	public IFileStore directory() {
-		IFileStore dir = super.directory();
-		if (dir == null) {
-			dir = EFS.getLocalFileSystem().getStore(new Path(connection().getWorkingDirectory()));
-			directory(dir);
-		}
-		return dir;
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder#environment()
 	 */
+	@Override
 	public Map<String, String> environment() {
 		return remoteEnv;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteProcessBuilder#start()
 	 */

@@ -25,6 +25,7 @@
 
 #include "compat.h"
 #include "bitset.h"
+#include "varstr.h"
 
 bitset *
 bitset_new(int nbits)
@@ -296,7 +297,9 @@ bitset_firstset(bitset *b)
 
 static char tohex[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-#define NUM_BYTES(bits) (((bits-1) >> 3) + 1)
+#define NUM_BYTES(bits) (((bits-1) >> 3) + 1)	/* number of bytes required to store bits */
+#define NUM_LEN			8*2						/* number of characters required to store largest length */
+#define SEP_LEN			1						/* number of characters for ':' separator */
 
 /**
  * Return a string representation of a bitset. We use hex to compress
@@ -329,7 +332,7 @@ bitset_to_str(bitset *b)
 	 */
 	bytes = NUM_BYTES(b->bs_nbits);
 
-	str = (char *)malloc(bytes + 8 + 2);
+	str = (char *)malloc(bytes*2 + NUM_LEN + SEP_LEN + 1);
 
 	/*
 	 * Start with actual number of bits (silently truncate to 32 bits)
@@ -405,24 +408,22 @@ str_to_bitset(char *str, char **end)
 	return bp;
 }
 
-int
-emit_range(char ** str, char sep, int lower, int upper)
+static int
+emit_range(varstr *v, char sep, int lower, int upper)
 {
-	int			n;
-
-	if (lower < 0 || upper < lower)
+	if (lower < 0 || upper < lower) {
 		return 0;
-
-	if (sep)
-		*(*str)++ = sep;
-
-	if (lower != upper) {
-		n = sprintf(*str, "%d-%d", lower, upper);
-	} else {
-		n = sprintf(*str, "%d", lower);
 	}
 
-	*str += n;
+	if (sep) {
+		varstr_add(v, sep);
+	}
+
+	if (lower != upper) {
+		varstr_sprintf(v, "%d-%d", lower, upper);
+	} else {
+		varstr_sprintf(v, "%d", lower);
+	}
 
 	return 1;
 }
@@ -440,32 +441,33 @@ bitset_to_set(bitset *b)
 	int			upper;
 	char		sep = 0;
 	char *		str;
-	char *		s;
+	varstr *	v;
 
 	if (b == NULL)
 		return strdup("{}");
 
-	str = s = (char *)malloc(b->bs_nbits * 2 + 3);
-
-	*s++ = '{';
+	v = varstr_fromstr("{");
 
 	for (bit = 0, lower = -1, upper = -1; bit < b->bs_nbits; bit++) {
 		if (bitset_test(b, bit)) {
-			if (lower < 0)
+			if (lower < 0) {
 				lower = bit;
-
+			}
 			upper = bit;
 		} else {
-			if (emit_range(&s, sep, lower, upper))
+			if (emit_range(v, sep, lower, upper)) {
 				sep = ',';
+			}
 			lower = bit + 1;
 		}
 	}
 
-	emit_range(&s, sep, lower, upper);
+	emit_range(v, sep, lower, upper);
 
-	*s++ = '}';
-	*s = '\0';
+	varstr_add(v, '}');
+
+	str = varstr_tostr(v);
+	varstr_free(v);
 
 	return str;
 }

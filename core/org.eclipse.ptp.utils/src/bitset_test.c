@@ -26,29 +26,35 @@
 #include "compat.h"
 #include "bitset.h"
 
-void test_invert_mask(int tnum, int nbits);
-void test_oreq(int tnum, int nb1, int nb2);
-void test_str(int);
-void test_boundary(int);
-void test_nine(int);
+void test_invert_mask(char *name, int nbits);
+void test_oreq(char *name, int nb1, int nb2);
+void test_str(char *name);
+void test_set(char *name);
+void test_boundary(char *name);
+void test_nine(char *name);
+void test_144(char *name);
+void test_2048(char *name);
 
 int
 main(int argc, char *argv[])
 {
 	int bits_size = (sizeof(bits)<<3);
 
-	test_invert_mask(1, bits_size*2-4);
-	test_oreq(2, bits_size*2-4,bits_size*2);
-	test_oreq(3, bits_size*2,bits_size*2-4);
-	test_str(4);
-	test_boundary(5);
-	test_nine(6);
+	test_invert_mask("test_invert_mask", bits_size*2-4);
+	test_oreq("test_oreq", bits_size*2-4,bits_size*2);
+	test_oreq("test_oreq", bits_size*2,bits_size*2-4);
+	test_str("test_str");
+	test_set("test_set");
+	test_boundary("test_boundary");
+	test_nine("test_nine");
+	test_144("test_144");
+	test_2048("test_2048");
 
 	return 0;
 }
 
 void
-test_invert_mask(int tnum, int nbits)
+test_invert_mask(char *name, int nbits)
 {
 	int			i;
 	bits 		r;
@@ -61,15 +67,15 @@ test_invert_mask(int tnum, int nbits)
 	b = bitset_new(nbits);
 	bitset_invert(b);
 	if (b->bs_bits[b->bs_size-1] != r)
-		printf("TEST_%d FAIL: high bits should be 0x%x, actually 0x%x\n", tnum, r, b->bs_bits[b->bs_size-1]);
+		printf("TEST(%s) FAIL: high bits should be 0x%x, actually 0x%x\n", name, r, b->bs_bits[b->bs_size-1]);
 	else
-		printf("TEST_%d SUCCEDED\n", tnum);
+		printf("TEST(%s) SUCCEDED\n", name);
 	bitset_free(b);
 }
 
 
 void
-test_oreq(int tnum, int nb1, int nb2)
+test_oreq(char *name, int nb1, int nb2)
 {
 	int			i;
 	bitset *	b1;
@@ -90,16 +96,16 @@ test_oreq(int tnum, int nb1, int nb2)
 
 	for (i = 0; i < r->bs_size; i++) {
 		if (r->bs_bits[i] != b1->bs_bits[i]) {
-			printf("TEST_%d FAIL: [%d] 0x%x != 0x%x\n", i, r->bs_bits[i], b1->bs_bits[i], tnum);
+			printf("TEST(%s) FAIL: [%d] 0x%x != 0x%x\n", name, i, r->bs_bits[i], b1->bs_bits[i]);
 			return;
 		}
 	}
 
-	printf("TEST_%d SUCCEDED\n", tnum);
+	printf("TEST(%s) SUCCEDED\n", name);
 }
 
 void
-test_str(int tnum)
+test_str(char *name)
 {
 	char *		str2;
 	char * 		str1 = "17:6411eda";
@@ -107,27 +113,50 @@ test_str(int tnum)
 	bitset *	b = str_to_bitset(str1, &end);
 	str2 = bitset_to_str(b);
 	if (strncmp(str1, str2, 9) != 0) {
-		printf("TEST_%d_1 FAIL: %s != %s\n", tnum, str1, str2);
+		printf("TEST(%s)_1 FAIL: %s != %s\n", name, str1, str2);
 	} else if (*end != 'a') {
-		printf("TEST_%d_1 FAIL: end == %d\n", tnum, *end);
+		printf("TEST(%s)_1 FAIL: end == %d\n", name, *end);
 	} else {
-		printf("TEST_%d_1 SUCCEDED\n", tnum);
+		printf("TEST(%s)_1 SUCCEDED\n", name);
 	}
 
 	str1 = "3:07";
 	b = str_to_bitset(str1, NULL);
 	str2 = bitset_to_str(b);
 	if (strncmp(str1, str2, 9) != 0) {
-		printf("TEST_%d_2 FAIL: %s != %s\n", tnum, str1, str2);
+		printf("TEST(%s)_2 FAIL: %s != %s\n", name, str1, str2);
 	} else if (*end != 'a') {
-		printf("TEST_%d_2 FAIL: end == %d\n", tnum, *end);
+		printf("TEST(%s)_2 FAIL: end == %d\n", name, *end);
 	} else {
-		printf("TEST_%d_2 SUCCEDED\n", tnum);
+		printf("TEST(%s)_2 SUCCEDED\n", name);
+	}
+}
+
+
+void
+test_set(char *name)
+{
+	char * 		str1 = "{0,3-5,7-9,14}";
+	char *		str2;
+	bitset *	b = bitset_new(15);
+	bitset_set(b, 0);
+	bitset_set(b, 3);
+	bitset_set(b, 4);
+	bitset_set(b, 5);
+	bitset_set(b, 7);
+	bitset_set(b, 8);
+	bitset_set(b, 9);
+	bitset_set(b, 14);
+	str2 = bitset_to_set(b);
+	if (strcmp(str1, str2) != 0) {
+		printf("TEST(%s) FAIL: %s != %s\n", name, str1, str2);
+	} else {
+		printf("TEST(%s) SUCCEDED\n", name);
 	}
 }
 
 void
-test_boundary(int tnum)
+test_boundary(char *name)
 {
 	char * 		str1 = "8:7f";
 	char *		str2;
@@ -137,14 +166,14 @@ test_boundary(int tnum)
 	bitset_set(b, 7);
 	str2 = bitset_to_str(b);
 	if (strncmp(str3, str2, 4) != 0) {
-		printf("TEST_%d_1 FAIL: %s != %s\n", tnum, str3, str2);
+		printf("TEST(%s) FAIL: %s != %s\n", name, str3, str2);
 	} else {
-		printf("TEST_%d_1 SUCCEDED\n", tnum);
+		printf("TEST(%s) SUCCEDED\n", name);
 	}
 }
 
 void
-test_nine(int tnum)
+test_nine(char *name)
 {
 	char *		str1 = "9:0001";
 	char *		str2;
@@ -156,8 +185,48 @@ test_nine(int tnum)
 	str2 = bitset_to_str(b1);
 	str3 = bitset_to_str(b2);
 	if (strcmp(str2, str3) != 0) {
-		printf("TEST_%d FAIL: %s != %s\n", tnum, str2, str3);
+		printf("TEST(%s) FAIL: %s != %s\n", name, str2, str3);
 	} else {
-		printf("TEST_%d SUCCEDED\n", tnum);
+		printf("TEST(%s) SUCCEDED\n", name);
+	}
+}
+
+void
+test_144(char *name)
+{
+	char *		str1 = "90:800000000000000000000000000000000001";
+	char *		str2;
+	char *		str3;
+	char *		end;
+	bitset *	b1 = str_to_bitset(str1, &end);
+	bitset *	b2 = bitset_new(144);
+	bitset_set(b2, 0);
+	bitset_set(b2, 143);
+	str2 = bitset_to_str(b1);
+	str3 = bitset_to_str(b2);
+	if (strcmp(str2, str3) != 0) {
+		printf("TEST(%s) FAIL: %s != %s\n", name, str2, str3);
+	} else {
+		printf("TEST(%s) SUCCEDED\n", name);
+	}
+}
+
+void
+test_2048(char *name)
+{
+	char *		str1 = "800:80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+	char *		str2;
+	char *		str3;
+	char *		end;
+	bitset *	b1 = str_to_bitset(str1, &end);
+	bitset *	b2 = bitset_new(2048);
+	bitset_set(b2, 0);
+	bitset_set(b2, 2047);
+	str2 = bitset_to_str(b1);
+	str3 = bitset_to_str(b2);
+	if (strcmp(str2, str3) != 0) {
+		printf("TEST(%s) FAIL: %s != %s\n", name, str2, str3);
+	} else {
+		printf("TEST(%s) SUCCEDED\n", name);
 	}
 }

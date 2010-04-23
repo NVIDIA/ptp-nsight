@@ -20,18 +20,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.remote.core.IRemoteFileManager;
 
 public class LocalFileManager implements IRemoteFileManager {
-	private final LocalConnection fConnection;
-
-	public LocalFileManager(LocalConnection conn) {
-		fConnection = conn;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#getDirectorySeparator()
-	 */
-	public String getDirectorySeparator() {
-		return System.getProperty("file.separator", "/"); //$NON-NLS-1$ //$NON-NLS-2$
-	}
+	private IPath fWorkingDir = null;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#getResource(java.lang.String)
@@ -39,9 +28,26 @@ public class LocalFileManager implements IRemoteFileManager {
 	public IFileStore getResource(String pathStr) {
 		IPath path = new Path(pathStr);
 		if (!path.isAbsolute()) {
-			path = new Path(fConnection.getWorkingDirectory()).append(path);
+			path = getWorkingDirectoryPath().append(path);
 		}
 		return EFS.getLocalFileSystem().getStore(path);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#getWorkingDirectory(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public String getWorkingDirectory() {
+		return getWorkingDirectoryPath().toString();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#setWorkingDirectory(java.lang.String)
+	 */
+	public void setWorkingDirectory(String pathStr) {
+		IPath path = new Path(pathStr);
+		if (path.isAbsolute()) {
+			fWorkingDir = path;
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -57,11 +63,23 @@ public class LocalFileManager implements IRemoteFileManager {
 	public URI toURI(IPath path) {
 		return URIUtil.toURI(path);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#toURI(java.lang.String)
 	 */
 	public URI toURI(String path) {
 		return URIUtil.toURI(path);
+	}
+
+	private IPath getWorkingDirectoryPath() {
+		if (fWorkingDir == null) {
+			String home = System.getProperty("user.home"); //$NON-NLS-1$
+			if (home != null) {
+				fWorkingDir = new Path(home);
+			} else {
+				fWorkingDir = new Path("."); //$NON-NLS-1$
+			}
+		}
+		return fWorkingDir;
 	}
 }

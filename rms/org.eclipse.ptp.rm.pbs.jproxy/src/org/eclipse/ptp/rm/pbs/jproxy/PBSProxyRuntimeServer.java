@@ -40,12 +40,15 @@ import org.eclipse.ptp.rm.proxy.core.event.NodeEventFactory;
 import org.eclipse.ptp.rm.proxy.core.event.QueueEventFactory;
 import org.eclipse.ptp.rm.proxy.core.parser.XMLReader;
 
+/**
+ * Proxy for PBS.
+ */
 public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 
-	static final boolean debugReadFromFiles = false;
-	static final String debugFolder = "helics"; //$NON-NLS-1$
+	private static final boolean debugReadFromFiles = false;
+	private static final String debugFolder = "helics"; //$NON-NLS-1$
 	// static final String debugUser = "alizade1";
-	static final String debugUser = "xli"; //$NON-NLS-1$
+	private static final String debugUser = "xli"; //$NON-NLS-1$
 
 	public static void main(String[] args) {
 		System.err.println(PBSProxyRuntimeServer.class.getSimpleName());
@@ -63,8 +66,9 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 		}
 
 		Map<String, Object> params = parseArguments(args);
-		if (params == null)
+		if (params == null) {
 			return;
+		}
 		new PBSProxyRuntimeServer((String) params.get("host"), (Integer) params //$NON-NLS-1$
 				.get("port")); //$NON-NLS-1$
 	}
@@ -76,13 +80,14 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 
 	String user = null;
 
-	public PBSProxyRuntimeServer(String host, int port) {
+	private PBSProxyRuntimeServer(String host, int port) {
 		super(host, port, new ProxyRuntimeEventFactory());
 	}
 
 	private String getUser() {
-		if (debugReadFromFiles)
+		if (debugReadFromFiles) {
 			user = debugUser;
+		}
 		if (user == null) {
 			try {
 				Process p = Runtime.getRuntime().exec("whoami"); //$NON-NLS-1$
@@ -109,8 +114,14 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 	// }
 	// }
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.ptp.proxy.runtime.server.AbstractProxyRuntimeServer#
+	 * startEventThread(int)
+	 */
 	@Override
-	public void startEventThread(final int transID) {
+	protected void startEventThread(final int transID) {
 
 		int dummyMachineID = ElementIDGenerator.getInstance().getUniqueID();
 		System.out.println(Messages.getString("PBSProxyRuntimeServer.2")); //$NON-NLS-1$
@@ -228,6 +239,13 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.proxy.runtime.server.AbstractProxyRuntimeServer#submitJob
+	 * (int, java.lang.String[])
+	 */
 	@Override
 	protected void submitJob(int transID, String[] arguments) {
 
@@ -243,10 +261,11 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 
 		String jobSubId = null;
 		// Insert values into template and store special parameters
-		for (int i = 0; i < arguments.length; i++) {
-			String[] keyValue = arguments[i].split("=", 2); //$NON-NLS-1$
-			if (keyValue[0].equals("jobSubId"))jobSubId = keyValue[1]; //$NON-NLS-1$
-			else { // any other parameter is used for the template
+		for (String argument : arguments) {
+			String[] keyValue = argument.split("=", 2); //$NON-NLS-1$
+			if (keyValue[0].equals("jobSubId")) {
+				jobSubId = keyValue[1];
+			} else { // any other parameter is used for the template
 				template = template.replaceAll(
 						"@" + keyValue[0] + "@", keyValue[1]); //$NON-NLS-1$ //$NON-NLS-2$
 			}
@@ -280,8 +299,9 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 					BufferedReader err = new BufferedReader(
 							new InputStreamReader(p.getErrorStream()));
 					String line, errMsg = ""; //$NON-NLS-1$
-					while ((line = err.readLine()) != null)
+					while ((line = err.readLine()) != null) {
 						errMsg += line;
+					}
 					String errArgs[] = { "jobSubId=" + jobSubId, //$NON-NLS-1$
 							"errorCode=" + 0, //$NON-NLS-1$
 							// p.exitValue()
@@ -316,6 +336,13 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 		// System.out.print(template);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.proxy.runtime.server.AbstractProxyRuntimeServer#terminateJob
+	 * (int, java.lang.String[])
+	 */
 	@Override
 	protected void terminateJob(int transID, String[] arguments) {
 		// CHECK: threading issues of jobController.currentElements
@@ -340,8 +367,9 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 				BufferedReader err = new BufferedReader(new InputStreamReader(p
 						.getErrorStream()));
 				String line, errMsg = ""; //$NON-NLS-1$
-				while ((line = err.readLine()) != null)
+				while ((line = err.readLine()) != null) {
 					errMsg += line;
+				}
 				String errArgs[] = {
 						"errorCode=" + p.exitValue(), "errorMsg=" + errMsg }; //$NON-NLS-1$ //$NON-NLS-2$
 				sendEvent(getEventFactory().newErrorEvent(transID, errArgs));

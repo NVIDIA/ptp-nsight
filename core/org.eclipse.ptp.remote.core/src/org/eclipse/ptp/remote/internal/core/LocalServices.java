@@ -22,9 +22,9 @@ import org.eclipse.ptp.remote.core.IRemoteServicesDescriptor;
 public class LocalServices implements IRemoteServices {
 	public static final String LocalServicesId = "org.eclipse.ptp.remote.LocalServices"; //$NON-NLS-1$
 
-	private IRemoteFileManager fFileMgr = null;
+	private IRemoteConnectionManager connMgr = new LocalConnectionManager();
+	private IRemoteFileManager fileMgr = new LocalFileManager();
 	
-	private final IRemoteConnectionManager fConnMgr = new LocalConnectionManager(this);
 	private final IRemoteServicesDescriptor fDescriptor;
 	
 	public LocalServices(IRemoteServicesDescriptor descriptor) {
@@ -35,7 +35,14 @@ public class LocalServices implements IRemoteServices {
 	 * @see org.eclipse.ptp.remote.core.IRemoteServicesDescriptor#getConnectionManager()
 	 */
 	public IRemoteConnectionManager getConnectionManager() {
-		return fConnMgr;
+		return connMgr;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ptp.remote.core.IRemoteServicesDescriptor#getDirectorySeparator(org.eclipse.ptp.remote.core.IRemoteConnection)
+	 */
+	public String getDirectorySeparator(IRemoteConnection conn) {
+		return System.getProperty("file.separator", "/"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/* (non-Javadoc)
@@ -45,10 +52,7 @@ public class LocalServices implements IRemoteServices {
 		if (!(conn instanceof LocalConnection)) {
 			return null;
 		}
-		if (fFileMgr == null) {
-			fFileMgr = new LocalFileManager((LocalConnection)conn);
-		}
-		return fFileMgr;
+		return fileMgr;
 	}
 
 	/* (non-Javadoc)
@@ -89,7 +93,7 @@ public class LocalServices implements IRemoteServices {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteServicesDescriptor#getServicesExtension(org.eclipse.ptp.remote.core.IRemoteConnection, java.lang.Class)
 	 */
-	@SuppressWarnings({ "rawtypes" })
+	@SuppressWarnings("unchecked")
 	public Object getServicesExtension(IRemoteConnection conn, Class extension) {
 		return null;
 	}

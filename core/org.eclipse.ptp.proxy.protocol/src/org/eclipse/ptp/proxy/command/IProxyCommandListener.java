@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2010 The Regents of the University of California and others
+ * Copyright (c) 2005 The Regents of the University of California. 
  * This material was produced under U.S. Government contract W-7405-ENG-36 
  * for Los Alamos National Laboratory, which is operated by the University 
  * of California for the U.S. Department of Energy. The U.S. Government has 
@@ -15,23 +15,23 @@
  * http://www.eclipse.org/legal/epl-v10.html
  * 
  * LA-CC 04-115
- * 
- * Contributors:
- *     LANL - Initial Implementation
- *     Dieter Krachtus, University of Heidelberg
- *     Roland Schulz, University of Tennessee
  *******************************************************************************/
 
 package org.eclipse.ptp.proxy.command;
 
 public interface IProxyCommandListener {
 
+	/**
+	 * Handler for quit commands
+	 * 
+	 * @param c command to handle
+	 */
+	public void handleCommand(IProxyQuitCommand c);
 
 	/**
-	 * Handler for commands
+	 * Handler for extended commands
 	 * 
-	 * @param cmd command to handle
+	 * @param c command to handle
 	 */
-	public void handleCommand(IProxyCommand cmd);
-
+	public void handleCommand(IProxyExtendedCommand c);
 }

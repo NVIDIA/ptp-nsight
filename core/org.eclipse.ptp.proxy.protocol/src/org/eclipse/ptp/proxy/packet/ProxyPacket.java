@@ -1,14 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 IBM Corporation and others.
+ * Copyright (c) 2007 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     IBM Corporation - Initial API and implementation
- *     Dieter Krachtus, University of Heidelberg
- *     Roland Schulz, University of Tennessee
+ * IBM Corporation - Initial API and implementation
  *******************************************************************************/
 
 package org.eclipse.ptp.proxy.packet;
@@ -58,7 +56,6 @@ public class ProxyPacket {
 		this.packetID = event.getEventID();
 		this.packetTransID = event.getTransactionID();
 		this.packetArgs = event.getAttributes();
-		if (this.packetArgs==null) this.packetArgs=new String[0];
 	}
 
 	/**
@@ -154,6 +151,10 @@ public class ProxyPacket {
 		fullRead(channel, lengthBytes);
 		CharBuffer len_str = decoder.decode(lengthBytes);
 		
+		if (debug) {
+			System.out.print("RECEIVE:[" + len_str); //$NON-NLS-1$
+		}
+	
 		int len;
 		try {
 			len = Integer.parseInt(len_str.subSequence(0, PACKET_LENGTH_SIZE).toString(), 16);
@@ -174,7 +175,7 @@ public class ProxyPacket {
 		CharBuffer packetBuf = decoder.decode(packetBytes);
 		
 		if (debug) {
-			System.out.println("RECEIVE:[" + len_str + " -> " + packetBuf + "] -> " + Thread.currentThread().getName());   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+			System.out.println(packetBuf + "]"); //$NON-NLS-1$
 		}
 
 		/*
@@ -231,7 +232,7 @@ public class ProxyPacket {
 				PACKET_LENGTH_SIZE) + " " + body; //$NON-NLS-1$
 		
 		if (debug) {
-			System.out.println("SEND:[" + packet + "] -> " + Thread.currentThread().getName()); //$NON-NLS-1$ //$NON-NLS-2$
+			System.out.println("SEND:[" + packet + "]"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		
 		fullWrite(channel, encoder.encode(CharBuffer.wrap(packet)));

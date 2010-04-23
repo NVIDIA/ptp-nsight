@@ -23,19 +23,21 @@ import org.eclipse.ptp.rm.proxy.core.attributes.IElementAttributes;
  * This is only a temporary solution.
  */
 
-public class PBSNodeClientAttributes extends PBSNodeProtocolAttributes implements IElementAttributes {
+public class PBSNodeClientAttributes extends PBSNodeProtocolAttributes
+		implements IElementAttributes {
 	private static final Map<String, String> nodeStatusMap = new HashMap<String, String>();
 	static {
-		nodeStatusMap.put("job-exclusive" ,   "UP"             ); //$NON-NLS-1$ //$NON-NLS-2$
-		nodeStatusMap.put("free"          ,   "UP"             ); //$NON-NLS-1$ //$NON-NLS-2$
-		nodeStatusMap.put("down,offline"  ,   "DOWN"           ); //$NON-NLS-1$ //$NON-NLS-2$
-		nodeStatusMap.put("down"          ,   "DOWN"           ); //$NON-NLS-1$ //$NON-NLS-2$
-		nodeStatusMap.put("offline"       ,   "DOWN"           ); //$NON-NLS-1$ //$NON-NLS-2$
+		nodeStatusMap.put("job-exclusive", "UP"); //$NON-NLS-1$ //$NON-NLS-2$
+		nodeStatusMap.put("free", "UP"); //$NON-NLS-1$ //$NON-NLS-2$
+		nodeStatusMap.put("down,offline", "DOWN"); //$NON-NLS-1$ //$NON-NLS-2$
+		nodeStatusMap.put("down", "DOWN"); //$NON-NLS-1$ //$NON-NLS-2$
+		nodeStatusMap.put("offline", "DOWN"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private static final Map<String, DefaultValueMap<String, String>> valueMap = new HashMap<String, DefaultValueMap<String, String>>();
 	static {
-		valueMap.put("state", new DefaultValueMap<String, String>("UNKNOWN", nodeStatusMap)); //$NON-NLS-1$ //$NON-NLS-2$
+		valueMap.put(
+				"state", new DefaultValueMap<String, String>("UNKNOWN", nodeStatusMap)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	// public static Map<String, String> getNodeStatusMap() {
@@ -44,21 +46,18 @@ public class PBSNodeClientAttributes extends PBSNodeProtocolAttributes implement
 
 	private static final Map<String, String> xmlTag_AttributeID_Map = new HashMap<String, String>();
 	static {
-		xmlTag_AttributeID_Map.put("name"       ,   NAME_ATTR_ID         ); //$NON-NLS-1$
-		xmlTag_AttributeID_Map.put("state"      ,   STATE_ATTR_ID        ); //$NON-NLS-1$
-		xmlTag_AttributeID_Map.put("np"         ,   NP_ATTR_ID           ); //$NON-NLS-1$
-		xmlTag_AttributeID_Map.put("properties" ,   PROPERTIES_ATTR_ID   ); //$NON-NLS-1$
-		xmlTag_AttributeID_Map.put("ntype"      ,   NTYPE_ATTR_ID        ); //$NON-NLS-1$
+		xmlTag_AttributeID_Map.put("name", NAME_ATTR_ID); //$NON-NLS-1$
+		xmlTag_AttributeID_Map.put("state", STATE_ATTR_ID); //$NON-NLS-1$
+		xmlTag_AttributeID_Map.put("np", NP_ATTR_ID); //$NON-NLS-1$
+		xmlTag_AttributeID_Map.put("properties", PROPERTIES_ATTR_ID); //$NON-NLS-1$
+		xmlTag_AttributeID_Map.put("ntype", NTYPE_ATTR_ID); //$NON-NLS-1$
 		// somehow breaks the UI population, even after escaping the value as to
 		// not interfer with the protocol encoding.
 		// xmlTag_AttributeID_Map.put("status" , STATUS_ATTR_ID );
 	}
 
-	public Map<String, String> getXmltagAttributeID_Map() {
-		return xmlTag_AttributeID_Map;
-	}
-
 	private static final String key = "name"; //$NON-NLS-1$
+
 	private static final String parent_key = null;
 
 	/*
@@ -82,10 +81,17 @@ public class PBSNodeClientAttributes extends PBSNodeProtocolAttributes implement
 		return parent_key;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.proxy.jproxy.attributes.IElementAttributes#getValueMap()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.proxy.jproxy.attributes.IElementAttributes#getValueMap()
 	 */
 	public Map<String, DefaultValueMap<String, String>> getValueMap() {
 		return valueMap;
+	}
+
+	public Map<String, String> getXmltagAttributeID_Map() {
+		return xmlTag_AttributeID_Map;
 	}
 }

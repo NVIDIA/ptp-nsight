@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.ptp.rm.pbs"
       label="%featureName"
-      version="4.0.0.qualifier"
+      version="3.0.2.qualifier"
       provider-name="%providerName"
       plugin="org.eclipse.ptp.rm.pbs.core"
       image="eclipse_update_120.jpg">
@@ -32,12 +32,13 @@
       <import plugin="org.eclipse.ptp.proxy.protocol"/>
       <import plugin="org.eclipse.ptp.core"/>
       <import plugin="org.eclipse.ptp.remote.core" version="2.1.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.ptp.rm.core" version="1.0.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.services.ui" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ptp.remote.core" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.remote.ui"/>
       <import plugin="org.eclipse.ptp.utils.ui" version="1.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.ui" version="3.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.launch" version="3.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ptp.rm.core" version="1.0.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ptp.rm.ui" version="1.0.1" match="greaterOrEqual"/>
    </requires>
 
@@ -56,10 +57,9 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.ptp.rm.pbs.jproxy"
+         id="org.eclipse.ptp.rm.pbs.proxy"
          download-size="0"
          install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

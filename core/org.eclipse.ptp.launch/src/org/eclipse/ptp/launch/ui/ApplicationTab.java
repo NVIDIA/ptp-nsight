@@ -638,7 +638,8 @@ public class ApplicationTab extends LaunchConfigurationTab {
 		if (localServices != null && localUIServices != null) {
 			IRemoteConnectionManager lconnMgr = localServices
 					.getConnectionManager();
-			IRemoteConnection lconn = lconnMgr.getConnection(""); //$NON-NLS-1$
+			IRemoteConnection lconn = lconnMgr.getConnection(null); // Since
+			// it's a local service, doesn't matter which parameter is passed
 			IRemoteUIFileManager localUIFileMgr = localUIServices
 					.getUIFileManager();
 			localUIFileMgr.setConnection(lconn);

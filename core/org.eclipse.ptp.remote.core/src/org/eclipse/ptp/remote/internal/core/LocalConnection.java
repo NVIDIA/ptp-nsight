@@ -13,14 +13,11 @@ package org.eclipse.ptp.remote.internal.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ListenerList;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeEvent;
 import org.eclipse.ptp.remote.core.IRemoteConnectionChangeListener;
-import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
 import org.eclipse.ptp.remote.core.exception.UnableToForwardPortException;
 import org.eclipse.ptp.remote.core.messages.Messages;
@@ -30,24 +27,17 @@ public class LocalConnection implements IRemoteConnection {
 	private String fAddress = Messages.LocalConnection_1;
 	private String fUsername = System.getProperty("user.name"); //$NON-NLS-1$
 	private boolean fConnected = true;
-	private IPath fWorkingDir = null;
 	
 	private final IRemoteConnection fConnection = this;
-	private final IRemoteServices fRemoteServices;
-	
 	private final ListenerList fListeners = new ListenerList();
-	
-	public LocalConnection(IRemoteServices services) {
-		fRemoteServices = services;
-	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#addConnectionChangeListener(org.eclipse.ptp.remote.core.IRemoteConnectionChangeListener)
 	 */
 	public void addConnectionChangeListener(IRemoteConnectionChangeListener listener) {
 		fListeners.add(listener);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#close()
 	 */
@@ -65,7 +55,7 @@ public class LocalConnection implements IRemoteConnection {
 			int fwdPort) throws RemoteConnectionException {
 		throw new UnableToForwardPortException(Messages.LocalConnection_2);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#forwardLocalPort(java.lang.String, int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -96,7 +86,7 @@ public class LocalConnection implements IRemoteConnection {
 	public String getAddress() {
 		return fAddress;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getAttributes()
 	 */
@@ -133,37 +123,12 @@ public class LocalConnection implements IRemoteConnection {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getRemoteServices()
-	 */
-	public IRemoteServices getRemoteServices() {
-		return fRemoteServices;
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#getUsername()
 	 */
 	public String getUsername() {
 		return fUsername;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#getWorkingDirectory(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public String getWorkingDirectory() {
-		if (fWorkingDir == null) {
-			String cwd = System.getProperty("user.home"); //$NON-NLS-1$
-			if (cwd == null) {
-				cwd = System.getProperty("user.dir"); //$NON-NLS-1$;
-			}
-			if (cwd == null) {
-				fWorkingDir = Path.ROOT;
-			} else {
-				fWorkingDir = new Path(cwd);
-			}
-		}
-		return fWorkingDir.toString();
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#isOpen()
 	 */
@@ -211,22 +176,12 @@ public class LocalConnection implements IRemoteConnection {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.remote.core.IRemoteFileManager#setWorkingDirectory(java.lang.String)
-	 */
-	public void setWorkingDirectory(String pathStr) {
-		IPath path = new Path(pathStr);
-		if (path.isAbsolute()) {
-			fWorkingDir = path;
-		}
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.remote.core.IRemoteConnection#supportsTCPPortForwarding()
 	 */
 	public boolean supportsTCPPortForwarding() {
 		return false;
 	}
-	
+
 	/**
 	 * Notify all listeners when this connection's status changes.
 	 * 
