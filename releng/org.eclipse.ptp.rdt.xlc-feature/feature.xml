@@ -3,7 +3,8 @@
       id="org.eclipse.ptp.rdt.xlc"
       label="%featureName"
       version="2.1.4.qualifier"
-      provider-name="%providerName">
+      provider-name="%providerName"
+      plugin="org.eclipse.ptp.rdt.xlc">
 
    <description>
       %description
@@ -16,6 +17,10 @@
    <license url="%licenseURL">
       %license
    </license>
+
+   <url>
+      <update url="http://download.eclipse.org/tools/ptp/releases/2.1"/>
+   </url>
 
    <requires>
       <import plugin="org.eclipse.core.runtime"/>

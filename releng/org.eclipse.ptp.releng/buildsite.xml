@@ -63,6 +63,12 @@
 	<feature id="org.eclipse.ptp.rdt.xlc" url="features/org.eclipse.ptp.rdt.xlc_@buildVersion@.jar" version="@buildVersion@">
 		<category name="Remote Development Tools"/>
 	</feature>
+	<feature id="org.eclipse.ptp.rdt.sdk" url="features/org.eclipse.ptp.rdt.sdk_@buildVersion@.jar" version="@buildVersion@">
+		<category name="Remote Development Tools"/>
+	</feature>
+	<feature id="org.eclipse.ptp.rdt.xlc.sdk" url="features/org.eclipse.ptp.rdt.xlc.sdk_@buildVersion@.jar" version="@buildVersion@">
+		<category name="Remote Development Tools"/>
+	</feature>
 	<category-def name="Parallel Tools Platform 2.1" label="Parallel Tools Platform 2.1"/>
 	<category-def name="Remote Development Tools" label="Remote Development Tools"/>
 </site>

@@ -194,6 +194,13 @@
 		</antcall>	
 		
 		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt.sdk-feature"/>
+		</antcall>	
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.rdt.xlc.sdk-feature"/>
+		</antcall>	
+		
+		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/cell/org.eclipse.ptp.cell-feature"/>
 		</antcall>		
 		
