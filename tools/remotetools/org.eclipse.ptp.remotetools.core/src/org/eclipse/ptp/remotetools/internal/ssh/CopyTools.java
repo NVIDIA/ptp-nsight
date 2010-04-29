@@ -31,8 +31,6 @@ import org.eclipse.ptp.remotetools.internal.common.Debug;
 import org.eclipse.ptp.utils.core.file.FileEnumeration;
 import org.eclipse.ptp.utils.core.file.FileRecursiveEnumeration;
 
-import com.jcraft.jsch.SftpException;
-
 public class CopyTools implements IRemoteCopyTools {
 	
 	ExecutionManager manager;
@@ -120,32 +118,34 @@ public class CopyTools implements IRemoteCopyTools {
 	}
 
 	private void doDownloadFileToFile(String remotePath, File localFile) throws RemoteConnectionException, CancelException, RemoteOperationException {
-		FileOutputStream sink;
+		FileOutputStream sink = null;
 		try {
 			sink = new FileOutputStream(localFile);
+			remoteFileTools.downloadIntoOutputStream(remotePath, sink, null);
 		} catch (FileNotFoundException e) {
 			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doDownloadFileToFile_CannotWriteFile, e.getMessage()), e);
-		}
-		
-		try {
-			manager.getConnection().getDefaultSFTPChannel().get(remotePath, sink);
-		} catch (SftpException ex) {
-			throw new RemoteOperationException(ex);
+		} finally {
+			try {
+				if (sink!=null) sink.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	private void doUploadFileToFile(File localFile, String remotePath) throws RemoteConnectionException, CancelException, RemoteOperationException {
-		FileInputStream source;
+		FileInputStream source = null;
 		try {
 			source = new FileInputStream(localFile); 
+			remoteFileTools.uploadFromInputStream(source, remotePath, null);
 		} catch (FileNotFoundException e) {
 			throw new RemoteOperationException(NLS.bind(Messages.CopyTools_doUploadFileFromFile_CannotReadFile, e.getMessage()), e);
-		}
-		
-		try {
-			manager.getConnection().getDefaultSFTPChannel().put(source,remotePath);
-		} catch (SftpException ex) {
-			throw new RemoteOperationException(ex);
+		} finally {
+			try {
+				if (source!=null) source.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 	}

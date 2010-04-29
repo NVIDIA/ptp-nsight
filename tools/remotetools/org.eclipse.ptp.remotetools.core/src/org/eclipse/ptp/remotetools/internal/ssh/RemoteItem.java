@@ -13,14 +13,12 @@ package org.eclipse.ptp.remotetools.internal.ssh;
 
 import java.util.Set;
 
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.ptp.remotetools.core.IRemoteItem;
 import org.eclipse.ptp.remotetools.exception.CancelException;
 import org.eclipse.ptp.remotetools.exception.RemoteConnectionException;
 import org.eclipse.ptp.remotetools.exception.RemoteOperationException;
 
 import com.jcraft.jsch.SftpATTRS;
-import com.jcraft.jsch.SftpException;
 
 /**
  * @author Richard Maciel
@@ -68,20 +66,12 @@ class RemoteItem implements IRemoteItem {
 	public void commitAttributes() throws RemoteConnectionException, CancelException, RemoteOperationException {
 		fileTools.test();
 		if ((changes & PERMISSION) != 0) {
-			try {
-				fileTools.manager.connection.getDefaultSFTPChannel().chmod(permissions, path);
-				changes &= ~PERMISSION;
-			} catch (SftpException e) {
-				throw new RemoteOperationException(NLS.bind("Failed to set permission of remote file {0} ({1})", new String[] {path, e.getMessage()}), e);
-			}
+			fileTools.chmod(permissions, path, null);
+			changes &= ~PERMISSION;
 		}
 		if ((changes & MODIFICATION_TIME) != 0) {
-			try {
-				fileTools.manager.connection.getDefaultSFTPChannel().setMtime(path, modificationTime);
-				changes &= ~MODIFICATION_TIME;
-			} catch (SftpException e) {
-				throw new RemoteOperationException(NLS.bind("Failed to set modification time of remote file {0} ({1})", new Object[] {path, e}), e);
-			}
+			fileTools.setMtime(path, modificationTime, null);
+			changes &= ~MODIFICATION_TIME;
 		}
 //		changes = 0;
 	}

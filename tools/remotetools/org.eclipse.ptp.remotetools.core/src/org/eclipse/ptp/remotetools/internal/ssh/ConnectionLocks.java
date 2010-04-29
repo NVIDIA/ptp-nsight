@@ -12,8 +12,6 @@ package org.eclipse.ptp.remotetools.internal.ssh;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import sun.awt.datatransfer.DataTransferer.ReencodingInputStream;
-
 public class ConnectionLocks {
 	protected ReentrantLock remotePortForwarding = new ReentrantLock();
 	protected ReentrantLock localPortForwarding = new ReentrantLock();
