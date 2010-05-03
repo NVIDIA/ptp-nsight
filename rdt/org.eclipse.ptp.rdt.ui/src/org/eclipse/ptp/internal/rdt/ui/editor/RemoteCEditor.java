@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * Copyright (c) 2008, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.help.IContextProvider;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
+import org.eclipse.ptp.internal.rdt.core.model.CProject;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
 import org.eclipse.ptp.internal.rdt.ui.search.actions.SelectionSearchGroup;
 import org.eclipse.ptp.rdt.core.resources.RemoteNature;
@@ -173,6 +174,20 @@ public class RemoteCEditor extends CEditor {
 		menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
 		//remove refactoring for now
 		menu.remove("org.eclipse.cdt.ui.refactoring.menu"); //$NON-NLS-1$
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.cdt.internal.ui.editor.CEditor#shouldProcessLocalParsingCompletions()
+	 */
+	@Override
+	public boolean shouldProcessLocalParsingCompletions() {
+		
+		ICProject cproject = EditorUtility.getCProject(input);
+		if(RemoteNature.hasRemoteNature(cproject.getProject())){
+			return false;
+		}
+		
+		return true;
 	}
 	
 }
