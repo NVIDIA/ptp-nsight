@@ -81,7 +81,8 @@
 		<move file="${buildDirectory}/eclipse/notice.html" todir="${buildDirectory}/site/eclipse"/>
 		<copy file="buildsite.xml" tofile="${buildDirectory}/site/eclipse/site.xml"/>
 		<replace file="${buildDirectory}/site/eclipse/site.xml">
-			<replacefilter token="@buildVersion@" value="${branchVersion}.${timestamp}"/>
+			<replacefilter token="@branchVersion@" value="${branchVersion}"/>
+			<replacefilter token="@timeStamp@" value="${timestamp}"/>
 		</replace>
 		<copy file="pack.properties" todir="${buildDirectory}/site/eclipse"/>
 
