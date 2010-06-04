@@ -622,21 +622,12 @@ public class FileTools implements IRemoteFileTools {
 		test();
 		validateRemotePath(dir);
 		IRemotePathTools pathTool = manager.getRemotePathTools();
-		final String path = pathTool.quote(dir, true);
-		
 		try {
-			SftpCallable<Integer> c = new SftpCallable<Integer>(){
-				public Integer call() throws SftpException {
-					getChannel().rmdir(path);
-					return 0;
-				}
-			};
-			c.syncCmdInThread("Remove directory", null);
-		} catch (IOException e) {
+			executeCommand("rm -rf " + pathTool.quote(dir, true)); //$NON-NLS-1$
+		} catch (RemoteExecutionException e) {
 			throw new RemoteOperationException(e);
-		} catch (SftpException e) {
-			throw new RemoteOperationException(e);
-		}
+		} 
+
 	}
 
 	public String removeTrailingSlash(String path) {
