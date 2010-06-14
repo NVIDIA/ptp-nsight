@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -165,9 +164,9 @@ public class Connection implements IRemoteConnection {
 	private SSHUserInfo sshuserinfo = new SSHUserInfo();
 
 	/**
-	 * All executions managers created for this connection.
+	 * The executions manager created for this connection.
 	 */
-	private ArrayList<IRemoteExecutionManager> executionManagers = new ArrayList<IRemoteExecutionManager>();
+	private IRemoteExecutionManager executionManager = null;
 	/**
 	 * Tunnels to remote host.
 	 */
@@ -378,12 +377,10 @@ public class Connection implements IRemoteConnection {
 	 */
 	public synchronized IRemoteExecutionManager createRemoteExecutionManager()
 			throws RemoteConnectionException {
-		if (executionManagers.size() > 0) {
-			return (IRemoteExecutionManager) executionManagers.get(0);
+		if (executionManager == null) {
+			executionManager = new ExecutionManager(this);
 		}
-		ExecutionManager e = new ExecutionManager(this);
-		executionManagers.add(e);
-		return e;
+		return executionManager;
 	}
 
 	/*
@@ -392,15 +389,9 @@ public class Connection implements IRemoteConnection {
 	 * @see org.eclipse.ptp.remotetools.IRemoteConnection#disconnect()
 	 */
 	public synchronized void disconnect() {
-		/*
-		 * First, cancel all ongoing executions and tunnels created by managers,
-		 * by closing their execution managers.
-		 */
-		Iterator iterator = executionManagers.iterator();
-		while (iterator.hasNext()) {
-			ExecutionManager manager = (ExecutionManager) iterator.next();
-			manager.close();
-			iterator = executionManagers.iterator();
+		if (executionManager != null) {
+			executionManager.close();
+			executionManager = null;
 		}
 
 		if (executionObserver != null) {
@@ -775,7 +766,7 @@ public class Connection implements IRemoteConnection {
 	}
 
 	protected synchronized void releaseExcutionManager(ExecutionManager manager) {
-		executionManagers.remove(manager);
+		// nothing required any more
 	}
 
 	/**
