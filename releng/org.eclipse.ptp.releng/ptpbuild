@@ -14,8 +14,8 @@
 # launching the build script in the releng project
 
 LANG=en_US
-TAG=HEAD
-CDT_TAG=HEAD
+TAG=ptp_3_0
+CDT_TAG=cdt_6_0
 
 # main staging directory
 BUILD_DIR=/opt/public/download-staging.priv/tools/ptp/releng
