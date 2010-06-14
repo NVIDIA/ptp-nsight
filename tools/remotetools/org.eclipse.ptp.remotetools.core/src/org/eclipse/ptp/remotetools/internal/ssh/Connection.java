@@ -177,7 +177,7 @@ public class Connection implements IRemoteConnection {
 	 */
 	private static final int SFTP_POOLSIZE = 3;
 
-	private ArrayBlockingQueue<ChannelSftp> sftpChannelPool;
+	private ArrayBlockingQueue<ChannelSftp> sftpChannelPool = new ArrayBlockingQueue<ChannelSftp>(SFTP_POOLSIZE);
 	/**
 	 * Hashtable that keeps all remote executions that can be killed. The table
 	 * is indexed by Internal PID.
@@ -329,7 +329,6 @@ public class Connection implements IRemoteConnection {
 		/*
 		 * Create sft pool.
 		 */
-		sftpChannelPool = new ArrayBlockingQueue<ChannelSftp>(SFTP_POOLSIZE);
 		try {
 			for (int i = 0; i < SFTP_POOLSIZE; i++) {
 				ChannelSftp sftp = (ChannelSftp) defaultSession.openChannel("sftp"); //$NON-NLS-1$
@@ -431,7 +430,6 @@ public class Connection implements IRemoteConnection {
 		defaultSession = null;
 		controlChannel = null;
 		executionObserver = null;
-		sftpChannelPool = null;
 		if (forwardingPool != null) {
 			forwardingPool.disconnect();
 			forwardingPool = null;
