@@ -2,7 +2,7 @@
 <?NLS TYPE="org.eclipse.help.toc"?>
 
 <toc label="Running SLURM Jobs" link_to="../org.eclipse.ptp.help/toc.xml#ptpSLURM">
-   <topic href="html/toc.html" label="Contents"/>
+   <topic href="html/toc.html" label="Contents">
    </topic>
 	<topic label="Requirements"  href="html/require.html"> 
 	</topic>
