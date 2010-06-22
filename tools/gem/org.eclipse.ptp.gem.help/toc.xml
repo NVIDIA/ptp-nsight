@@ -2,6 +2,7 @@
 <?NLS TYPE="org.eclipse.help.toc"?>
 
 <toc label="Graphical Explorer of MPI Programs (GEM)" link_to="../org.eclipse.ptp.help/toc.xml#ptpGEM" topic="html/toc.html">
+    <topic href="html/toc.html" label="Contents"/>
     <topic label="Overview"  href="html/overview.html"/>
     <topic label="GEM Plug-in Prerequisites"  href="html/prereqs.html"/> 
     <topic label="GEM Plug-in Preferences"  href="html/preferences.html"/>

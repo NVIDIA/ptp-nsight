@@ -2,6 +2,7 @@
 <?NLS TYPE="org.eclipse.help.toc"?>
 
 <toc label="Parallel Language Development Tools (PLDT)" link_to="../org.eclipse.ptp.help/toc.xml#ptpPLDT" topic="html/toc.html">
+   <topic href="html/toc.html" label="Contents"/>
    <topic href="html/overview.html" label="Overview"/>
       <topic label="Setup for PTP MPI tools"  href="html/setup.html"/> 
       <topic label="Running PTP MPI tools"  href="html/run.html"/> 

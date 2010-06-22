@@ -2,6 +2,7 @@
 <?NLS TYPE="org.eclipse.help.toc"?>
 
 <toc label="Parallel Tools Platform (PTP) User Guide">
+      <topic href="html/toc.html" label="Contents"/>
       <topic label="Overview"  href="html/00overview.html"/> 
       <topic label="PTP Prerequisites"  href="html/00prereqs.html"/> 
       <topic label="Creating an MPI Project" href="html/01buildMPIprog.html"/> 
