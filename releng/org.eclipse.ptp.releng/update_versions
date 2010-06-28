@@ -47,6 +47,7 @@ PTP_FEATURES="\
 	org.eclipse.ptp.rm.openmpi-feature \
 	org.eclipse.ptp.rm.pbs-feature \
 	org.eclipse.ptp.rm.slurm-feature \
+	org.eclipse.ptp.sci-feature \
 	org.eclipse.ptp.sdm-feature \
 	org.eclipse.ptp.services-feature \
 	org.eclipse.ptp.utils-feature"
@@ -84,12 +85,6 @@ update_manifest() {
 	mv $TMP_DIR/${1}_MANIFEST.MF $1/META-INF/MANIFEST.MF
 }
 
-update_configure() {
-	sed -e "s/AC_INIT(\[*\([^],]*\)\]*, *\[*[0-9]\.[0-9]\.[0-9]\]*)/AC_INIT([\1], [$2])/" < $1/configure.in > $TMP_DIR/${1}_configure.in
-	mv $TMP_DIR/${1}_configure.in $1/configure.in
-	(cd $1; autoconf)
-}
-
 for feature in $PTP_FEATURES; do
 	echo "Updating $feature..."
 	update_feature $feature $ptp_version
@@ -103,7 +98,6 @@ done
 for project in $PTP_C_PROJECTS; do
 	echo "Updating $project..."
 	update_manifest $project $ptp_version
-	update_configure $project $ptp_version
 done
 
 for feature in $PHOTRAN_FEATURES; do
