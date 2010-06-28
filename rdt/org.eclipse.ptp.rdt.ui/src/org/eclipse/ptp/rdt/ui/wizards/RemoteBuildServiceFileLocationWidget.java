@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import org.eclipse.ptp.rdt.ui.messages.Messages;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteProcessBuilder;
 import org.eclipse.ptp.remote.core.IRemoteServices;
+import org.eclipse.ptp.remote.ui.IRemoteUIFileManager;
 import org.eclipse.ptp.remote.ui.IRemoteUIServices;
 import org.eclipse.ptp.remote.ui.PTPRemoteUIPlugin;
 import org.eclipse.swt.SWT;
@@ -165,7 +166,10 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 		
 	private void browse() {
 		IRemoteUIServices uiServices = PTPRemoteUIPlugin.getDefault().getRemoteUIServices(fRemoteServices);
-		IPath remotePath = uiServices.getUIFileManager().browseDirectory(this.getShell(), Messages.getString("RemoteBuildServiceFileLocationWidget.0"), text.getText()); //$NON-NLS-1$
+		IRemoteUIFileManager fmConnection = uiServices.getUIFileManager();
+		fmConnection.setConnection(fRemoteConnection);
+		
+		IPath remotePath = fmConnection.browseDirectory(this.getShell(), Messages.getString("RemoteBuildServiceFileLocationWidget.0"), text.getText()); //$NON-NLS-1$
 		if(remotePath != null)
 			text.setText(remotePath.toString());
 	}
