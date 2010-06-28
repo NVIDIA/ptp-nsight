@@ -23,16 +23,19 @@ photran_version=$2
 PTP_FEATURES="\
 	org.eclipse.ptp-feature \
 	org.eclipse.ptp.core-feature \
-	org.eclipse.ptp.external-feature \
-	org.eclipse.ptp.master \
 	org.eclipse.ptp.etfw-feature \
+	org.eclipse.ptp.etfw.ppw-feature \
 	org.eclipse.ptp.etfw.tau-feature \
 	org.eclipse.ptp.etfw.tau.fortran-feature \
-	org.eclipse.ptp.isp-feature \
+	org.eclipse.ptp.external-feature \
+	org.eclipse.ptp.gem-feature \
+	org.eclipse.ptp.master \
 	org.eclipse.ptp.pldt-feature \
 	org.eclipse.ptp.pldt.lapi-feature \
 	org.eclipse.ptp.pldt.upc-feature \
 	org.eclipse.ptp.rdt-feature \
+	org.eclipse.ptp.rdt.remotejars-feature \
+	org.eclipse.ptp.rdt.remotetools-feature \
 	org.eclipse.ptp.rdt.xlc-feature \
 	org.eclipse.ptp.remote-feature \
 	org.eclipse.ptp.remote.remotetools-feature \
@@ -42,8 +45,8 @@ PTP_FEATURES="\
 	org.eclipse.ptp.rm.ibm.pe-feature \
 	org.eclipse.ptp.rm.mpich2-feature \
 	org.eclipse.ptp.rm.openmpi-feature \
-	org.eclipse.ptp.rm.slurm-feature \
 	org.eclipse.ptp.rm.pbs-feature \
+	org.eclipse.ptp.rm.slurm-feature \
 	org.eclipse.ptp.sdm-feature \
 	org.eclipse.ptp.services-feature \
 	org.eclipse.ptp.utils-feature"
@@ -68,7 +71,6 @@ PTP_C_PROJECTS="\
 	org.eclipse.ptp.proxy \
 	org.eclipse.ptp.rm.ibm.pe.proxy \
 	org.eclipse.ptp.rm.ibm.ll.proxy \
-	org.eclipse.ptp.rm.pbs.proxy \
 	org.eclipse.ptp.rm.slurm.proxy \
 	org.eclipse.ptp.utils"
 	
