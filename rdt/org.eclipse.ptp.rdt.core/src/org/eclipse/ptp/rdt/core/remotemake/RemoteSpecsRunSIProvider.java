@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * Copyright (c) 2008, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -146,9 +146,14 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 			IFileInfo fileInfo = specsFile.fetchInfo();
 			
 			if (!fileInfo.exists()) {
-				InputStream is = new ByteArrayInputStream("\n".getBytes()); //$NON-NLS-1$
-				OutputStream os = specsFile.openOutputStream(EFS.NONE, null);
 				try {
+					// If the working directory doesn't exist, create it. 
+					if (!workingDir.fetchInfo().exists()) {
+						workingDir.mkdir(0, monitor);
+					}
+
+					InputStream is = new ByteArrayInputStream("\n".getBytes()); //$NON-NLS-1$
+					OutputStream os = specsFile.openOutputStream(EFS.NONE, null);
 
 					int data = is.read();
 					while (data != -1) {
@@ -161,14 +166,11 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 				} catch (IOException e) {
 					RDTLog.logError(e);
 				}
-				
-
 			}
 			
 			return specsFile;
 			
 		}
-		
 		
 		return null;
 	}
