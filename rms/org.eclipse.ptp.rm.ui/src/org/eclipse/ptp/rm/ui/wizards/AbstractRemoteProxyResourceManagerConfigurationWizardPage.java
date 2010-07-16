@@ -26,9 +26,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -38,6 +40,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -47,6 +50,7 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteConnectionManager;
 import org.eclipse.ptp.remote.core.IRemoteFileManager;
@@ -79,6 +83,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 /**
@@ -277,6 +282,8 @@ public abstract class AbstractRemoteProxyResourceManagerConfigurationWizardPage 
 	 * @since 1.1
 	 */
 	protected boolean proxyOptionsEnabled = true;
+
+	private IRemoteServices[] fAllRemoteServices = null;
 
 	public AbstractRemoteProxyResourceManagerConfigurationWizardPage(IRMConfigurationWizard wizard, String title) {
 		super(wizard, title);
@@ -771,25 +778,21 @@ public abstract class AbstractRemoteProxyResourceManagerConfigurationWizardPage 
 	 * routine when the default index is selected.
 	 */
 	protected void initializeRemoteServicesCombo() {
-		IRemoteServices[] allServices = PTPRemoteCorePlugin.getDefault().getAllRemoteServices();
+		initializeRemoteServices();
 		IRemoteServices defServices;
-		if (remoteServices != null)
+		if (remoteServices != null) {
 			defServices = remoteServices;
-		else
+		} else {
 			defServices = PTPRemoteCorePlugin.getDefault().getDefaultServices();
+		}
 		int defIndex = 0;
-		Arrays.sort(allServices, new Comparator<IRemoteServices>() {
-			public int compare(IRemoteServices c1, IRemoteServices c2) {
-				return c1.getName().compareToIgnoreCase(c2.getName());
-			}
-		});
 		remoteCombo.removeAll();
-		for (int i = 0; i < allServices.length; i++) {
-			remoteCombo.add(allServices[i].getName());
-			if (allServices[i].equals(defServices))
+		for (int i = 0; i < fAllRemoteServices.length; i++) {
+			remoteCombo.add(fAllRemoteServices[i].getName());
+			if (fAllRemoteServices[i].equals(defServices))
 				defIndex = i;
 		}
-		if (allServices.length > 0) {
+		if (fAllRemoteServices.length > 0) {
 			remoteCombo.select(defIndex);
 			/*
 			 * Linux doesn't call selection handler so need to call it
@@ -1060,5 +1063,56 @@ public abstract class AbstractRemoteProxyResourceManagerConfigurationWizardPage 
 					}
 			}
 		return proxyPathIsValid;
+	}
+
+	/**
+	 * Ensure that the remote service providers are initialized. This method
+	 * will present the user with a dialog box that can be canceled.
+	 */
+	private void initializeRemoteServices() {
+		if (fAllRemoteServices == null) {
+			final List<IRemoteServices> initializedServices = new ArrayList<IRemoteServices>();
+
+			IRunnableWithProgress runnable = new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					IRemoteServices[] services = PTPRemoteCorePlugin.getDefault().getAllRemoteServices();
+					SubMonitor progress = SubMonitor.convert(monitor, services.length);
+					try {
+						for (int i = 0; i < services.length; i++) {
+							IRemoteServices service = services[i];
+							progress.setTaskName(NLS.bind(Messages.AbstractRemoteProxyResourceManagerConfigurationWizardPage_18,
+									service.getName()));
+							while (!service.isInitialized() && !progress.isCanceled()) {
+								progress.setWorkRemaining(services.length - i);
+								synchronized (this) {
+									wait(100);
+								}
+								service.initialize();
+								progress.worked(1);
+							}
+							if (progress.isCanceled()) {
+								throw new InterruptedException();
+							}
+							initializedServices.add(service);
+						}
+					} finally {
+						monitor.done();
+					}
+				}
+			};
+			try {
+				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(runnable);
+			} catch (InvocationTargetException e) {
+				RMUIPlugin.log(e.getMessage());
+			} catch (InterruptedException e) {
+				// canceled
+			}
+			fAllRemoteServices = initializedServices.toArray(new IRemoteServices[0]);
+			Arrays.sort(fAllRemoteServices, new Comparator<IRemoteServices>() {
+				public int compare(IRemoteServices c1, IRemoteServices c2) {
+					return c1.getName().compareToIgnoreCase(c2.getName());
+				}
+			});
+		}
 	}
 }

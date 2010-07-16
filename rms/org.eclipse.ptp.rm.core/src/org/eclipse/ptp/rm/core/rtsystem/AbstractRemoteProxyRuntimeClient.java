@@ -102,11 +102,11 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 		}
 
 		synchronized (this) {
-			fStartupMonitor = monitor;
+			fStartupMonitor = subMon;
 		}
 
 		try {
-			monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_1);
+			subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_1);
 
 			/*
 			 * This can fail if we are restarting the RM from saved information
@@ -118,15 +118,18 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 				throw new IOException(NLS.bind(Messages.AbstractRemoteProxyRuntimeClient_10, getConfiguration()
 						.getRemoteServicesId()));
 			}
+			if (!remoteServices.isInitialized() && !initializeRemoteServices(remoteServices, subMon.newChild(1))) {
+				throw new IOException(NLS.bind("Unable to initialize {0}", getConfiguration().getRemoteServicesId())); //$NON-NLS-1$
+			}
 
-			monitor.worked(5);
+			subMon.worked(5);
 
 			if (getConfiguration().testOption(IRemoteProxyOptions.MANUAL_LAUNCH)) {
-				monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_2);
+				subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_2);
 
 				sessionCreate();
 
-				monitor.worked(5);
+				subMon.worked(5);
 
 				List<String> args = new ArrayList<String>();
 				args.add(getConfiguration().getProxyServerPath());
@@ -148,7 +151,7 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 
 				final String msg = NLS.bind(Messages.AbstractRemoteProxyRuntimeClient_3, args.toString());
 
-				monitor.subTask(msg);
+				subMon.subTask(msg);
 
 				Status info = new Status(IStatus.INFO, PTPCorePlugin.getUniqueIdentifier(), IStatus.INFO, msg, null);
 				PTPCorePlugin.log(info);
@@ -160,17 +163,17 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 							.getConnectionName()));
 				}
 
-				monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_4);
+				subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_4);
 
 				if (!fConnection.isOpen()) {
 					fConnection.open(subMon.newChild(4));
 				}
-				if (monitor.isCanceled()) {
+				if (subMon.isCanceled()) {
 					fConnection.close();
 					return;
 				}
 
-				monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_5);
+				subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_5);
 
 				/*
 				 * Check the remote proxy exists
@@ -191,16 +194,16 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 							.getProxyServerPath()));
 				}
 
-				if (monitor.isCanceled()) {
+				if (subMon.isCanceled()) {
 					fConnection.close();
 					return;
 				}
 
-				monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_6);
+				subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_6);
 
 				sessionCreate();
 
-				monitor.worked(1);
+				subMon.worked(1);
 
 				ArrayList<String> args = new ArrayList<String>();
 				args.add(getConfiguration().getProxyServerPath());
@@ -213,7 +216,7 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 					} catch (RemoteConnectionException e) {
 						throw new IOException(e.getMessage());
 					}
-					if (monitor.isCanceled()) {
+					if (subMon.isCanceled()) {
 						sessionFinish();
 						return;
 					}
@@ -233,12 +236,12 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 					System.out.println("Launch command: " + args.toString()); //$NON-NLS-1$
 				}
 
-				monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_7);
+				subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_7);
 
 				IRemoteProcessBuilder processBuilder = remoteServices.getProcessBuilder(fConnection, args);
 				IRemoteProcess process = processBuilder.start();
 
-				monitor.worked(2);
+				subMon.worked(2);
 
 				final BufferedReader err_reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 				final BufferedReader out_reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -274,9 +277,9 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 				}
 			}
 
-			monitor.subTask(Messages.AbstractRemoteProxyRuntimeClient_8);
+			subMon.subTask(Messages.AbstractRemoteProxyRuntimeClient_8);
 			super.startup();
-			monitor.worked(2);
+			subMon.worked(2);
 
 		} catch (IOException e) {
 			try {
@@ -290,6 +293,9 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 		} finally {
 			synchronized (this) {
 				fStartupMonitor = null;
+			}
+			if (monitor != null) {
+				monitor.done();
 			}
 		}
 	}
@@ -305,6 +311,41 @@ public abstract class AbstractRemoteProxyRuntimeClient extends AbstractProxyRunt
 		getDebugOptions().CLIENT_TRACING = DebugUtil.PROXY_CLIENT_TRACING;
 		getDebugOptions().SERVER_DEBUG_LEVEL = DebugUtil.PROXY_SERVER_DEBUG_LEVEL;
 
+	}
+
+	/**
+	 * Ensure that the remote service is initialized. This method will present
+	 * the user with a dialog box that can be canceled.
+	 * 
+	 * @param services
+	 *            remote services to initialize
+	 * @param monitor
+	 *            progress monitor to allow user to cancel operation
+	 * @return true if services initialized, false otherwise
+	 */
+	private synchronized boolean initializeRemoteServices(IRemoteServices services, IProgressMonitor monitor) {
+		SubMonitor progress = SubMonitor.convert(monitor,
+				NLS.bind(Messages.AbstractRemoteProxyRuntimeClient_16, services.getName()), 10);
+		try {
+			while (!services.isInitialized() && !progress.isCanceled()) {
+				progress.setWorkRemaining(9);
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					// Ignore
+				}
+				services.initialize();
+				progress.worked(1);
+			}
+			if (progress.isCanceled()) {
+				return false;
+			}
+		} finally {
+			if (monitor != null) {
+				monitor.done();
+			}
+		}
+		return true;
 	}
 
 	/**

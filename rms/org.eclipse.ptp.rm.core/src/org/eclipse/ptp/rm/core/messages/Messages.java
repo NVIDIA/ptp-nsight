@@ -31,6 +31,8 @@ public class Messages extends NLS {
 	public static String AbstractRemoteProxyRuntimeClient_13;
 	public static String AbstractRemoteProxyRuntimeClient_14;
 	public static String AbstractRemoteProxyRuntimeClient_15;
+
+	public static String AbstractRemoteProxyRuntimeClient_16;
 	
 	public static String AbstractRemoteCommandJob_Exception_CommandFailed;
 	public static String AbstractRemoteCommandJob_Exception_InternalError;
@@ -38,6 +40,8 @@ public class Messages extends NLS {
 	public static String AbstractToolRuntimeSystem_0;
 	public static String AbstractToolRuntimeSystem_1;
 	public static String AbstractToolRuntimeSystem_2;
+
+	public static String AbstractToolRuntimeSystem_3;
 	public static String AbstractToolRuntimeSystem_Exception_NoConnection;
 	public static String AbstractToolRuntimeSystem_Exception_NoRemoteServices;
 	public static String AbstractToolRuntimeSystem_Exception_ResourceManagerNotInitialized;

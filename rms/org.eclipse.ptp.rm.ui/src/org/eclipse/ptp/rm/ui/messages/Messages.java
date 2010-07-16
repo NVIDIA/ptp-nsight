@@ -52,6 +52,8 @@ public class Messages extends NLS {
 	public static String AbstractRemoteProxyResourceManagerConfigurationWizardPage_16;
 	public static String AbstractRemoteProxyResourceManagerConfigurationWizardPage_17;
 
+	public static String AbstractRemoteProxyResourceManagerConfigurationWizardPage_18;
+
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_0;
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_1;
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_2;
@@ -59,6 +61,8 @@ public class Messages extends NLS {
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_4;
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_5;
 	public static String AbstractRemoteResourceManagerConfigurationWizardPage_6;
+
+	public static String AbstractRemoteResourceManagerConfigurationWizardPage_7;
 	
 	public static String AbstractToolRMConfigurationWizardPage_Exception_ConnectionError;
 	public static String AbstractToolRMConfigurationWizardPage_Exception_ConnectionErrorDescription;

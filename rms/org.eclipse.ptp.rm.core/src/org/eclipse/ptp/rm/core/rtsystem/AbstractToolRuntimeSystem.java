@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ptp.core.attributes.AttributeDefinitionManager;
 import org.eclipse.ptp.core.attributes.AttributeManager;
 import org.eclipse.ptp.core.attributes.BooleanAttribute;
@@ -550,10 +551,10 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 		SubMonitor subMon = SubMonitor.convert(monitor, 90);
 
 		synchronized (this) {
-			startupMonitor = monitor;
+			startupMonitor = subMon;
 		}
 
-		monitor.subTask(Messages.AbstractToolRuntimeSystem_1);
+		subMon.subTask(Messages.AbstractToolRuntimeSystem_1);
 
 		DebugUtil.trace(DebugUtil.RTS_TRACING, "RTS {0}: startup", rmConfiguration.getName()); //$NON-NLS-1$
 
@@ -563,11 +564,17 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 				throw new CoreException(new Status(IStatus.ERROR, RMCorePlugin.PLUGIN_ID,
 						Messages.AbstractToolRuntimeSystem_Exception_NoRemoteServices));
 			}
+			if (!remoteServices.isInitialized() && !initializeRemoteServices(remoteServices, subMon.newChild(1))) {
+				remoteServices = null;
+				throw new CoreException(new Status(IStatus.ERROR, RMCorePlugin.PLUGIN_ID, NLS.bind(
+						"Unable to initialize {0}", remoteServices.getName()))); //$NON-NLS-1$
+			}
+
 			IRemoteConnectionManager connectionManager = remoteServices.getConnectionManager();
 			Assert.isNotNull(connectionManager);
 
-			monitor.worked(10);
-			monitor.subTask(Messages.AbstractToolRuntimeSystem_2);
+			subMon.worked(10);
+			subMon.subTask(Messages.AbstractToolRuntimeSystem_2);
 
 			connection = connectionManager.getConnection(rmConfiguration.getConnectionName());
 			if (connection == null) {
@@ -583,7 +590,7 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 				}
 			}
 
-			if (monitor.isCanceled()) {
+			if (subMon.isCanceled()) {
 				connection.close();
 				return;
 			}
@@ -595,7 +602,7 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 				throw e;
 			}
 
-			if (monitor.isCanceled()) {
+			if (subMon.isCanceled()) {
 				connection.close();
 				return;
 			}
@@ -627,6 +634,9 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 		} finally {
 			synchronized (this) {
 				startupMonitor = null;
+			}
+			if (monitor != null) {
+				monitor.done();
 			}
 		}
 	}
@@ -699,6 +709,40 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 		Job job = jobs.get(ipJob.getID());
 		pendingJobQueue.remove(job);
 		job.cancel();
+	}
+
+	/**
+	 * Ensure that the remote service is initialized. This method will present
+	 * the user with a dialog box that can be canceled.
+	 * 
+	 * @param services
+	 *            remote services to initialize
+	 * @param monitor
+	 *            progress monitor to allow user to cancel operation
+	 * @return true if services initialized, false otherwise
+	 */
+	private synchronized boolean initializeRemoteServices(IRemoteServices services, IProgressMonitor monitor) {
+		SubMonitor progress = SubMonitor.convert(monitor, NLS.bind(Messages.AbstractToolRuntimeSystem_3, services.getName()), 10);
+		try {
+			while (!services.isInitialized() && !progress.isCanceled()) {
+				progress.setWorkRemaining(9);
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					// Ignore
+				}
+				services.initialize();
+				progress.worked(1);
+			}
+			if (progress.isCanceled()) {
+				return false;
+			}
+		} finally {
+			if (monitor != null) {
+				monitor.done();
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -795,15 +839,6 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 	}
 
 	/**
-	 * @since 2.0
-	 */
-	protected int generateIntID() {
-		int id = nextID;
-		nextID++;
-		return id;
-	}
-
-	/**
 	 * Generate a range set of count IDs
 	 * 
 	 * @param count
@@ -814,6 +849,15 @@ public abstract class AbstractToolRuntimeSystem extends AbstractRuntimeSystem {
 		int start = nextID;
 		nextID += count;
 		return new RangeSet(start, nextID - 1);
+	}
+
+	/**
+	 * @since 2.0
+	 */
+	protected int generateIntID() {
+		int id = nextID;
+		nextID++;
+		return id;
 	}
 
 	/**
