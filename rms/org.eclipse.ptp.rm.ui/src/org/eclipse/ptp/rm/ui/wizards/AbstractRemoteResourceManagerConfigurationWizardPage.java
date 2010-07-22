@@ -523,7 +523,11 @@ public abstract class AbstractRemoteResourceManagerConfigurationWizardPage exten
 				}
 			};
 			try {
-				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(runnable);
+				if (getControl().isVisible()) {
+					getContainer().run(true, true, runnable);
+				} else {
+					PlatformUI.getWorkbench().getProgressService().busyCursorWhile(runnable);
+				}
 			} catch (InvocationTargetException e) {
 				RMUIPlugin.log(e.getMessage());
 			} catch (InterruptedException e) {

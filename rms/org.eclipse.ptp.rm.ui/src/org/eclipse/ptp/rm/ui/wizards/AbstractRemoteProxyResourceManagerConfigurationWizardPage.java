@@ -1051,9 +1051,7 @@ public abstract class AbstractRemoteProxyResourceManagerConfigurationWizardPage 
 
 							};
 							try {
-								ProgressMonitorDialog dialog = new ProgressMonitorDialog(getShell());
-								dialog.setOpenOnRun(false);
-								dialog.run(true, true, op);
+								getContainer().run(true, true, op);
 							} catch (InvocationTargetException e) {
 								// return false
 							} catch (InterruptedException e) {
@@ -1101,7 +1099,11 @@ public abstract class AbstractRemoteProxyResourceManagerConfigurationWizardPage 
 				}
 			};
 			try {
-				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(runnable);
+				if (getControl().isVisible()) {
+					getContainer().run(true, true, runnable);
+				} else {
+					PlatformUI.getWorkbench().getProgressService().busyCursorWhile(runnable);
+				}
 			} catch (InvocationTargetException e) {
 				RMUIPlugin.log(e.getMessage());
 			} catch (InterruptedException e) {
