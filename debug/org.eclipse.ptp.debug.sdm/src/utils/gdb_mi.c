@@ -479,13 +479,16 @@ GetMIVarDetails(MISession *session, char *name, MIVar *mivar, int listChildren)
 float
 GetGDBVersion(MISession *session)
 {
-	MICommand *	cmd = MIGDBVersion();
-	SendCommandWait(session, cmd);
-	if (MICommandResultOK(cmd)) {
-		_gdb_version = CLIGetGDBVersion(cmd);
-		DEBUG_PRINTF(DEBUG_LEVEL_BACKEND, "------------------- gdb version: %f\n", _gdb_version);
+	MICommand *	cmd;
+	if (_gdb_version <= 0.0) {
+		cmd = MIGDBVersion();
+		SendCommandWait(session, cmd);
+		if (MICommandResultOK(cmd)) {
+			_gdb_version = CLIGetGDBVersion(cmd);
+			DEBUG_PRINTF(DEBUG_LEVEL_BACKEND, "------------------- gdb version: %f\n", _gdb_version);
+		}
+		MICommandFree(cmd);
 	}
-	MICommandFree(cmd);
 	return _gdb_version;
 }
 
