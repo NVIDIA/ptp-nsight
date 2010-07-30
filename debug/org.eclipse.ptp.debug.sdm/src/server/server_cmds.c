@@ -194,9 +194,7 @@ svr_progress(dbg_backend *db)
 		return 0;
 	}
 
-	db->db_funcs->progress();
-
-	return 0;
+	return db->db_funcs->progress();
 }
 
 int

@@ -379,6 +379,7 @@ SetDebugError(MICommand * cmd)
 		DbgSetError(DBGERR_DEBUGGER, "bad response from gdb");
 	}
 }
+
 static List *
 GetChangedVariables()
 {
@@ -605,7 +606,9 @@ SendCommandWait(MISession *sess, MICommand *cmd)
 {
 	MISessionSendCommand(sess, cmd);
 	do {
-		MISessionProgress(sess);
+		if (MISessionProgress(sess) < 0) {
+			break;
+		}
 		if (sess->out_fd == -1) {
 			DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- SendCommandWait sess->out_fd = -1\n");
 			break;
@@ -619,6 +622,7 @@ SendCommandWait(MISession *sess, MICommand *cmd)
 static int
 GDBMIStartSession(char *gdb_path, char *prog, char *path, char *work_dir, char **args, char **env, long timeout)
 {
+	int			res;
 	char *		prog_path;
 	char **		e;
 	struct stat	st;
@@ -675,34 +679,57 @@ GDBMIStartSession(char *gdb_path, char *prog, char *path, char *work_dir, char *
 
 	free(prog_path);
 
+	cmd = MIGDBVersion();
+	SendCommandWait(sess, cmd);
+	res = MICommandResultOK(cmd);
+	MICommandFree(cmd);
+	if (!res) {
+		DbgSetError(DBGERR_DEBUGGER, "Unable to determine gdb version");
+		MISessionFree(sess);
+		return DBGRES_ERR;
+	}
+
+	GDB_Version = CLIGetGDBVersion(cmd);
+	DEBUG_PRINTF(DEBUG_LEVEL_BACKEND, "------------------- gdb version: %f\n", GDB_Version);
+
 	if (*args != NULL) {
 		cmd = MIExecArguments(args);
 		SendCommandWait(sess, cmd);
+		res = MICommandResultOK(cmd);
 		MICommandFree(cmd);
+		if (!res) {
+			DbgSetError(DBGERR_DEBUGGER, "Debugger \"-exec-arguments\" command failed");
+			MISessionFree(sess);
+			return DBGRES_ERR;
+		}
 	}
 
 	for (e = env; e != NULL && *e != NULL; e++) {
 		cmd = MIGDBSet("environment", *e);
 		SendCommandWait(sess, cmd);
+		res = MICommandResultOK(cmd);
 		MICommandFree(cmd);
+		if (!res) {
+			DbgSetError(DBGERR_DEBUGGER, "Debugger \"-gdb-set\" command failed");
+			MISessionFree(sess);
+			return DBGRES_ERR;
+		}
 	}
 
 	cmd = MIGDBSet("confirm", "off");
 	SendCommandWait(sess, cmd);
+	res = MICommandResultOK(cmd);
 	MICommandFree(cmd);
+	if (!res) {
+		DbgSetError(DBGERR_DEBUGGER, "Debugger \"-gdb-set\" command failed");
+		MISessionFree(sess);
+		return DBGRES_ERR;
+	}
 
 	MISessionRegisterEventCallback(sess, AsyncCallback);
 	MISessionRegisterTargetCallback(sess, StreamTargetCallback);
 
 	DebugSession = sess;
-
-	cmd = MIGDBVersion();
-	SendCommandWait(sess, cmd);
-	if (MICommandResultOK(cmd)) {
-		GDB_Version = CLIGetGDBVersion(cmd);
-		DEBUG_PRINTF(DEBUG_LEVEL_BACKEND, "------------------- gdb version: %f\n", GDB_Version);
-	}
-	MICommandFree(cmd);
 
 	Started = 0;
 	SaveEvent(NewDbgEvent(DBGEV_OK));
@@ -746,7 +773,7 @@ GDBMIProgress(void)
 			DbgSetError(DBGERR_DEBUGGER, GetLastErrorStr());
 			ERROR_TO_EVENT(e);
 			SaveEvent(e);
-			return 0;
+			return -1;
 		}
 
 		/*
@@ -2563,17 +2590,7 @@ GetAIF(MIVar *var, int named)
 	cmd = MIVarListChildren(var->name);
 	SendCommandWait(DebugSession, cmd);
 	if (!MICommandResultOK(cmd)) {
-		if (MICommandResultClass(cmd) == MIResultRecordERROR) {
-			char *err = MICommandResultErrorMessage(cmd);
-			if (err != NULL) {
-				DbgSetError(DBGERR_DEBUGGER, err);
-				free(err);
-			} else {
-				DbgSetError(DBGERR_DEBUGGER, "got error from gdb, but no message");
-			}
-		} else {
-			DbgSetError(DBGERR_DEBUGGER, "bad response from gdb");
-		}
+		SetDebugError(cmd);
 		MICommandFree(cmd);
 		return NULL;
 	}
