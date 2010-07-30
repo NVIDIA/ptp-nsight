@@ -30,8 +30,7 @@ struct MISession {
 	int				in_fd; /* GDB input */
 	int				out_fd; /* GDB output */
 	int				pty_fd; /* App output */
-	int				pid;
-	int				exited;
+	int				pid; /* PID of gdb or -1 if no child exists */
 	int				exit_status;
 	MICommand *		command;
 	MIList *		send_queue;
@@ -64,7 +63,7 @@ extern void MISessionRegisterTargetCallback(MISession *sess, void (*callback)(ch
 extern void MISessionSetGDBPath(MISession *sess, char *path);
 extern int MISessionSendCommand(MISession *sess, MICommand *cmd);
 extern int MISessionCommandCompleted(MISession *sess);
-extern void MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds);
+extern int MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds);
 extern void MISessionGetFds(MISession *sess, int *nfds, fd_set *rfds, fd_set *wfds, fd_set *efds);
 extern int MISessionProgress(MISession *sess);
 extern void ProcessCLIResultRecord(MIResultRecord *, void *);

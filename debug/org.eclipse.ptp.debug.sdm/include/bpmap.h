@@ -6,37 +6,25 @@
  * rights to use, reproduce, and distribute this software. NEITHER THE
  * GOVERNMENT NOR THE UNIVERSITY MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
  * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. If software is modified
- * to produce derivative works, such modified software should be clearly  
+ * to produce derivative works, such modified software should be clearly
  * marked, so as not to confuse it with the version available from LANL.
  *
  * Additionally, this program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * LA-CC 04-115
  ******************************************************************************/
- 
- /*
-  * Based on the QNX Java implementation of the MI interface
-  */
 
-#ifndef _MIOUTPUT_H_
-#define _MIOUTPUT_H_
+#ifndef _BPMAP_H_
+#define _BPMAP_H_
 
-#include "MIList.h"
-#include "MIResultRecord.h"
+extern void		AddBPMap(int local, int remote, int temp);
+extern void		ClearBPMaps(void);
+extern int		IsTempBP(int id);
+extern int		GetLocalBPID(int id);
+extern int		GetRemoteBPID(int id);
+extern void		RemoveBPMap(int id);
 
-/**
- * GDB/MI response.
- */
-struct MIOutput {
-	MIResultRecord *	rr;
-	MIList *			oobs;
-};
-typedef struct MIOutput MIOutput;
-
-extern MIOutput *MIOutputNew(void);
-extern int MIParse(char *buffer, MIOutput *op);
-extern void MIOutputFree(MIOutput *op);
-#endif /* _MIOUTPUT_H_ */
+#endif /* _BPMAP_H_ */

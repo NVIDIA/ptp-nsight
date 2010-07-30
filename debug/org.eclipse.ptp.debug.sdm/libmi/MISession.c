@@ -57,7 +57,6 @@ MISessionNew(void)
 	sess->out_fd = -1;
 	sess->pty_fd = -1;
 	sess->pid = -1;
-	sess->exited = 1;
 	sess->exit_status = 0;
 	sess->command = NULL;
 	sess->send_queue = MIListNew();
@@ -98,7 +97,7 @@ HandleChild(int sig)
 	if (MISessionList != NULL) {
 		for (MIListSet(MISessionList); (sess = (MISession *)MIListGet(MISessionList)) != NULL; ) {
 			if (sess->pid == pid) {
-				sess->exited = 1;
+				sess->pid = -1;
 				sess->exit_status = stat;
 			}
 		}
@@ -123,7 +122,6 @@ MISessionStartLocal(MISession *sess, char *prog)
 {
 	int			p1[2];
 	int			p2[2];
-	int			master;
 	char *		name;
 	
 	if (pipe(p1) < 0 || pipe(p2) < 0) {
@@ -133,7 +131,6 @@ MISessionStartLocal(MISession *sess, char *prog)
 	
 	sess->in_fd = p2[1];
 	sess->out_fd = p1[0];
-	sess->exited = 0;
 	
 	signal(SIGCHLD, HandleChild);
 	signal(SIGPIPE, SIG_IGN);
@@ -360,14 +357,14 @@ ReadResponse(int fd)
  * Assumes that fds contains file descriptors ready
  * for writing.
  */
-void
+int
 MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds)
 {
 	char *		str;
 	MIOutput *	output;
 	
 	if (sess->pid == -1) {
-		return;
+		return -1;
 	}
 		
 	if (sess->in_fd != -1
@@ -403,7 +400,7 @@ MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds
 	if (sess->out_fd != -1 && FD_ISSET(sess->out_fd, rfds)) {
 		if ((str = ReadResponse(sess->out_fd)) == NULL) {
 			sess->out_fd = -1;
-			return;
+			return -1;
 		}
 		
 		/*
@@ -416,7 +413,12 @@ MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds
 			output = MIOutputNew();
 		}
 
-		MIParse(str, output);
+		if (MIParse(str, output) < 0) {
+			if (sess->command == NULL) {
+				MIOutputFree(output);
+			}
+			return -1;
+		}
 			
 		/*
 		 * The output can consist of:
@@ -473,6 +475,8 @@ MISessionProcessCommandsAndResponses(MISession *sess, fd_set *rfds, fd_set *wfds
         	sess->pty_fd = -1;
         }
     }
+
+    return 0;
 }
 
 /*
@@ -657,6 +661,8 @@ MISessionGetFds(MISession *sess, int *nfds, fd_set *rfds, fd_set *wfds, fd_set *
  * 
  * Also, we make a copy of sess->select_timeout as some select()
  * functions will modify it.
+ *
+ * Returns 0 on success or -1 if an error occurred.
  */
 int
 MISessionProgress(MISession *sess)
@@ -666,6 +672,10 @@ MISessionProgress(MISession *sess)
 	fd_set			rfds;
 	struct timeval	tv = sess->select_timeout;
 	
+	if (sess->pid == -1) {
+		return -1;
+	}
+
 	MISessionGetFds(sess, &nfds, &rfds, NULL, NULL);
 
 	for ( ;; ) {
@@ -702,7 +712,5 @@ MISessionProgress(MISession *sess)
 	}
 	
 
-	MISessionProcessCommandsAndResponses(sess, &rfds, NULL);
-	
-	return n;
+	return MISessionProcessCommandsAndResponses(sess, &rfds, NULL);
 }
