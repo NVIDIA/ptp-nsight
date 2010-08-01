@@ -255,7 +255,7 @@ public abstract class AbstractProxyClient implements IProxyClient {
 	 */
 	public void sendCommand(IProxyCommand cmd) throws IOException {
 		if (!isReady()) {
-			throw new IOException(Messages.AbstractProxyClient_0);
+			throw new IOException(Messages.getString("AbstractProxyClient_0"));
 		}
 		ProxyPacket packet = new ProxyPacket(cmd);
 		if (getDebugOptions().PROTOCOL_TRACING) {
@@ -336,11 +336,11 @@ public abstract class AbstractProxyClient implements IProxyClient {
 				} catch (ClosedByInterruptException e) {
 					error = true;
 					fireProxyMessageEvent(new ProxyMessageEvent(Level.WARNING,
-							Messages.AbstractProxyClient_1));
+							Messages.getString("AbstractProxyClient_1")));
 				} catch (IOException e) {
 					error = true;
 					fireProxyMessageEvent(new ProxyMessageEvent(Level.FATAL,
-							Messages.AbstractProxyClient_2));
+							Messages.getString("AbstractProxyClient_2")));
 				} finally {
 					try {
 						sessSvrSock.close();
@@ -355,7 +355,7 @@ public abstract class AbstractProxyClient implements IProxyClient {
 							error = true;
 							fireProxyMessageEvent(new ProxyMessageEvent(
 									Level.WARNING,
-									Messages.AbstractProxyClient_3));
+									Messages.getString("AbstractProxyClient_3")));
 						}
 						if (!error && state == SessionState.WAITING) {
 							state = SessionState.CONNECTED;
@@ -508,7 +508,7 @@ public abstract class AbstractProxyClient implements IProxyClient {
 
 		synchronized (state) {
 			if (state != SessionState.CONNECTED) {
-				throw new IOException(Messages.AbstractProxyClient_4);
+				throw new IOException(Messages.getString("AbstractProxyClient_4")); //$NON-NLS-1$
 			}
 			state = SessionState.RUNNING;
 		}
