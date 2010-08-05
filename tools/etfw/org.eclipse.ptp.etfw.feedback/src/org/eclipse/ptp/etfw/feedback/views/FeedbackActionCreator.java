@@ -14,8 +14,6 @@ package org.eclipse.ptp.etfw.feedback.views;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.ptp.etfw.feedback.AbstractFeedbackAction;
 import org.eclipse.ptp.etfw.feedback.Activator;
@@ -49,8 +47,6 @@ public class FeedbackActionCreator {
 	public AbstractFeedbackAction findFeedbackAction(String viewID) {
 		final String pid = Activator.PLUGIN_ID;
 		final String extid = Activator.FEEDBACK_ACTION_EXTENSION_ID;
-		IExtensionRegistry ier = Platform.getExtensionRegistry();
-		IExtensionPoint ixp = ier.getExtensionPoint(pid, extid);
 		IExtension[] extensions = Platform.getExtensionRegistry().getExtensionPoint(pid, extid).getExtensions();
 		for (int i = 0; i < extensions.length; i++) {
 			IExtension extn = extensions[i];
@@ -66,7 +62,6 @@ public class FeedbackActionCreator {
 				// Could have multiple later??
 				if (traceOn)
 					System.out.println(ice.getAttributeNames());
-				String id = ice.getAttribute("id");// is this the plugin id? no //$NON-NLS-1$
 				String className = ice.getAttribute(ATTR_CLASSNAME);
 				String name = ice.getAttribute(ATTR_NAME);
 				String icon = ice.getAttribute(ATTR_ICON);
@@ -78,16 +73,9 @@ public class FeedbackActionCreator {
 					if (!actionViewID.equals(viewID))
 						continue;
 				}
-				String[] ans = ice.getAttributeNames();
 				if (traceOn)
 					System.out.println("class=" + className + "   name=" + name); //$NON-NLS-1$ //$NON-NLS-2$
-				// Determine if this action extension is for the view in the
-				// current plugin
-				String nsi = ice.getNamespaceIdentifier();// identifies which
-															// plugin this
-															// extension comes
-															// from
-				Object parent = ice.getParent();
+
 				Object obj = null;
 				try {
 					obj = ice.createExecutableExtension(ATTR_CLASSNAME);// err

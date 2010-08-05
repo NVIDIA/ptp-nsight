@@ -321,7 +321,7 @@ public class MarkerManager {
 			}
 			if (item.hasChildren()) {
 				List<IFeedbackItem> kids = item.getChildren();
-				for (Iterator iterator2 = kids.iterator(); iterator2.hasNext();) {
+				for (Iterator<IFeedbackItem> iterator2 = kids.iterator(); iterator2.hasNext();) {
 					IFeedbackItem kid = (IFeedbackItem) iterator2.next();
 					String parentid = item.getID();
 					String namePrefix = "";//"Bottleneck: ";   //$NON-NLS-1$
