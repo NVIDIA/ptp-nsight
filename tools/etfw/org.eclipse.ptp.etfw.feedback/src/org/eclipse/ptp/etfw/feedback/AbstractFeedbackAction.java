@@ -30,7 +30,6 @@ import org.eclipse.ptp.etfw.feedback.obj.IFeedbackItem;
  */
 public abstract class AbstractFeedbackAction {
 	private String iconName;
-	private String tooltip;
 
 	/**
 	 * What is a better arg to run(), the IFeedbackItem, or the IMarker? We'll
