@@ -144,9 +144,6 @@ public class ShowFeedbackHandler extends AbstractHandler {
 			//       how to read this type
 			final String pid=Activator.PLUGIN_ID;
 			final String extid=Activator.FEEDBACK_EXTENSION_ID;
-			IExtensionRegistry ier=Platform.getExtensionRegistry();
-			IExtensionPoint ixp=ier.getExtensionPoint(pid,extid);
-			IExtension[] xs =ixp.getExtensions();
 			IExtension[] extensions = Platform.getExtensionRegistry().getExtensionPoint(pid, extid).getExtensions();
 			for (int i = 0; i < extensions.length; i++) {
 				IExtension extn=extensions[i];
@@ -161,13 +158,11 @@ public class ShowFeedbackHandler extends AbstractHandler {
 					// specifically: something that can parse this file and return
 					// things that implement the IFeedbackItem interface.
 					if(traceOn)System.out.println(ice.getAttributeNames());
-					String id=ice.getAttribute("id"); //$NON-NLS-1$
 					String nodeName=ice.getAttribute("nodeName"); //$NON-NLS-1$
 
 					if(rootNode.equals(nodeName)) {
 						// we found a match!
-						if(traceOn)System.out.println("match! "+rootNode); //$NON-NLS-1$
-					
+						if(traceOn)System.out.println("match! "+rootNode); //$NON-NLS-1$				
 						String className = ice.getAttribute(ATTR_CLASSNAME);
 						String name=ice.getAttribute(ATTR_NAME);
 						if(traceOn)System.out.println("class="+className+"   name="+name); //$NON-NLS-1$ //$NON-NLS-2$
