@@ -203,7 +203,7 @@ public class MarkerManager {
 	 * @param lineNo
 	 * @param desc
 	 * @return
-	 * @since 2.0
+	 * @since 3.0
 	 */
 	public Map<String, Object> createCommonMarkers(IFeedbackItem item, String itemID, String name, String parentID, String filename, String pathname,
 			int lineNo,  String desc) {
