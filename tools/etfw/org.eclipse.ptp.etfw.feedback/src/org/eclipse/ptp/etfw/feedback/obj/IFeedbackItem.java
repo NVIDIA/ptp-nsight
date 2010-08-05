@@ -18,6 +18,11 @@ import java.util.List;
  * An IFeedbackItem has some standard info, like name, file, lineNo, etc
  * <br>
  * And some variable data, which will fill in the (variable number of) other columns.
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class or interface has been added as part
+ * of a work in progress. There is no guarantee that this API will work or that
+ * it will remain the same. We do not recommending using this API without consulting with
+ * the etfw.feedback team.
  * @author beth tibbitts
  *
  */
@@ -59,6 +64,13 @@ public interface IFeedbackItem {
 	 * @since 2.0
 	 */
 	public Object getObject();
+	
+ 
+	
+	/**  @since 3.0 	 */
+	public String getAttr(String key);
+	/**  @since 3.0 	 */
+	public Object getObject(String key);
 	
 	
 	
