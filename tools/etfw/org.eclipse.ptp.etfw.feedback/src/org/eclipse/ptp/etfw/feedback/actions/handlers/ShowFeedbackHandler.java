@@ -49,6 +49,12 @@ import org.xml.sax.SAXException;
  * Our sample handler extends AbstractHandler, an IHandler base class.
  * @see org.eclipse.core.commands.IHandler
  * @see org.eclipse.core.commands.AbstractHandler
+ * 
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class or interface has been added as part
+ * of a work in progress. There is no guarantee that this API will work or that
+ * it will remain the same. We do not recommending using this API without consulting with
+ * the etfw.feedback team.
  */
 public class ShowFeedbackHandler extends AbstractHandler {
 	private static final String ATTR_NAME = "name"; //$NON-NLS-1$

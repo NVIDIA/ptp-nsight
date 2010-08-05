@@ -13,9 +13,11 @@ package org.eclipse.ptp.etfw.feedback;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -26,8 +28,11 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ptp.etfw.feedback.messages.Messages;
 import org.eclipse.ptp.etfw.feedback.obj.IFeedbackItem;
+import org.eclipse.ptp.etfw.feedback.preferences.PreferenceConstants;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -38,8 +43,6 @@ import org.w3c.dom.Node;
  */
 public class MarkerManager {
 	private static final boolean traceOn = false;
-
-	String srcTempPathname = "/Users/beth/ews/runtime-compiler-xform-test/MyHPCSTproject/src"; //$NON-NLS-1$
 
 	static String path;
 	static String filename;
@@ -191,17 +194,19 @@ public class MarkerManager {
 	/**
 	 * Create marker attributes common to all marker items.
 	 * 
+	 * @param item the IFeedback item that this marker represents.  
 	 * @param itemID
 	 * @param name
 	 * @param parentID
 	 * @param filename
-	 * @param pathname
+	 * @param pathname possibly not used?
 	 * @param lineNo
 	 * @param desc
 	 * @return
+	 * @since 2.0
 	 */
-	public Map<String, Object> createCommonMarkers(String itemID, String name, String parentID, String filename, String pathname,
-			int lineNo, /* String function, */String desc) {
+	public Map<String, Object> createCommonMarkers(IFeedbackItem item, String itemID, String name, String parentID, String filename, String pathname,
+			int lineNo,  String desc) {
 		Map<String, Object> attrs = new HashMap<String, Object>();
 
 		attrs.put(FeedbackIDs.FEEDBACK_ATTR_ID, itemID);
@@ -209,10 +214,11 @@ public class MarkerManager {
 		attrs.put(FeedbackIDs.FEEDBACK_ATTR_NAME, name);
 		attrs.put(FeedbackIDs.FEEDBACK_ATTR_FILENAME, filename);
 		attrs.put(FeedbackIDs.FEEDBACK_ATTR_PARENT, parentID);
-		// attrs.put(FeedbackIDs.FEEDBACK_ATTR_FUNCTION, function);
-		attrs.put(FeedbackIDs.FEEDBACK_ATTR_FUNCTION_CALLEE, ""); // set to blank, may be overridden if values are available //$NON-NLS-1$
+ 
 		attrs.put(FeedbackIDs.FEEDBACK_ATTR_PATHNAME, pathname);
 		attrs.put(IMarker.LINE_NUMBER, new Integer(lineNo));
+		
+		attrs.put(FeedbackIDs.FEEDBACK_ATTR_ITEM, item);
 
 		// later, set the marker to more precise location - but omit for now, or
 		// else lineNumber won't be used
@@ -246,23 +252,48 @@ public class MarkerManager {
 	 * @param itemlist
 	 */
 	public void createMarkers(List<IFeedbackItem> itemlist, String markerID) {
-
-		boolean dbgTags = true;
-		// HACK we need to be able to remove markers on (all?) files in the
-		// list.
-		// What if some markers were from other things? need to use only our
-		// specific plugin's marker id.
-		String f1 = itemlist.get(0).getFile();
-		IResource res1 = getResource(f1);
-		try {
-			removeMarkers(res1, markerID);
-		} catch (Exception e) {
-			System.out.println("Error deleting markers on file: " + res1); //$NON-NLS-1$
-			e.printStackTrace();
+		boolean dbgTags = false;
+		if(itemlist.size()==0) {
+			IPreferenceStore pf = Activator.getDefault().getPreferenceStore();
+			boolean showDialog = pf.getBoolean(PreferenceConstants.P_SHOW_NO_ITEMS_FOUND_DIALOG);
+			System.out.println("showDialog="+showDialog);
+			if (showDialog) {
+				String title = Messages.MarkerManager_noFeedbackItemsFoundTitle;
+				String msg = Messages.MarkerManager_noFeedbackItemsFoundMessage;
+				// MessageDialog.openInformation(null, title, msg);
+				String togMsg = Messages.MarkerManager_dontShowMeThisAgain;
+				MessageDialogWithToggle.openInformation(null, title, msg.toString(), togMsg, false, pf,
+						PreferenceConstants.P_SHOW_NO_ITEMS_FOUND_DIALOG);
+			}
+			return;
 		}
+		// Will we need this list of the files elsewhere? should we keep it elsewhere?
+		Set<String> files=new HashSet<String>();
+		for (Iterator iterator = itemlist.iterator(); iterator.hasNext();) {
+			IFeedbackItem item = (IFeedbackItem) iterator.next();
+			String f1 = item.getFile();
+			if( (f1!=null) && (!files.contains(f1))  ) {
+				files.add(f1);
+				if(traceOn)System.out.println("Source file: "+f1);// print each unique one we find
+			}
+		} 
+		 
+		// remove "our" markers on all source files referenced in this file
+		IResource res = null;
+		for (Iterator iterator = files.iterator(); iterator.hasNext();) {
+			String filename = (String) iterator.next();
+			res=getResource(filename);
+			try {
+				removeMarkers(res, markerID);
+			} catch (Exception e) {
+				System.out.println("Error deleting markers on file: " + res); //$NON-NLS-1$
+				//e.printStackTrace();
+			}
+		}
+
 		// for root nodes, may have no parent ID
 		String parentID = ""; //$NON-NLS-1$
-		IFeedbackItem temp = itemlist.get(0);
+		//IFeedbackItem temp = itemlist.get(0);
 		int count = 0;
 		Map<String, Object> attrs;
 
@@ -275,16 +306,13 @@ public class MarkerManager {
 			String desc = item.getDescription();
 			String itemID = item.getID();
 			parentID = item.getParentID();
-			String pathname = "";//srcTempPathname; // we assume it's fully qualified filename now //$NON-NLS-1$
-			if (filename.contains(Path.SEPARATOR + "")) { //$NON-NLS-1$
+			String pathname = ""; // we assume it's fully qualified filename now //$NON-NLS-1$
+			if (filename!=null && filename.contains(Path.SEPARATOR + "")) { //$NON-NLS-1$
 				IPath path = new Path(filename);
 				pathname = path.removeLastSegments(1).toString();
 				filename = path.segment(path.segmentCount() - 1);
 			}
-			attrs = createCommonMarkers(itemID, name, parentID, filename, pathname, lineNo, /*
-																							 * function
-																							 * ,
-																							 */desc);
+			attrs = createCommonMarkers(item, itemID, name, parentID, filename, pathname, lineNo, desc);
 
 			IResource resource = getResource(pathname, filename);
 			if (resource != null) {
@@ -307,11 +335,10 @@ public class MarkerManager {
 					int uid = counter++; // need something unique
 					String uidStr = Integer.toString(uid);
 					// make file/location the same as parent
-					attrs = createCommonMarkers(uidStr, kname, parentid, filename, pathname, lineNo, kid.getDescription());
+					attrs = createCommonMarkers(kid, uidStr, kname, parentid, filename, pathname, lineNo, kid.getDescription());
 					createMarker(resource, attrs, markerID);
 					boolean gkids = kid.hasChildren();
-					// fixme make this recursive so level of hierarchy doesn't
-					// matter
+					// fixme make this recursive so level of hierarchy doesn't  matter
 					if (gkids) {
 						if (traceOn)
 							System.out.println("grandkids"); //$NON-NLS-1$
@@ -319,8 +346,8 @@ public class MarkerManager {
 						for (Object gkid : gkidItems) {
 							IFeedbackItem gki = (IFeedbackItem) gkid;
 							String gkNamePrefix = Messages.MarkerManager_solution; // HACK
-							attrs = createCommonMarkers(gki.getID(), gkNamePrefix + gki.getName(), uidStr, filename,
-									srcTempPathname, lineNo, gki.getDescription());
+							attrs = createCommonMarkers(gki, gki.getID(), gkNamePrefix + gki.getName(), uidStr, filename,
+									pathname, lineNo,  gki.getDescription());
 							createMarker(resource, attrs, markerID);
 						}
 					}
