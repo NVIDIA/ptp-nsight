@@ -31,6 +31,8 @@ import org.eclipse.ptp.etfw.feedback.preferences.PreferenceConstants;
  * it will remain the same. We do not recommending using this API without consulting with
  * the etfw.feedback team.
  * 
+ * UNUSED?
+ * 
  * @author beth tibbitts
  * 
  */
