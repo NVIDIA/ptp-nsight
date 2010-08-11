@@ -360,14 +360,15 @@ GDBMIStartSession(char *gdb_path, char *prog, char *path, char *work_dir, char *
 	cmd = MIGDBVersion();
 	SendCommandWait(sess, cmd);
 	res = MICommandResultOK(cmd);
-	MICommandFree(cmd);
 	if (!res) {
+		MICommandFree(cmd);
 		DbgSetError(DBGERR_DEBUGGER, "Unable to determine gdb version");
 		MISessionFree(sess);
 		return DBGRES_ERR;
 	}
 
 	GDB_Version = CLIGetGDBVersion(cmd);
+	MICommandFree(cmd);
 	DEBUG_PRINTF(DEBUG_LEVEL_BACKEND, "------------------- gdb version: %f\n", GDB_Version);
 
 	if (*args != NULL) {
