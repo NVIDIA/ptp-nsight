@@ -127,11 +127,10 @@ char *secondaryPrompt = ">"; //$NON-NLS-1$
  * @param mi MIOutput
  * @see MIOutput
  */
-int
-MIParse(char *buffer, MIOutput *mi)
-{
+ void
+ MIParse(char *buffer, MIOutput *mi) 
+ {
 	int id = -1;
-	int ret = -1;
 	char *s;
 	char *token;
 
@@ -152,12 +151,9 @@ MIParse(char *buffer, MIOutput *mi)
 		if (*token != '\0') {
 			if (*token == '^') {
 				token++;
-				if ((mi->rr = processMIResultRecord(token, id)) == NULL) {
-					return -1;
-				}
+				mi->rr = processMIResultRecord(token, id);
 			} else if (strncmp(token, primaryPrompt, strlen(primaryPrompt)) == 0) {
-				ret = 0;
-				break;
+				//break; // Do nothing.
 			} else {
 				MIOOBRecord *oob = processMIOOBRecord(token, id);
 				if (oob != NULL) {
@@ -169,7 +165,6 @@ MIParse(char *buffer, MIOutput *mi)
 			}
 		}
 	}
-	return ret;
 }
 
 /**
@@ -196,8 +191,8 @@ processMIResultRecord(char *buffer, int id)
 		rr->resultClass = MIResultRecordCONNECTED;
 		buffer += 9;
 	} else {
-		free(rr);
-		return NULL;
+		// FIXME:
+		// Error throw an exception?
 	}
 
 	// Results are separated by commas.
@@ -317,7 +312,7 @@ processMIResult(char **buffer)
 		*buffer = equal;
 		value = processMIValue(buffer);
 		result->value = value;
-	} else if (*(*buffer) != '\0' && *(*buffer) == '"') {
+	} else if(*(*buffer) != '\0' && *(*buffer) == '"') {
 		// This an error but we just swallow it and move on.
 		value = processMIValue(buffer);
 		result->value = value;

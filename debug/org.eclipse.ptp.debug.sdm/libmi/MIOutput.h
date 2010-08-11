@@ -37,6 +37,6 @@ struct MIOutput {
 typedef struct MIOutput MIOutput;
 
 extern MIOutput *MIOutputNew(void);
-extern int MIParse(char *buffer, MIOutput *op);
+extern void MIParse(char *buffer, MIOutput *op);
 extern void MIOutputFree(MIOutput *op);
 #endif /* _MIOUTPUT_H_ */

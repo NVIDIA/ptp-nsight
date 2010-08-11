@@ -452,7 +452,7 @@ GDBMIProgress(void)
 			DbgSetError(DBGERR_DEBUGGER, GetLastErrorStr());
 			ERROR_TO_EVENT(e);
 			SaveEvent(e);
-			return -1;
+			return 0;
 		}
 
 		/*

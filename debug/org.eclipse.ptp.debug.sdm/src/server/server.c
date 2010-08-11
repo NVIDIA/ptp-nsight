@@ -168,9 +168,7 @@ server(dbg_backend *dbgr)
 		if (sdm_progress() < 0) {
 			svr_shutdown(dbgr);
 		}
-		if (svr_progress(dbgr) < 0) {
-			break;
-		}
+		svr_progress(dbgr);
 	}
 }
 
