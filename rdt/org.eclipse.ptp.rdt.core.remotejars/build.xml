@@ -396,7 +396,7 @@ $ENV{LD_LIBRARY_PATH}=$dir:$LD_LIBRARY_PATH;
 		<replace file="${remoteServerTempDir}/daemon.pl">
 			<replacetoken>if (defined ($oldClasspath))</replacetoken>
 			<replacevalue>$ENV{LD_LIBRARY_PATH}=$dir:$LD_LIBRARY_PATH;
-if (defined ($oldClasspath))
+			if (defined ($oldClasspath))
 			</replacevalue>
 		</replace>
 	</target>
@@ -436,9 +436,9 @@ export serverpath CLASSPATH LIBPATH
 		<replace token="java " value="java ${defaultJVMHeapSize} " file="${remoteServerTempDir}/daemon.pl"/>
 		
 		<replace file="${remoteServerTempDir}/daemon.pl">
-			<replacetoken>export serverpath CLASSPATH</replacetoken>
-			<replacevalue>LIBPATH=$serverpath:$LIBPATH;
-export serverpath CLASSPATH LIBPATH
+			<replacetoken>if (defined ($oldClasspath))</replacetoken>
+			<replacevalue>$ENV{LD_LIBRARY_PATH}=$dir:$LD_LIBRARY_PATH;
+			if (defined ($oldClasspath))
 			</replacevalue>
 		</replace>
 	</target>
