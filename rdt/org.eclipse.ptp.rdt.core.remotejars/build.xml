@@ -351,9 +351,10 @@
 			
 	<target name="prepare.remote.tar">
 		<property name="platform" value="linux"/>
+		<property name="jarplatform" value="linux"/>
 			
 		<delete dir="${remoteServerTempDir}"/>
-		<untar src="${downloads}/${dStoreBaseName}-${platform}.tar" dest="${remoteServerTempDir}"/>
+		<untar src="${downloads}/${dStoreBaseName}-${jarplatform}.tar" dest="${remoteServerTempDir}"/>
 		
 		<!-- Add CDTMiner to minerFile.dat -->
 		<concat destfile="${remoteServerTempDir}/minerFile.dat" append="true">org.eclipse.ptp.internal.rdt.core.miners.CDTMiner</concat>
@@ -456,9 +457,10 @@ export serverpath CLASSPATH LIBPATH
 	
 	<target name="prepare.remote.zip">
 		<property name="platform" value="windows"/>
+		<property name="jarplatform" value="windows"/>
 			
 		<delete dir="${remoteServerTempDir}"/>
-		<unzip src="${downloads}/${dStoreBaseName}-${platform}.zip" dest="${remoteServerTempDir}"/>
+		<unzip src="${downloads}/${dStoreBaseName}-${jarplatform}.zip" dest="${remoteServerTempDir}"/>
 
 		<!-- Add CDTMiner to minerFile.dat -->
 		<concat destfile="${remoteServerTempDir}/minerFile.dat" append="true">org.eclipse.ptp.internal.rdt.core.miners.CDTMiner</concat>
@@ -474,9 +476,10 @@ export serverpath CLASSPATH LIBPATH
 	
 	<target name="prepare.remote.jar">
 		<property name="platform" value="linux"/>
+		<property name="jarplatform" value="linux"/>
 			
 		<delete dir="${remoteServerTempDir}"/>
-		<untar src="${downloads}/${dStoreBaseName}-${platform}.tar" dest="${remoteServerTempDir}"/>
+		<untar src="${downloads}/${dStoreBaseName}-${jarplatform}.tar" dest="${remoteServerTempDir}"/>
 		
 		<!-- Add CDTMiner to minerFile.dat -->
 		<concat destfile="${remoteServerTempDir}/minerFile.dat" append="true">org.eclipse.ptp.internal.rdt.core.miners.CDTMiner</concat>
@@ -559,13 +562,13 @@ export serverpath CLASSPATH LIBPATH
 		
 	<target name="add.so.macosx">
 	</target>
-	
-	
+		
 	<target name="add.so.windows">
 	</target>
 	
 	<target name="tar.remote" depends="prepare.remote.tar, assemble.remote">
 		<property name="platform" value="linux"/>
+		<property name="jarplatform" value="linux"/>
 			
 		<tar destfile="${serverJar}-${platform}-${serverVersion}.tar">
 			<fileset dir="${basedir}">
@@ -581,6 +584,7 @@ export serverpath CLASSPATH LIBPATH
 
 	<target name="zip.remote" depends="prepare.remote.zip, assemble.remote">
 		<property name="platform" value="windows"/>
+		<property name="jarplatform" value="windows"/>
 			
 		<zip destfile="${serverJar}-${platform}-${serverVersion}.zip">
 			<fileset dir="${basedir}">
@@ -614,21 +618,27 @@ export serverpath CLASSPATH LIBPATH
 		<antcall target="zip.remote"/>
 		<antcall target="tar.remote">
 			<param name="platform" value="linux"/>
+			<param name="jarplatform" value="linux"/>
 		</antcall>
 		<antcall target="tar.remote">
 			<param name="platform" value="unix"/>
+			<param name="jarplatform" value="unix"/>
 		</antcall>
 		<antcall target="tar.remote">
 			<param name="platform" value="macosx"/>
+			<param name="jarplatform" value="macosx"/>
 		</antcall>
 		<antcall target="tar.remote">
 			<param name="platform" value="aix"/>
+			<param name="jarplatform" value="unix"/>
 		</antcall>
 		<antcall target="tar.remote">
 			<param name="platform" value="linux.ppc"/>
+			<param name="jarplatform" value="linux"/>
 		</antcall>
 		<antcall target="tar.remote">
 			<param name="platform" value="linux.x86"/>
+			<param name="jarplatform" value="linux"/>
 		</antcall>		
 		<antcall target="jar.remote"/>
 	</target>
