@@ -560,10 +560,9 @@ export serverpath CLASSPATH LIBPATH
 	<target name="add.so.macosx">
 	</target>
 	
-	<!--
+	
 	<target name="add.so.windows">
 	</target>
-	-->
 	
 	<target name="tar.remote" depends="prepare.remote.tar, assemble.remote">
 		<property name="platform" value="linux"/>
