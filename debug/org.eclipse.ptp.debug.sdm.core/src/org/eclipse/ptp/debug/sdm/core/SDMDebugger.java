@@ -398,25 +398,34 @@ public class SDMDebugger implements IPDebugger {
 	 */
 	private void prepareRoutingFile(ILaunchConfiguration configuration, AttributeManager attrMgr, IProgressMonitor monitor)
 			throws CoreException {
-		IPath routingFilePath = new Path(attrMgr.getAttribute(JobAttributes.getWorkingDirectoryAttributeDefinition()).getValue());
-		routingFilePath = routingFilePath.append("routing_file"); //$NON-NLS-1$
+		SubMonitor progress = SubMonitor.convert(monitor, 10);
 
-		IResourceManagerControl rm = (IResourceManagerControl) getResourceManager(configuration);
-		IResourceManagerConfiguration conf = rm.getConfiguration();
-		IRemoteServices remoteServices = PTPRemoteCorePlugin.getDefault().getRemoteServices(conf.getRemoteServicesId());
-		IRemoteConnectionManager rconnMgr = remoteServices.getConnectionManager();
-		IRemoteConnection rconn = rconnMgr.getConnection(conf.getConnectionName());
-		IRemoteFileManager remoteFileManager = remoteServices.getFileManager(rconn);
+		try {
+			IPath routingFilePath = new Path(attrMgr.getAttribute(JobAttributes.getWorkingDirectoryAttributeDefinition())
+					.getValue());
+			routingFilePath = routingFilePath.append("routing_file"); //$NON-NLS-1$
 
-		fRoutingFileStore = remoteFileManager.getResource(routingFilePath.toString());
+			IResourceManagerControl rm = (IResourceManagerControl) getResourceManager(configuration);
+			IResourceManagerConfiguration conf = rm.getConfiguration();
+			IRemoteServices remoteServices = PTPRemoteCorePlugin.getDefault().getRemoteServices(conf.getRemoteServicesId());
+			IRemoteConnectionManager rconnMgr = remoteServices.getConnectionManager();
+			IRemoteConnection rconn = rconnMgr.getConnection(conf.getConnectionName());
+			IRemoteFileManager remoteFileManager = remoteServices.getFileManager(rconn);
 
-		if (fRoutingFileStore.fetchInfo(EFS.NONE, monitor).exists()) {
-			try {
-				fRoutingFileStore.delete(0, monitor);
-			} catch (CoreException e) {
-				throw newCoreException(e.getLocalizedMessage());
+			fRoutingFileStore = remoteFileManager.getResource(routingFilePath.toString());
+
+			if (fRoutingFileStore.fetchInfo(EFS.NONE, progress.newChild(3)).exists()) {
+				try {
+					fRoutingFileStore.delete(0, progress.newChild(2));
+				} catch (CoreException e) {
+					throw newCoreException(e.getLocalizedMessage());
+				}
+				fRoutingFileStore.fetchInfo();
 			}
-			fRoutingFileStore.fetchInfo();
+		} finally {
+			if (monitor != null) {
+				monitor.done();
+			}
 		}
 	}
 
@@ -451,26 +460,27 @@ public class SDMDebugger implements IPDebugger {
 			Random random = new Random();
 			for (Integer processIndex : new BitSetIterable(processJobRanks)) {
 				String nodeId = pJob.getProcessNodeId(processIndex);
-				IPNode node = pJob.getQueue().getResourceManager().getNodeById(nodeId);
-				if (node == null) {
+				if (nodeId == null) {
 					subMon.subTask(Messages.SDMDebugger_10);
-				}
-				while (node == null && !subMon.isCanceled()) {
-					try {
-						wait(3000);
-					} catch (InterruptedException e) {
-						// ignore
+					while (nodeId == null && !subMon.isCanceled()) {
+						try {
+							wait(3000);
+						} catch (InterruptedException e) {
+							// ignore
+						}
+						nodeId = pJob.getProcessNodeId(processIndex);
+						subMon.worked(1);
 					}
-					node = pJob.getQueue().getResourceManager().getNodeById(nodeId);
 				}
+				IPNode node = pJob.getQueue().getResourceManager().getNodeById(nodeId);
 				if (node == null) {
 					throw newCoreException(Messages.SDMDebugger_15);
 				}
 				String nodeName = node.getName();
 				int portNumber = base + random.nextInt(range);
 				pw.format("%s %s %d\n", processIndex, nodeName, portNumber); //$NON-NLS-1$
-				subMon.setWorkRemaining(100);
-				subMon.worked(1);
+				subMon.setWorkRemaining(60);
+				subMon.worked(10);
 			}
 			pw.close();
 			try {
