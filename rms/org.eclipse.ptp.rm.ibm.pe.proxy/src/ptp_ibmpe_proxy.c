@@ -379,15 +379,21 @@ static struct option longopts[] = {
     {   "debug", required_argument, NULL, 'D'},
     {   "runMiniproxy", no_argument, NULL, 'M'},
     {   NULL, 0, NULL, 0}
-};
-static char *libpath[] = {NULL, "/opt/ibmll/LoadL/full/lib/",
-    "/opt/ibmll/LoadL/so/lib/", (char *) -1
-};
-static char *libname = "libllapi.so";
-#else
-static char *libpath[] = { NULL, "/usr/lpp/LoadL/full/lib", "/usr/lpp/LoadL/so/lib", "/opt/ibmll/LoadL/full/lib/",
-        "/opt/ibmll/LoadL/so/lib/", (char *) -1 };
-static char *libname = "libllapi.a";
+    static char *libpath[] = {NULL,
+    		"/opt/ibmll/LoadL/full/lib/",
+    		"/opt/ibmll/LoadL/scheduler/full/lib",
+    		"/opt/ibmll/LoadL/so/lib/",
+    		(char *) -1
+    };
+    static char *libname = "libllapi.so";
+    #else
+    static char *libpath[] = { NULL,
+    		"/usr/lpp/LoadL/full/lib",
+    		"/usr/lpp/LoadL/so/lib",
+    		"/opt/ibmll/LoadL/full/lib/",
+            	"/opt/ibmll/LoadL/so/lib/",
+    		(char *) -1 };
+    static char *libname = "libllapi.a";
 #endif
 
 #ifdef HAVE_LLAPI_H
