@@ -1387,6 +1387,7 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 	 */
 	protected void getDirectory(FileSelectorRowWidget selector, String titleID,
 			String pathAttrID) {
+		String dirName;
 		String selectedFile = null;
 
 		print_message(TRACE_MESSAGE, ">>> " + this.getClass().getName() //$NON-NLS-1$
@@ -1394,9 +1395,12 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 		if (remoteUIService != null) {
 			IRemoteUIFileManager fmgr = remoteUIService.getUIFileManager();
 			fmgr.setConnection(remoteConnection);
+			dirName = getFileDialogPath(pathAttrID);
+			if (dirName.length() == 0) {
+				dirName = remoteConnection.getWorkingDirectory();
+			}
 			selectedFile = fmgr.browseDirectory(parentShell,
-					Messages.getString(titleID), getFileDialogPath(pathAttrID),
-					0).toString();
+					Messages.getString(titleID), dirName, 0).toString();
 		}
 		if (selectedFile != null) {
 			String parentDir;
@@ -1426,12 +1430,12 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 
 		print_message(TRACE_MESSAGE, ">>> " + this.getClass().getName() //$NON-NLS-1$
 				+ ":getFileDialogPath entered."); //$NON-NLS-1$
-		dir = "/"; //$NON-NLS-1$
+		dir = ""; //$NON-NLS-1$
 		if (currentLaunchConfig != null) {
 			try {
-				dir = currentLaunchConfig.getAttribute(attrName, "/"); //$NON-NLS-1$
+				dir = currentLaunchConfig.getAttribute(attrName, ""); //$NON-NLS-1$
 			} catch (CoreException e) {
-				dir = "/"; //$NON-NLS-1$
+				dir = ""; //$NON-NLS-1$
 			}
 		}
 		print_message(TRACE_MESSAGE, "<<< " + this.getClass().getName() //$NON-NLS-1$
@@ -1457,10 +1461,24 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 		print_message(TRACE_MESSAGE, ">>> " + this.getClass().getName() //$NON-NLS-1$
 				+ ":getInputFile entered."); //$NON-NLS-1$
 		if (remoteUIService != null) {
+			File inputFile;
+			String inputDir;
+			
 			IRemoteUIFileManager fmgr = remoteUIService.getUIFileManager();
 			fmgr.setConnection(remoteConnection);
+			inputDir = getFileDialogPath(pathAttrID);
+			if (inputDir.length() == 0) {
+				inputDir = remoteConnection.getWorkingDirectory();
+			}
+			else {
+				inputFile = new File(inputDir);
+				inputDir = inputFile.getParent();
+				if (inputDir == null) {
+					inputDir = remoteConnection.getWorkingDirectory();
+				}
+			}
 			selectedFile = fmgr.browseFile(parentShell, Messages
-					.getString(titleID), getFileDialogPath(pathAttrID), 0);
+					.getString(titleID), inputDir, 0);
 		}
 		if (selectedFile != null) {
 			saveFileDialogPath(pathAttrID, selectedFile);
@@ -1540,10 +1558,24 @@ public class IBMLLRMLaunchConfigurationDynamicTab extends
 		print_message(TRACE_MESSAGE, ">>> " + this.getClass().getName() //$NON-NLS-1$
 				+ ":getOutputFile entered."); //$NON-NLS-1$
 		if (remoteUIService != null) {
+			String outputPath;
+			File outputDir;
+			
 			IRemoteUIFileManager fmgr = remoteUIService.getUIFileManager();
 			fmgr.setConnection(remoteConnection);
+			outputPath = getFileDialogPath(pathAttrID);
+			if (outputPath.length() == 0) {
+				outputPath = remoteConnection.getWorkingDirectory();
+			}
+			else {
+				outputDir = new File(outputPath);
+				outputPath = outputDir.getParent();
+				if (outputPath == null) {
+					outputPath = remoteConnection.getWorkingDirectory();
+				}
+			}
 			selectedFile = fmgr.browseFile(parentShell, Messages
-					.getString(titleID), getFileDialogPath(pathAttrID), 0);
+					.getString(titleID), outputPath, 0);
 		}
 		if (selectedFile != null) {
 			saveFileDialogPath(pathAttrID, selectedFile);
