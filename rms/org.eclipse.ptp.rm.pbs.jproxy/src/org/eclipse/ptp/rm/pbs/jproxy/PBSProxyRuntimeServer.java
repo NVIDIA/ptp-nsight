@@ -56,13 +56,13 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 		String host = (String) params.get("host"); //$NON-NLS-1$
 		if (host == null) {
 			System.err.println(Messages.getString("PBSProxyRuntimeServer.1")); //$NON-NLS-1$
-			return;
+			System.exit(1);
 		}
 		int port = 0;
 		Integer portVal = ((Integer) params.get("port")); //$NON-NLS-1$
 		if (portVal == null) {
 			System.err.println(Messages.getString("PBSProxyRuntimeServer.3")); //$NON-NLS-1$
-			return;
+			System.exit(1);
 		}
 		port = portVal.intValue();
 
@@ -74,7 +74,7 @@ public class PBSProxyRuntimeServer extends AbstractProxyRuntimeServer {
 			server.start();
 		} catch (IOException e) {
 			System.err.println(Messages.getString("PBSProxyRuntimeServer.5") + e.getMessage()); //$NON-NLS-1$
-			return;
+			System.exit(1);
 		}
 	}
 
