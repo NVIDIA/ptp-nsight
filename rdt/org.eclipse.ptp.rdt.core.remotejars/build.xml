@@ -44,7 +44,7 @@
 	
 	<!-- CDT VERSIONS MUST BE UPDATED FOR NEW CDT VERSION -->
 	
-	<property name="cdtVersion" value="201008261204"/>
+	<property name="cdtVersion" value="201009071034"/>
 	
 	<property name="cdtCoreVersion" value="5.2.1.${cdtVersion}"/>
 	<property name="cdtCoreJar" value="org.eclipse.cdt.core_${cdtCoreVersion}.jar"/>

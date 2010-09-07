@@ -20,7 +20,7 @@
 		<!-- Update for new Eclipse version -->
 		<property name="eclipseDist" value="/home/data/httpd/download.eclipse.org/eclipse/downloads/drops/R-3.6-201006080911/eclipse-SDK-3.6-linux-gtk-ppc.tar.gz"/>
 		<!-- Update for new CDT version -->
-		<property name="cdtDist" value="/home/data/httpd/download.eclipse.org/tools/cdt/builds/7.0.1/I.I201008261204/cdt-master-7.0.1-I201008261204.zip"/>
+		<property name="cdtDist" value="/home/data/httpd/download.eclipse.org/tools/cdt/builds/7.0.1/I.I201009071034/cdt-master-7.0.1-I201009071034.zip"/>
 		<!-- Update for new RSE version -->
 		<property name="rseDist" value="/home/data/httpd/download.eclipse.org/dsdp/tm/downloads/drops/R-3.2-201006071030/RSE-SDK-3.2.zip"/>
 		<!-- Update for new Mylyn version -->
@@ -294,10 +294,6 @@
 		</antcall>
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.etfw.tau-feature"/>
-			<param name="tagbranch" value="${ptpTagBranch}"/>
-		</antcall>		
-		<antcall target="tagone">
-			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.etfw.ppw-feature"/>
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>		
 		<antcall target="tagone">
@@ -595,10 +591,6 @@
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>
 		<antcall target="tagone">
-			<param name="tagmodule" value="org.eclipse.ptp/tools/ppw/org.eclipse.ptp.etfw.ppw"/>
-			<param name="tagbranch" value="${ptpTagBranch}"/>
-		</antcall>
-		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/etfw/org.eclipse.ptp.etfw.tau"/>
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>
@@ -647,7 +639,7 @@
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>
 		<antcall target="tagone">
-			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.server.dstore"/>
+			<param name="tagmodule" value="org.eclipse.ptp/rdt/org.eclipse.ptp.rdt.servers.dstore"/>
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>
 		<antcall target="tagone">
