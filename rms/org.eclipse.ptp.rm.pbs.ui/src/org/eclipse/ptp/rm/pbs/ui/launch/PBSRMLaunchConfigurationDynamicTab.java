@@ -48,6 +48,7 @@ import org.eclipse.ptp.rm.ui.launch.RMLaunchConfigurationDynamicTabDataSource;
 import org.eclipse.ptp.rm.ui.launch.RMLaunchConfigurationDynamicTabWidgetListener;
 import org.eclipse.ptp.rm.ui.utils.WidgetListener;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -481,6 +482,15 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 	 * basis of the PBS Job Attributes present in the template.
 	 */
 	public void createControl(Composite parent, IResourceManager rm, IPQueue queue) throws CoreException {
+		if (parent instanceof ScrolledComposite) {
+			/*
+			 * turn off the expansion, else the dynamic repopulation will fail
+			 * to show the scroll bar
+			 */
+			ScrolledComposite scrolled = (ScrolledComposite) parent;
+			scrolled.setExpandHorizontal(false);
+			scrolled.setExpandVertical(false);
+		}
 		control = WidgetUtils.createComposite(parent, 2);
 		populateControl();
 	}
@@ -706,6 +716,11 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 					valueWidgets, getListener(), template);
 			wizardPage.createControl(childControl);
 		}
+		/*
+		 * We need to repeat this (the ResourcesTab does it when it initially
+		 * builds the control) because this method is called on updates as well.
+		 */
+		control.setSize(control.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 	}
 
 	/*
