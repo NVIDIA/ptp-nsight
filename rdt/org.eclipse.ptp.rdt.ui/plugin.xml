@@ -96,6 +96,7 @@
             vendor="%configuration.vendor.0">
       </configuration>
    </extension>
+   <!-- Disable service model wizard page
    <extension
          point="org.eclipse.cdt.managedbuilder.ui.newWizardPages">
       <wizardPage
@@ -106,6 +107,7 @@
          </nature>
       </wizardPage>
    </extension>
+   -->
    <extension
          point="org.eclipse.ui.newWizards">
       <category
