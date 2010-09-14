@@ -10,10 +10,9 @@
  ******************************************************************************/
 package org.eclipse.ptp.rm.generic.core.rmsystem;
 
-import org.eclipse.ptp.core.Preferences;
+import org.eclipse.core.runtime.Preferences;
 import org.eclipse.ptp.rm.core.rmsystem.AbstractEffectiveToolRMConfiguration;
 import org.eclipse.ptp.rm.core.rmsystem.IToolRMConfiguration;
-import org.eclipse.ptp.rm.generic.core.GenericRMCorePlugin;
 import org.eclipse.ptp.rm.generic.core.GenericRMPreferenceManager;
 
 /**
@@ -28,11 +27,10 @@ public class EffectiveGenericRMConfiguration extends AbstractEffectiveToolRMConf
 		String remoteInstallPath = null;
 
 		if (configuration.getUseToolDefaults()) {
-			launchCmd = Preferences.getString(GenericRMCorePlugin.getUniqueIdentifier(),
-					GenericRMPreferenceManager.PREFS_LAUNCH_CMD);
-			debugCmd = Preferences.getString(GenericRMCorePlugin.getUniqueIdentifier(), GenericRMPreferenceManager.PREFS_DEBUG_CMD);
-			remoteInstallPath = Preferences.getString(GenericRMCorePlugin.getUniqueIdentifier(),
-					GenericRMPreferenceManager.PREFS_REMOTE_INSTALL_PATH);
+			Preferences preferences = GenericRMPreferenceManager.getPreferences();
+			launchCmd = preferences.getString(GenericRMPreferenceManager.PREFS_LAUNCH_CMD);
+			debugCmd = preferences.getString(GenericRMPreferenceManager.PREFS_DEBUG_CMD);
+			remoteInstallPath = preferences.getString(GenericRMPreferenceManager.PREFS_REMOTE_INSTALL_PATH);
 		} else {
 			launchCmd = configuration.getLaunchCmd();
 			debugCmd = configuration.getDebugCmd();

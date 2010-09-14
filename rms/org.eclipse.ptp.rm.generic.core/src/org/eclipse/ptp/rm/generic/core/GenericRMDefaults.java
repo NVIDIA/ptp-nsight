@@ -10,14 +10,19 @@
  ******************************************************************************/
 package org.eclipse.ptp.rm.generic.core;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.ptp.rm.core.AbstractRMDefaults;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.Bundle;
 
-public class GenericRMDefaults extends AbstractRMDefaults {
+public class GenericRMDefaults {
 
 	public static String LAUNCH_CMD = null;
 	public static String DEBUG_CMD = null;
@@ -37,5 +42,42 @@ public class GenericRMDefaults extends AbstractRMDefaults {
 		assert LAUNCH_CMD != null;
 		assert DEBUG_CMD != null;
 		assert PATH != null;
+	}
+
+	public static Properties read(Path defaultsPropertiesPath, Bundle bundle) throws CoreException {
+		InputStream inStream;
+		Properties properties = new Properties();
+		try {
+			inStream = FileLocator.openStream(bundle, defaultsPropertiesPath, false);
+			properties.load(inStream);
+
+		} catch (IOException e) {
+			throw GenericRMCorePlugin.coreErrorException("Failed to read properties file with default preferences", e); //$NON-NLS-1$
+		}
+		return properties;
+	}
+
+	public static String getString(Bundle bundle, Properties properties, String key) throws CoreException {
+		String value = properties.getProperty(key);
+		if (value == null) {
+			throw new CoreException(new Status(IStatus.ERROR, bundle.getSymbolicName(), NLS.bind(
+					"Missing default value for {0}", key))); //$NON-NLS-1$
+		}
+		return value;
+	}
+
+	public static int getInteger(Bundle bundle, Properties properties, String key) throws CoreException {
+		String value = getString(bundle, properties, key);
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			throw new CoreException(new Status(IStatus.ERROR, bundle.getSymbolicName(), NLS.bind(
+					"Failed to parse integer default value for {0}", key))); //$NON-NLS-1$
+		}
+	}
+
+	public static boolean getBoolean(Bundle bundle, Properties properties, String key) throws CoreException {
+		String value = getString(bundle, properties, key);
+		return Boolean.parseBoolean(value);
 	}
 }

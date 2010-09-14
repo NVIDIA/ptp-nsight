@@ -11,24 +11,25 @@
 package org.eclipse.ptp.rm.generic.core;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.ptp.core.Preferences;
+import org.eclipse.core.runtime.Preferences;
 import org.eclipse.ptp.rm.core.AbstractToolsPreferenceManager;
 
 public class GenericRMPreferenceManager extends AbstractToolsPreferenceManager {
 
-	public static void savePreferences() {
-		Preferences.savePreferences(GenericRMCorePlugin.getUniqueIdentifier());
+	public static Preferences getPreferences() {
+		return GenericRMCorePlugin.getDefault().getPluginPreferences();
 	}
 
-	@Override
-	public void initializeDefaultPreferences() {
-		try {
-			GenericRMDefaults.loadDefaults();
-		} catch (CoreException e) {
-			GenericRMCorePlugin.log(e);
-		}
-		Preferences.setDefaultString(GenericRMCorePlugin.getUniqueIdentifier(), PREFS_LAUNCH_CMD, GenericRMDefaults.LAUNCH_CMD);
-		Preferences.setDefaultString(GenericRMCorePlugin.getUniqueIdentifier(), PREFS_DEBUG_CMD, GenericRMDefaults.DEBUG_CMD);
-		Preferences.setDefaultString(GenericRMCorePlugin.getUniqueIdentifier(), PREFS_REMOTE_INSTALL_PATH, GenericRMDefaults.PATH);
+	public static void savePreferences() {
+		GenericRMCorePlugin.getDefault().savePluginPreferences();
+	}
+
+	public static void initializePreferences() throws CoreException {
+
+		Preferences preferences = GenericRMCorePlugin.getDefault().getPluginPreferences();
+		GenericRMDefaults.loadDefaults();
+		preferences.setDefault(PREFS_LAUNCH_CMD, GenericRMDefaults.LAUNCH_CMD);
+		preferences.setDefault(PREFS_DEBUG_CMD, GenericRMDefaults.DEBUG_CMD);
+		preferences.setDefault(PREFS_REMOTE_INSTALL_PATH, GenericRMDefaults.PATH);
 	}
 }

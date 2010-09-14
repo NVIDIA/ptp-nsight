@@ -15,7 +15,6 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.ptp.rm.generic.ui.wizards.GenericRMConfigurationWizardPage;
 import org.eclipse.ptp.services.core.IServiceProvider;
-import org.eclipse.ptp.services.core.IServiceProviderWorkingCopy;
 import org.eclipse.ptp.services.ui.IServiceProviderContributor;
 import org.eclipse.ptp.ui.wizards.IRMConfigurationWizard;
 import org.eclipse.ptp.ui.wizards.RMServiceProviderConfigurationWizard;
@@ -27,14 +26,10 @@ public class GenericRMProviderContributor implements IServiceProviderContributor
 	 * (non-Javadoc)
 	 * 
 	 * @see org.eclipse.ptp.services.ui.IServiceProviderContributor#
-	 * configureServiceProvider
-	 * (org.eclipse.ptp.services.core.IServiceProviderWorkingCopy,
+	 * configureServiceProvider(org.eclipse.ptp.services.core.IServiceProvider,
 	 * org.eclipse.swt.widgets.Composite)
 	 */
-	/**
-	 * @since 2.0
-	 */
-	public void configureServiceProvider(IServiceProviderWorkingCopy provider, Composite comp) {
+	public void configureServiceProvider(IServiceProvider provider, Composite comp) {
 		// Nothing
 	}
 

@@ -10,14 +10,10 @@
  ******************************************************************************/
 package org.eclipse.ptp.rm.generic.core;
 
-import org.eclipse.core.resources.ISaveContext;
-import org.eclipse.core.resources.ISaveParticipant;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.ptp.core.Preferences;
 import org.eclipse.ptp.rm.core.RMCorePlugin;
 import org.eclipse.ptp.rm.generic.core.messages.Messages;
 import org.osgi.framework.BundleContext;
@@ -46,23 +42,7 @@ public class GenericRMCorePlugin extends Plugin {
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
-		ResourcesPlugin.getWorkspace().addSaveParticipant(getUniqueIdentifier(), new ISaveParticipant() {
-			public void saving(ISaveContext saveContext) throws CoreException {
-				Preferences.savePreferences(getUniqueIdentifier());
-			}
-
-			public void rollback(ISaveContext saveContext) {
-				// Nothing
-			}
-
-			public void prepareToSave(ISaveContext saveContext) throws CoreException {
-				// Nothing
-			}
-
-			public void doneSaving(ISaveContext saveContext) {
-				// Nothing
-			}
-		});
+		GenericRMPreferenceManager.initializePreferences();
 	}
 
 	/*
@@ -73,13 +53,8 @@ public class GenericRMCorePlugin extends Plugin {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
-		try {
-			Preferences.savePreferences(getUniqueIdentifier());
-			ResourcesPlugin.getWorkspace().removeSaveParticipant(getUniqueIdentifier());
-		} finally {
-			super.stop(context);
-			fPlugin = null;
-		}
+		super.stop(context);
+		fPlugin = null;
 	}
 
 	/**
