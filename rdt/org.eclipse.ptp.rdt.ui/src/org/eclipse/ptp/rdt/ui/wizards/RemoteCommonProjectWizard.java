@@ -292,7 +292,14 @@ public abstract class RemoteCommonProjectWizard extends BasicNewResourceWizard i
 											fMonitor, 40));
 									if (newProject != null) {
 
-										// setup the service model
+										/*
+										 * Setup the service model. 
+										 * 
+										 * If using the ServiceModelWizardPage, get the configuration from the MBS property as follows (this is disabled
+										 * to simplify the new project creation.)
+										 * 
+										 * IServiceConfiguration config = (IServiceConfiguration)getMBSProperty(CONFIG_PROPERTY);
+										 * */
 										IServiceConfiguration config = getNewConfiguration();
 										
 										ServiceModelManager smm = ServiceModelManager.getInstance();
