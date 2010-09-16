@@ -60,6 +60,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 	private String fWorkDir = null;
 	private ServerState fServerState = ServerState.STARTING;
 	private IRemoteProcess fRemoteProcess;
+	private final Map<String, String> fVariables = new HashMap<String, String>();
 
 	public AbstractRemoteServerRunner(String name) {
 		super(name);
@@ -88,7 +89,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 	 * @return
 	 */
 	public String getPayload() {
-		return RemoteVariableManager.getInstance().getVariable("payload"); //$NON-NLS-1$
+		return fVariables.get("payload"); //$NON-NLS-1$
 	}
 
 	/**
@@ -117,7 +118,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 	 * @returns variable value
 	 */
 	public String getVariable(String name) {
-		return RemoteVariableManager.getInstance().getVariable(name);
+		return fVariables.get(name);
 	}
 
 	/**
@@ -173,7 +174,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 	 *            payload name
 	 */
 	public void setPayload(String file) {
-		RemoteVariableManager.getInstance().setVariable("payload", file); //$NON-NLS-1$
+		fVariables.put("payload", file); //$NON-NLS-1$
 	}
 
 	/**
@@ -196,7 +197,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 	 *            variable value
 	 */
 	public void setVariable(String name, String value) {
-		RemoteVariableManager.getInstance().setVariable(name, value);
+		fVariables.put(name, value);
 	}
 
 	/**
@@ -325,7 +326,7 @@ public abstract class AbstractRemoteServerRunner extends Job {
 			 * Now launch the server.
 			 */
 			subMon.subTask(Messages.AbstractRemoteServerRunner_5);
-			String launchCmd = RemoteVariableManager.getInstance().performStringSubstitution(getLaunchCommand());
+			String launchCmd = performStringSubstitution(getLaunchCommand());
 			List<String> launchArgs = Arrays.asList(launchCmd.split(" ")); //$NON-NLS-1$
 			IRemoteProcessBuilder builder = conn.getRemoteServices().getProcessBuilder(conn, launchArgs);
 			builder.directory(directory);
@@ -338,6 +339,22 @@ public abstract class AbstractRemoteServerRunner extends Job {
 				monitor.done();
 			}
 		}
+	}
+
+	/**
+	 * Perform variable substitution on an expression. The variables need to be
+	 * reset each time as there is only a global string variable manager and the
+	 * same variables are be used by other server launches.
+	 * 
+	 * @param expression
+	 *            containing variables to be substituted
+	 * @return expression with variables substituted
+	 */
+	private String performStringSubstitution(String expression) {
+		for (Map.Entry<String, String> entry : fVariables.entrySet()) {
+			RemoteVariableManager.getInstance().setVariable(entry.getKey(), entry.getValue());
+		}
+		return RemoteVariableManager.getInstance().performStringSubstitution(expression);
 	}
 
 	/*
