@@ -297,6 +297,10 @@
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>		
 		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.etfw.ppw-feature"/>
+			<param name="tagbranch" value="${ptpTagBranch}"/>
+		</antcall>		
+		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/releng/org.eclipse.ptp.etfw.tau.fortran-feature"/>
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>		
@@ -592,6 +596,10 @@
 		</antcall>		
 		<antcall target="tagone">
 			<param name="tagmodule" value="org.eclipse.ptp/tools/etfw/org.eclipse.ptp.etfw"/>
+			<param name="tagbranch" value="${ptpTagBranch}"/>
+		</antcall>
+		<antcall target="tagone">
+			<param name="tagmodule" value="org.eclipse.ptp/tools/ppw/org.eclipse.ptp.etfw.ppw"/>
 			<param name="tagbranch" value="${ptpTagBranch}"/>
 		</antcall>
 		<antcall target="tagone">
