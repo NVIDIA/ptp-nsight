@@ -58,9 +58,6 @@ public class Messages extends NLS {
 	public static String LegendDialog_29;
 	public static String LegendDialog_30;
 	public static String LegendDialog_31;
-	public static String LegendDialog_32;
-	public static String LegendDialog_33;
-	public static String LegendDialog_34;
 	public static String LegendDialog_35;
 	public static String LegendDialog_36;
 	public static String LegendDialog_37;
