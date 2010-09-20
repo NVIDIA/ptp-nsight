@@ -88,7 +88,7 @@ public class LegendDialog extends Dialog
 	
 	public LegendDialog(Shell parent, int style) {
 		super(parent, style);
-		setText(Messages.LegendDialog_25);
+		setText(Messages.LegendDialog_LegendTitle);
 	}
 	
 	public String open() {
@@ -113,7 +113,7 @@ public class LegendDialog extends Dialog
 		
 		/* the RM box */
 		Group box = new Group(shell, SWT.BORDER);
-		box.setText(Messages.LegendDialog_26);
+		box.setText(Messages.LegendDialog_ResourceManagerIcons);
 		FillLayout fill = new FillLayout(SWT.VERTICAL);
 		fill.marginHeight = 5;
 		fill.marginWidth = 5;
@@ -144,7 +144,7 @@ public class LegendDialog extends Dialog
 		
 		/* the machines box */
 		box = new Group(shell, SWT.BORDER);
-		box.setText(Messages.LegendDialog_27);
+		box.setText(Messages.LegendDialog_MachineIcons);
 		fill = new FillLayout(SWT.VERTICAL);
 		fill.marginHeight = 5;
 		fill.marginWidth = 5;
@@ -173,7 +173,7 @@ public class LegendDialog extends Dialog
 		
 		/* the node box */
 		box = new Group(shell, SWT.BORDER);
-		box.setText(Messages.LegendDialog_28);
+		box.setText(Messages.LegendDialog_NodeIcons);
 		GridLayout g = new GridLayout(2, true);
 		box.setLayout(g);
 		data = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -202,7 +202,7 @@ public class LegendDialog extends Dialog
 		
 		/* the job box */
 		box = new Group(shell, SWT.BORDER);
-		box.setText(Messages.LegendDialog_29);
+		box.setText(Messages.LegendDialog_JobIcons);
 		fill = new FillLayout(SWT.VERTICAL);
 		fill.marginHeight = 5;
 		fill.marginWidth = 5;
@@ -231,7 +231,7 @@ public class LegendDialog extends Dialog
 				
 		/* the process box */
 		box = new Group(shell, SWT.BORDER);
-		box.setText(Messages.LegendDialog_30);
+		box.setText(Messages.LegendDialog_ProcessIcons);
 		fill = new FillLayout(SWT.VERTICAL);
 		fill.marginHeight = 5;
 		fill.marginWidth = 5;
@@ -259,7 +259,7 @@ public class LegendDialog extends Dialog
 		}
 		
         Button close = new Button(shell, SWT.PUSH);
-        close.setText(Messages.LegendDialog_31);
+        close.setText(Messages.LegendDialog_Close);
         data = new GridData(GridData.HORIZONTAL_ALIGN_CENTER);
         data.horizontalSpan = 2;
 		close.setLayoutData(data);
