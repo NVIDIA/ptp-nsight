@@ -15,6 +15,7 @@
 		<property name="eclipseRelease" value="helios"/>
 		<!-- Update for new PTP branch -->
 		<property name="ptpBranchVersion" value="4.0.4"/>
+		<property name="photranBranchVersion" value="6.0.4"/>
 		<!-- The following properties need to be updated to reflect the version we are building against. -->
 		<!-- NOTE: changing any of these will require corresponding changes in org.eclipse.ptp.rdt.core.remotejars/build.xml -->
 		<!-- Update for new Eclipse version -->
@@ -102,6 +103,8 @@
 		</copy>
 		<copy file="buildsite.xml" tofile="${buildDirectory}/site/eclipse/site.xml"/>
 		<replace file="${buildDirectory}/site/eclipse/site.xml">
+			<replacefilter token="@ptpBranchVersion@" value="${ptpBranchVersion}"/>
+			<replacefilter token="@photranBranchVersion@" value="${photranBranchVersion}"/>
 			<replacefilter token="@timeStamp@" value="${timestamp}"/>
 		</replace>
 		<copy file="pack.properties" todir="${buildDirectory}/site/eclipse"/>
