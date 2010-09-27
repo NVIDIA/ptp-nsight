@@ -19,13 +19,13 @@
 		<!-- The following properties need to be updated to reflect the version we are building against. -->
 		<!-- NOTE: changing any of these will require corresponding changes in org.eclipse.ptp.rdt.core.remotejars/build.xml -->
 		<!-- Update for new Eclipse version -->
-		<property name="eclipseDist" value="/home/data/httpd/download.eclipse.org/eclipse/downloads/drops/R-3.6-201006080911/eclipse-SDK-3.6-linux-gtk-ppc.tar.gz"/>
+		<property name="eclipseDist" value="/home/data/httpd/download.eclipse.org/eclipse/downloads/drops/R-3.6-201006080911/eclipse-SDK-3.6-linux-gtk-x86_64.tar.gz"/>
 		<!-- Update for new CDT version -->
 		<property name="cdtDist" value="/home/data/httpd/download.eclipse.org/tools/cdt/builds/7.0.1/I.I201009141542/cdt-master-7.0.1-I201009141542.zip"/>
 		<!-- Update for new RSE version -->
 		<property name="rseDist" value="/home/data/httpd/download.eclipse.org/dsdp/tm/downloads/drops/M20100907-0720/RSE-SDK-M20100907-0720.zip"/>
 		<!-- Update for new Mylyn version -->
-		<property name="mylynDist" value="/home/data/httpd/download.eclipse.org/tools/mylyn/update/mylyn-3.4.1-e3.4.zip"/>
+		<property name="mylynDist" value="/home/data/httpd/download.eclipse.org/tools/mylyn/update/mylyn-3.4.2-e3.4.zip"/>
 		<!-- Update to build against a different branch                  -->
 		<!-- NOTE: master/build.properties will also have to be changed! -->
 		<property name="ptpTagBranch" value="-r ptp_4_0"/>
@@ -37,7 +37,7 @@
 		<property name="forceContextQualifier" value="${timestamp}"/>
 		<property name="buildingOSGi" value="true"/>
 		<property name="buildDirectory" value="${basedir}/results"/>
-		<property name="releaseDir" value="/home/www/tools/ptp/builds/${eclipseRelease}"/>
+		<property name="releaseDir" value="/home/data/httpd/download.eclipse.org/tools/ptp/builds/${eclipseRelease}"/>
 		<property name="copyToDir" value="${releaseDir}/${buildType}.${buildId}"/>
 		<property name="testDirectory" value="${buildDirectory}/test"/>
 		<property name="baseLocation" value="${buildDirectory}/eclipse"/>
@@ -56,7 +56,7 @@
 		<property name="tagname" value="v${timestamp}"/>
 		<property name="testReports" value="${zipsdir}/testReports"/>
 		<property name="junit-report-output" value="${testReports}"/>
-		<property name="jvm1.5" value="/opt/public/common/ibm-java2-ppc-50/bin/java"/>
+		<property name="jvm1.5" value="java"/>
 		<condition property="onWindows">
 			<os family="windows"/>
 		</condition>
