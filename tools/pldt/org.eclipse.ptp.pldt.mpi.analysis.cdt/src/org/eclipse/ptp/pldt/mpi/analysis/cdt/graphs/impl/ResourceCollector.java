@@ -71,6 +71,8 @@ public class ResourceCollector extends ASTVisitor {
             ast_ = CDOM.getInstance().getASTService().getTranslationUnit(file_,
                     CDOM.getInstance().getCodeReaderFactory(CDOM.PARSE_SAVED_RESOURCES));
         } catch (IASTServiceProvider.UnsupportedDialectException e) {
+        } catch (NullPointerException npe) {
+        	System.out.println("ResourceCollector: no ast available from CDOM.. remote project? will try alt. approach.");
         }
         if(traceOn)System.out.println("     initial ast construction: ast_="+ast_); //$NON-NLS-1$
         boolean temp=true;
