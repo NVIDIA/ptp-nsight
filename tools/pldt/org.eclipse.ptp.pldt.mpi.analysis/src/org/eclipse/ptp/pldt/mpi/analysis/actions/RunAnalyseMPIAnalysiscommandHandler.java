@@ -61,7 +61,7 @@ public class RunAnalyseMPIAnalysiscommandHandler extends RunAnalyseHandler  {
 			return null;
 		} else {
 			if(isRemote(selection)) {
-				MessageDialog.openInformation(null, "Remote Project found", "MPI Barrier Analysis currently is not supported on remote projects");
+				MessageDialog.openInformation(null, Messages.RunAnalyseMPIAnalysiscommandHandler_remoteProjectFound, Messages.RunAnalyseMPIAnalysiscommandHandler_remoteNotSupported);
 				return null;
 			}
 			final boolean reportErrors=true;
