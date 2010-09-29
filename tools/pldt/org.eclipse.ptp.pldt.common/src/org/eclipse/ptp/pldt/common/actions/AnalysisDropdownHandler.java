@@ -45,7 +45,7 @@ public class AnalysisDropdownHandler extends AbstractHandler implements ISelecti
 	static protected IStructuredSelection lastAnalysisSelection=null;
 	protected IStructuredSelection lastSelection=null;
 	protected static AnalysisDropdownHandler instance=null;
-	private static final boolean traceOn=true;
+	private static final boolean traceOn=false;
 
 	/**
 	 * Constructor: set singleton instance, and set up selection listener to 
