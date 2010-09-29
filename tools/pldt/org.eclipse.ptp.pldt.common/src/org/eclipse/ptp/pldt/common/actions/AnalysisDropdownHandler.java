@@ -45,7 +45,7 @@ public class AnalysisDropdownHandler extends AbstractHandler implements ISelecti
 	static protected IStructuredSelection lastAnalysisSelection=null;
 	protected IStructuredSelection lastSelection=null;
 	protected static AnalysisDropdownHandler instance=null;
-	private static final boolean traceOn=false;
+	private static final boolean traceOn=true;
 
 	/**
 	 * Constructor: set singleton instance, and set up selection listener to 
@@ -86,7 +86,7 @@ public class AnalysisDropdownHandler extends AbstractHandler implements ISelecti
 			System.out.println("AnalysisDropdownHandler <init> "+ e.getMessage()+" cause: "+msg); //$NON-NLS-1$ //$NON-NLS-2$
 			// FIXME this gets hit on target workbench shutdown. WHY?
 			// BRT maybe we DO want to return here; sometimes ss=null (Junit tests) and the code below fails sometimes.
-			//return;
+			return;
 
 		}
 
