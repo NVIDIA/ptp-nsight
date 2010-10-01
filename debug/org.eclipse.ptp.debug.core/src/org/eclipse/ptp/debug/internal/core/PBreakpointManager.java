@@ -24,12 +24,12 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -48,7 +48,6 @@ import org.eclipse.ptp.core.PreferenceConstants;
 import org.eclipse.ptp.debug.core.IPBreakpointManager;
 import org.eclipse.ptp.debug.core.IPSession;
 import org.eclipse.ptp.debug.core.PDebugModel;
-import org.eclipse.ptp.debug.core.PDebugUtils;
 import org.eclipse.ptp.debug.core.PTPDebugCorePlugin;
 import org.eclipse.ptp.debug.core.TaskSet;
 import org.eclipse.ptp.debug.core.event.IPDebugEvent;
@@ -84,7 +83,8 @@ import org.eclipse.ptp.debug.core.pdi.model.IPDIWatchpoint;
 import org.eclipse.ptp.debug.core.sourcelookup.IPSourceLocator;
 import org.eclipse.ptp.debug.core.sourcelookup.PSourceLookupDirector;
 
-public class PBreakpointManager implements IBreakpointsListener, IBreakpointManagerListener, IPDIEventListener, IAdaptable, IPBreakpointManager {
+public class PBreakpointManager implements IBreakpointsListener, IBreakpointManagerListener, IPDIEventListener, IAdaptable,
+		IPBreakpointManager {
 	private class BreakpointMap {
 		private final Map<String, IPBreakpoint> fPBreakpoints;
 		private final Map<String, IPDIBreakpoint> fPDIBreakpoints;
@@ -224,8 +224,13 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		getPDISession().getEventManager().addEventListener(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.internal.core.IPBreakpointManager#addSetBreakpoints(org.eclipse.ptp.core.util.TaskSet, org.eclipse.ptp.debug.core.model.IPBreakpoint[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.internal.core.IPBreakpointManager#addSetBreakpoints
+	 * (org.eclipse.ptp.core.util.TaskSet,
+	 * org.eclipse.ptp.debug.core.model.IPBreakpoint[])
 	 */
 	public void addSetBreakpoints(TaskSet tasks, IPBreakpoint[] breakpoints) {
 		if (breakpoints.length == 0) {
@@ -246,15 +251,22 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.debug.core.IBreakpointManagerListener#breakpointManagerEnablementChanged(boolean)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.debug.core.IBreakpointManagerListener#
+	 * breakpointManagerEnablementChanged(boolean)
 	 */
 	public void breakpointManagerEnablementChanged(boolean enabled) {
 		doSkipBreakpoints(!enabled);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.debug.core.IBreakpointsListener#breakpointsAdded(org.eclipse.debug.core.model.IBreakpoint[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.debug.core.IBreakpointsListener#breakpointsAdded(org.eclipse
+	 * .debug.core.model.IBreakpoint[])
 	 */
 	public void breakpointsAdded(IBreakpoint[] breakpoints) {
 		ArrayList<IPBreakpoint> list = new ArrayList<IPBreakpoint>(breakpoints.length);
@@ -273,8 +285,13 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		});
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.debug.core.IBreakpointsListener#breakpointsChanged(org.eclipse.debug.core.model.IBreakpoint[], org.eclipse.core.resources.IMarkerDelta[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.debug.core.IBreakpointsListener#breakpointsChanged(org.eclipse
+	 * .debug.core.model.IBreakpoint[],
+	 * org.eclipse.core.resources.IMarkerDelta[])
 	 */
 	public void breakpointsChanged(IBreakpoint[] breakpoints, IMarkerDelta[] deltas) {
 		for (int i = 0; i < breakpoints.length; ++i) {
@@ -284,34 +301,63 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.debug.core.IBreakpointsListener#breakpointsRemoved(org.eclipse.debug.core.model.IBreakpoint[], org.eclipse.core.resources.IMarkerDelta[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.debug.core.IBreakpointsListener#breakpointsRemoved(org.eclipse
+	 * .debug.core.model.IBreakpoint[],
+	 * org.eclipse.core.resources.IMarkerDelta[])
 	 */
 	public void breakpointsRemoved(IBreakpoint[] breakpoints, IMarkerDelta[] deltas) {
-		// Nothing to do
+		final List<IPBreakpoint> pBreakpoints = new ArrayList<IPBreakpoint>();
+		for (IBreakpoint breakpoint : breakpoints) {
+			if (isTargetBreakpoint(breakpoint)) {
+				pBreakpoints.add((IPBreakpoint) breakpoint);
+			}
+		}
+		final IPBreakpoint[] bpToRemove = pBreakpoints.toArray(new IPBreakpoint[0]);
+		DebugPlugin.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				deleteBreakpointsOnSession0(bpToRemove);
+			}
+		});
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.core.IPBreakpointManager#deleteBreakpoint(org.eclipse.ptp.debug.core.model.IPBreakpoint)
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.core.IPBreakpointManager#deleteBreakpoint(org.eclipse
+	 * .ptp.debug.core.model.IPBreakpoint)
 	 */
 	public void deleteBreakpoint(IPBreakpoint breakpoint) {
 		if (isTargetBreakpoint(breakpoint)) {
-			final IPBreakpoint[] pBreakpoints = new IPBreakpoint[]{breakpoint};
+			final IPBreakpoint[] pBreakpoints = new IPBreakpoint[] { breakpoint };
 			DebugPlugin.getDefault().asyncExec(new Runnable() {
 				public void run() {
-					deleteBreakpointsOnSession0(pBreakpoints);
 					try {
+						/*
+						 * Tell the debug plugin that the breakpoint should be
+						 * removed. This will result in a call to
+						 * breakpointsRemoved().
+						 */
 						DebugPlugin.getDefault().getBreakpointManager().removeBreakpoints(pBreakpoints, true);
 					} catch (CoreException e) {
 						PTPDebugCorePlugin.log(e);
-					}		
+					}
 				}
 			});
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.internal.core.IPBreakpointManager#deleteSetBreakpoints(org.eclipse.ptp.core.util.TaskSet, org.eclipse.ptp.debug.core.model.IPBreakpoint[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.internal.core.IPBreakpointManager#deleteSetBreakpoints
+	 * (org.eclipse.ptp.core.util.TaskSet,
+	 * org.eclipse.ptp.debug.core.model.IPBreakpoint[])
 	 */
 	public void deleteSetBreakpoints(TaskSet tasks, IPBreakpoint[] breakpoints) {
 		if (breakpoints.length == 0)
@@ -341,7 +387,9 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		getBreakpointMap().dispose();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	@SuppressWarnings("rawtypes")
@@ -355,8 +403,12 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.internal.core.IPBreakpointManager#getBreakpoint(org.eclipse.ptp.debug.core.pdi.model.IPDIBreakpoint)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.internal.core.IPBreakpointManager#getBreakpoint
+	 * (org.eclipse.ptp.debug.core.pdi.model.IPDIBreakpoint)
 	 */
 	public IBreakpoint getBreakpoint(IPDIBreakpoint pdiBpt) {
 		Object b = null;
@@ -366,8 +418,12 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		return (b instanceof IBreakpoint) ? (IBreakpoint) b : null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.internal.core.IPBreakpointManager#getBreakpointAddress(org.eclipse.ptp.debug.core.model.IPLineBreakpoint)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.internal.core.IPBreakpointManager#getBreakpointAddress
+	 * (org.eclipse.ptp.debug.core.model.IPLineBreakpoint)
 	 */
 	public BigInteger getBreakpointAddress(IPLineBreakpoint breakpoint) {
 		BigInteger address = null;
@@ -390,8 +446,12 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		return session;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.core.pdi.event.IPDIEventListener#handleDebugEvents(org.eclipse.ptp.debug.core.pdi.event.IPDIEvent[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.core.pdi.event.IPDIEventListener#handleDebugEvents
+	 * (org.eclipse.ptp.debug.core.pdi.event.IPDIEvent[])
 	 */
 	public void handleDebugEvents(IPDIEvent[] events) {
 		for (int i = 0; i < events.length; i++) {
@@ -410,8 +470,8 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 	 * 
 	 */
 	public void setInitialBreakpoints() {
-		IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
-				PDebugModel.getPluginIdentifier());
+		IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager()
+				.getBreakpoints(PDebugModel.getPluginIdentifier());
 		ArrayList<IPBreakpoint> list = new ArrayList<IPBreakpoint>(breakpoints.length);
 		for (int i = 0; i < breakpoints.length; ++i) {
 			if (isTargetBreakpoint(breakpoints[i])) {
@@ -434,8 +494,12 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		pdiBptMgr.setFunctionBreakpoint(tasks, IPDIBreakpoint.TEMPORARY, location, null, true, true);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ptp.debug.internal.core.IPBreakpointManager#skipBreakpoints(boolean)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.ptp.debug.internal.core.IPBreakpointManager#skipBreakpoints
+	 * (boolean)
 	 */
 	public void skipBreakpoints(boolean enabled) {
 		if (fSkipBreakpoint != enabled && (DebugPlugin.getDefault().getBreakpointManager().isEnabled() || !enabled)) {
@@ -455,14 +519,15 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		 * String module = null; try { module = breakpoint.getModule(); }
 		 * catch(CoreException e) { } if (module != null) return
 		 * getExecFilePath().toOSString().equals(module); try { return
-		 * getExecFilePath().toOSString().equals(breakpoint.getSourceHandle()); }
-		 * catch(CoreException e) { } return false;
+		 * getExecFilePath().toOSString().equals(breakpoint.getSourceHandle());
+		 * } catch(CoreException e) { } return false;
 		 */
 	}
 
 	/**
-	 * Update any pending breakpoints. This should be called when the debugger enters suspended state
-	 * to update any breakpoints that could not be set or deleted because tasks were running.
+	 * Update any pending breakpoints. This should be called when the debugger
+	 * enters suspended state to update any breakpoints that could not be set or
+	 * deleted because tasks were running.
 	 * 
 	 * @throws PDIException
 	 */
@@ -724,10 +789,11 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 	}
 
 	/**
-	 * Find the task set that this breakpoint applies to. Assumes that
-	 * the breakpoint marker exists.
+	 * Find the task set that this breakpoint applies to. Assumes that the
+	 * breakpoint marker exists.
 	 * 
-	 * @param pBpt breakpoint
+	 * @param pBpt
+	 *            breakpoint
 	 * @return set of tasks
 	 * @throws CoreException
 	 */
@@ -748,7 +814,7 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 		}
 		return pdiBpt.getTasks().copy();
 	}
-	
+
 	/**
 	 * @return
 	 */
@@ -814,32 +880,21 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 			try {
 				String bp_job_id = ((IPBreakpoint) breakpoint).getJobId();
 				if (bp_job_id.equals(getPDISession().getJobID()) || bp_job_id.equals(IPBreakpoint.GLOBAL)) {
-					IResource resource = breakpoint.getMarker().getResource();
-					if (breakpoint instanceof IPAddressBreakpoint)
+					if (breakpoint instanceof IPAddressBreakpoint) {
 						return supportsAddressBreakpoint((IPAddressBreakpoint) breakpoint);
+					}
 					if (breakpoint instanceof IPLineBreakpoint) {
 						try {
 							String handle = ((IPBreakpoint) breakpoint).getSourceHandle();
 							ISourceLocator sl = getSourceLocator();
-							if (sl instanceof IPSourceLocator)
+							if (sl instanceof IPSourceLocator) {
 								return (((IPSourceLocator) sl).findSourceElement(handle) != null);
-							else if (sl instanceof PSourceLookupDirector) {
+							}
+							if (sl instanceof PSourceLookupDirector) {
 								return (((PSourceLookupDirector) sl).contains(((IPBreakpoint) breakpoint)));
 							}
 						} catch (CoreException e) {
 							return false;
-						}
-					} else {
-						IProject project = resource.getProject();
-						if (project != null && project.exists()) {
-							ISourceLocator sl = getSourceLocator();
-							if (sl instanceof IPSourceLocator)
-								return ((IPSourceLocator) sl).contains(project);
-							else if (sl instanceof PSourceLookupDirector)
-								return ((PSourceLookupDirector) sl).contains(project);
-							if (project.equals(getProject()))
-								return true;
-							return PDebugUtils.isReferencedProject(getProject(), project);
 						}
 					}
 					return true;
@@ -856,27 +911,30 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 	 */
 	protected void deleteBreakpointsOnSession0(IPBreakpoint[] breakpoints) {
 		IPDIBreakpointManager pdiBptMgr = getPDISession().getBreakpointManager();
-		for (int i = 0; i < breakpoints.length; i++) {
+		for (IPBreakpoint breakpoint : breakpoints) {
 			IPDIBreakpoint pdiBreakpoint = null;
 			synchronized (getBreakpointMap()) {
-				pdiBreakpoint = getBreakpointMap().getPDIBreakpoint(breakpoints[i]);
+				pdiBreakpoint = getBreakpointMap().getPDIBreakpoint(breakpoint);
 			}
 			if (pdiBreakpoint == null) {
 				continue;
 			}
 
 			try {
-				// Add the tasks this breakpoint applies to, to the set of pending tasks. Since the
-				// breakpoint marker may have been removed, we must use the IMarkerDelta to find
-				// the breakpoint attributes.
-				pdiBreakpoint.getPendingTasks().or(getBreakpointTasks(breakpoints[i]));
-				
-				// Now delete the breakpoint
+				/*
+				 * Add the tasks this breakpoint applies to, to the set of
+				 * pending tasks.
+				 */
+				pdiBreakpoint.getPendingTasks().or(getBreakpointTasks(breakpoint));
+
+				/*
+				 * Now delete the breakpoint
+				 */
 				pdiBptMgr.deleteBreakpoint(pdiBreakpoint.getPendingTasks(), pdiBreakpoint);
-			} catch (PDIException ex) {
-				PTPDebugCorePlugin.log(ex);
-			} catch (CoreException ex) {
-				PTPDebugCorePlugin.log(ex);
+			} catch (PDIException e) {
+				PTPDebugCorePlugin.log(e);
+			} catch (CoreException e) {
+				PTPDebugCorePlugin.log(e);
 			}
 		}
 	}
@@ -911,7 +969,7 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 	protected boolean isEmpty(String str) {
 		return !(str != null && str.trim().length() > 0);
 	}
-	
+
 	/**
 	 * @param breakpoints
 	 */
@@ -942,8 +1000,8 @@ public class PBreakpointManager implements IBreakpointsListener, IBreakpointMana
 					IPath path = convertPath(handle);
 					IPDILineLocation location = pdiBptMgr.createLineLocation(path.toPortableString(), breakpoint.getLineNumber());
 					IPDICondition condition = createCondition(breakpoint);
-					b = pdiBptMgr.setLineBreakpoint(getBreakpointTasks(bpt), IPDIBreakpoint.REGULAR, location, condition, true, bpt
-							.isEnabled());
+					b = pdiBptMgr.setLineBreakpoint(getBreakpointTasks(bpt), IPDIBreakpoint.REGULAR, location, condition, true,
+							bpt.isEnabled());
 				} else if (bpt instanceof IPWatchpoint) {
 					IPWatchpoint watchpoint = (IPWatchpoint) bpt;
 					int accessType = 0;
