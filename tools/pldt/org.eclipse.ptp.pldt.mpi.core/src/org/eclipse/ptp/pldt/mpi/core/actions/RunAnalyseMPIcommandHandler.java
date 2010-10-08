@@ -63,13 +63,18 @@ public class RunAnalyseMPIcommandHandler extends RunAnalyseHandlerBase
             
 			//long startTime = System.currentTimeMillis();
 			IASTTranslationUnit atu = getAST(tu); // use index; was tu.getAST();
-			if(atu==null) {
-				System.out.println("RunAnalyseMPICommandHandler.doArtifactAnalysis(), atu is null (testing?)");
-				return msr;
-			}
+
 			//long endTime = System.currentTimeMillis();
 			//System.out.println("RunAnalyseMPICommandHandler: time to build AST for "+tu+": "+(endTime-startTime)/1000.0+" sec");
 			String languageID=lang.getId();
+			if(languageID.equals(GCCLanguage.ID) || languageID.equals(GPPLanguage.ID)) {
+				// null IASTTranslationUnit when we're doing C/C++ means we should quit.
+				// but want to continue to see if this is a fortran file we are analyzing.
+				if(atu==null) {// this is null for Fortran file during JUnit testing.
+					System.out.println("RunAnalyseMPICommandHandler.doArtifactAnalysis(), atu is null (testing?)");
+					return msr;
+				}
+			}
 			if (languageID.equals(GCCLanguage.ID)) {// C
 				atu.accept(new MpiCASTVisitor(includes, fileName, allowPrefixOnlyMatch, msr));
 			}
