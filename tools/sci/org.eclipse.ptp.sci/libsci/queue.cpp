@@ -33,8 +33,8 @@
 #include "exception.hpp"
 #include "ctrlblock.hpp"
 #include "log.hpp"
-#include "atomic.hpp"
 
+#include "atomic.hpp"
 #include "message.hpp"
 #include "tools.hpp"
 
@@ -51,7 +51,7 @@ MessageQueue::~MessageQueue()
     while (!queue.empty()) {
         msg = queue.front();
         queue.pop_front();
-        if (msg->decRefCount() == 0) {
+        if (decRefCount(msg->getRefCount()) == 0) {
             delete msg;
         }
     }
@@ -102,7 +102,7 @@ int MessageQueue::multiProduce(Message **msgs, int num)
     return 0;
 }
 
-void MessageQueue::notify()
+void MessageQueue::release()
 {
     ::sem_post(&sem);
 }
@@ -189,7 +189,7 @@ void MessageQueue::remove()
     msg = queue.front();
     queue.pop_front();
     unlock();
-    if (msg->decRefCount() == 0) {
+    if (decRefCount(msg->getRefCount()) == 0) {
         delete msg;
     }
 }
@@ -205,10 +205,10 @@ int MessageQueue::getSize()
     return size;
 }
 
-void MessageQueue::setName(string str)
+void MessageQueue::setName(char *str)
 {
     name = str;
-    if (getName() == "filterInQ") { 
+    if (name == "filterInQ") { 
         flowCtl = true;
     }
 }

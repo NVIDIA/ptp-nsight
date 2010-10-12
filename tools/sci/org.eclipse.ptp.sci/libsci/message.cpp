@@ -24,6 +24,7 @@
 ****************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
@@ -37,6 +38,7 @@
 #include "atomic.hpp"
 
 #include "message.hpp"
+#include "queue.hpp"
 
 Message::Message(Type t)
     : type(t)
@@ -60,6 +62,29 @@ Message::~Message()
     len = 0;
 }
 
+Message * Message::joinSegments(Message *msg, Stream *inS, MessageQueue *inQ)
+{
+    int i = 0;
+    int segnum = msg->getID() - 1; // exclude the SEGMENT header
+    Message *newMsg = NULL;
+    Message **segments = (Message **)::malloc(segnum * sizeof(Message *));
+    newMsg = new Message();
+    if (inS) {
+        delete msg;
+        for (i = 0; i < segnum; i++) {
+            segments[i] = new Message();
+            *inS >> *segments[i];
+        }
+    } else {
+        inQ->remove();
+        inQ->multiConsume(segments, segnum);
+    }
+    newMsg->joinSegments(segments, segnum);
+    ::free(segments);
+
+    return newMsg;
+}
+
 int Message::joinSegments(Message **segments, int segnum)
 {
     int i;
@@ -76,9 +101,9 @@ int Message::joinSegments(Message **segments, int segnum)
     }
     build(fid, gid, segnum, bufs, sizes, typ, id);
     ::free(bufs);
-    delete sizes;
+    delete []sizes;
     for (i = 0; i < segnum; i++) {
-        if (segments[i]->decRefCount() == 0) {
+        if (decRefCount(segments[i]->getRefCount()) == 0) {
             delete segments[i];
         }
     }
@@ -116,22 +141,17 @@ void Message::setRefCount(int cnt)
     refCount = cnt;
 }
 
-int Message::getRefCount()
+int & Message::getRefCount()
 {
     return refCount;
 }
 
-int Message::decRefCount()
-{
-    int cnt = fetch_and_add(&refCount, -1);
-    return (cnt - 1);
-}
-
 Stream & operator >> (Stream &stream, Message &msg)
 {  
+    int rc;
     struct iovec vecs[6];
     struct iovec sign = {0};
-    int rc, tmp0, tmp1, tmp2, tmp3, tmp4;
+    char fmt[32] = {0};
 
     // receive message header
     stream >> (int &) msg.type;
@@ -147,24 +167,8 @@ Stream & operator >> (Stream &stream, Message &msg)
         stream.read(msg.buf, msg.len);
     }
     stream >> sign;
-    tmp0 = htonl(msg.type);
-    vecs[0].iov_base = &tmp0;
-    vecs[0].iov_len = sizeof(tmp0);
-    tmp1 = htonl(msg.msgID);
-    vecs[1].iov_base = &tmp1;
-    vecs[1].iov_len = sizeof(tmp1);
-    tmp2 = htonl(msg.filterID);
-    vecs[2].iov_base = &tmp2;
-    vecs[2].iov_len = sizeof(tmp2);
-    tmp3 = htonl(msg.group);
-    vecs[3].iov_base = &tmp3;
-    vecs[3].iov_len = sizeof(tmp3);
-    tmp4 = htonl(msg.len);
-    vecs[4].iov_base = &tmp4;
-    vecs[4].iov_len = sizeof(tmp4);
-    vecs[5].iov_base = msg.buf;
-    vecs[5].iov_len = msg.len;
-    rc = SSHFUNC->verify_data(vecs, 6, &sign);
+    sprintf(fmt, "%%d%%d%%d%%d%%d%%%ds", msg.len);
+    rc = psec_verify_data(&sign, fmt, msg.type, msg.msgID, msg.filterID, msg.group, msg.len, msg.buf);
     delete [] (char *)sign.iov_base;
     if (rc != 0) {
         throw Exception(Exception::INVALID_SIGNATURE);
@@ -177,26 +181,10 @@ Stream & operator << (Stream &stream, Message &msg)
 {
     struct iovec vecs[6];
     struct iovec sign = {0};
-    int tmp0, tmp1, tmp2, tmp3, tmp4;
+    char fmt[32] = {0};
 
-    tmp0 = htonl(msg.type);
-    vecs[0].iov_base = &tmp0;
-    vecs[0].iov_len = sizeof(tmp0);
-    tmp1 = htonl(msg.msgID);
-    vecs[1].iov_base = &tmp1;
-    vecs[1].iov_len = sizeof(tmp1);
-    tmp2 = htonl(msg.filterID);
-    vecs[2].iov_base = &tmp2;
-    vecs[2].iov_len = sizeof(tmp2);
-    tmp3 = htonl(msg.group);
-    vecs[3].iov_base = &tmp3;
-    vecs[3].iov_len = sizeof(tmp3);
-    tmp4 = htonl(msg.len);
-    vecs[4].iov_base = &tmp4;
-    vecs[4].iov_len = sizeof(tmp4);
-    vecs[5].iov_base = msg.buf;
-    vecs[5].iov_len = msg.len;
-    SSHFUNC->sign_data(vecs, 6, &sign);
+    sprintf(fmt, "%%d%%d%%d%%d%%d%%%ds", msg.len);
+    psec_sign_data(&sign, fmt, msg.type, msg.msgID, msg.filterID, msg.group, msg.len, msg.buf);
     // send message header
     stream << (int) msg.type;
     stream << msg.msgID;
@@ -209,7 +197,7 @@ Stream & operator << (Stream &stream, Message &msg)
         stream.write(msg.buf, msg.len);
     }
     stream << sign;
-    SSHFUNC->free_signature(&sign);
+    psec_free_signature(&sign);
  
     return stream.flush();
 }

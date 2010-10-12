@@ -1,7 +1,21 @@
+/* IBM_PROLOG_BEGIN_TAG                                                   */
+/* This is an automatically generated prolog.                             */
+/*                                                                        */
+/*                                                                        */
+/*                                                                        */
+/* Licensed Materials - Property of IBM                                   */
+/*                                                                        */
+/* (C) COPYRIGHT International Business Machines Corp. 2008,2010          */
+/* All Rights Reserved                                                    */
+/*                                                                        */
+/* US Government Users Restricted Rights - Use, duplication or            */
+/* disclosure restricted by GSA ADP Schedule Contract with IBM Corp.      */
+/*                                                                        */
+/* IBM_PROLOG_END_TAG                                                     */
 #ifndef _SCI_H
 #define _SCI_H
 /***************************************************************************
-"%Z% %I% %W% %D% %T%\0"
+"@(#) 1.22.1.6 src/rsct/sci/include/sci.h, lapi.sci, rsct_rpm, rpm1040a 10/10/05 08:44:55\0"
  Name: sci.h
 
  Description:
@@ -42,6 +56,7 @@
 #define SCI_ERR_LAUNCH_FAILED        (-2022)
 #define SCI_ERR_POLL_INVALID         (-2023)
 #define SCI_ERR_INVALID_USER         (-2024)
+#define SCI_ERR_INVALID_MODE         (-2025)
 
 #define SCI_ERR_PARENT_BROKEN        (-5000)
 #define SCI_ERR_CHILD_BROKEN         (-5001)
@@ -57,6 +72,7 @@ typedef int sci_group_t;
 ** SCI Bcast & Upload message handler
 */
 typedef int (SCI_msg_hndlr)(void *user_param, sci_group_t group, void *buf, int size);
+typedef int (SCI_connect_hndlr)(const char *hostname);  // hostname can be a name or an IP address
 
 /*
 ** SCI Error message handler
@@ -103,7 +119,6 @@ typedef struct {
 } sci_filter_list_t;
 
 typedef struct {
-    sci_end_type_t       type;
     sci_mode_t           mode;
     SCI_msg_hndlr        *hndlr;
     void                 *param;
@@ -112,11 +127,11 @@ typedef struct {
     char                 *bepath;
     char                 **beenvp;
     sci_filter_list_t    filter_list;    
-    char                 reserve[52];
+    char                 **host_list;
+    char                 reserve[64];
 } sci_fe_info_t;
 
 typedef struct {
-    sci_end_type_t   type;
     sci_mode_t       mode;
     SCI_msg_hndlr    *hndlr;
     void             *param;
@@ -124,15 +139,20 @@ typedef struct {
     char             reserve[64];
 } sci_be_info_t;
 
-typedef union {
-    sci_end_type_t   type;
-    sci_fe_info_t    fe_info;
-    sci_be_info_t    be_info;
+typedef struct {
+    sci_end_type_t          type;
+    SCI_connect_hndlr       *connect_hndlr;             
+    union {
+        sci_fe_info_t           fe_info;
+        sci_be_info_t           be_info;
+    } _u;
+#define fe_info _u.fe_info
+#define be_info _u.be_info
 } sci_info_t;
 
 typedef struct {
     int              id;
-    char             *hostname;
+    char             *hostname;  // hostname can be a name or an IP address
     int              level;
 } sci_be_t;
 
@@ -147,7 +167,10 @@ typedef enum {
     NUM_SUCCESSORS,
     SUCCESSOR_IDLIST,
     HEALTH_STATUS,
-    AGENT_LEVEL
+    AGENT_LEVEL,
+    LISTENER_PORT,
+    PARENT_SOCKFD,
+    NUM_CHILDREN_FDS
 } sci_query_t;
 
 typedef enum {

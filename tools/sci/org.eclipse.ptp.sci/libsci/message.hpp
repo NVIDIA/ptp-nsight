@@ -34,6 +34,9 @@
 
 const int DEFAULT_MSG_ID = (-1024 * 1024);
 
+class MessageQueue;
+class Stream;
+
 class Message 
 {
     public:
@@ -80,20 +83,20 @@ class Message
 
         // message content
         int             len;
-        char            *buf;
 
         int             refCount;
+        char            *buf;
         
     public:
         Message(Type t = UNKNOWN);
         ~Message();
 
         int joinSegments(Message **segments, int segnum);
+        static Message *joinSegments(Message *msg, Stream *inS, MessageQueue *inQ);
         void build(int fid, sci_group_t g, int num_bufs, char *bufs[], int sizes[], Type t, 
             int id = DEFAULT_MSG_ID);
         void setRefCount(int cnt);
-        int getRefCount();
-        int decRefCount();
+        int & getRefCount();
 
         void setID(int id) { msgID = id; }
         void setFilterID(int id) { filterID = id; }

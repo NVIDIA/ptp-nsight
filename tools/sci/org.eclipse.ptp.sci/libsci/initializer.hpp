@@ -17,7 +17,7 @@
         2) Message queue
         3) Others like environment variables
    
- Author: Nicole Nie
+ Author: Nicole Nie, Tu HongJ
 
  History:
    Date     Who ID    Description
@@ -31,15 +31,20 @@
 
 #include <string>
 
+#include "ctrlblock.hpp" 
+
 using namespace std;
 
 class Stream;
+class Listener;
 
 class Initializer
 {
     private:
         Initializer();
         static Initializer *instance;
+        Listener    *listener;
+        Stream      *inStream;
         
     public:
         ~Initializer();
@@ -49,19 +54,20 @@ class Initializer
             return instance;
         }
 
-        int init(int hndl);
+        int init();
 
-        void recoverAgent(Stream *stream);
-        void recoverBE(Stream *stream);
+        Listener * initListener();
+        Listener * getListener();
+        Stream * getInStream();
 
     private:
-        int initFE(int hndl);
-        int initAgent(int hndl);
-        int initBE(int hndl);
+        int initFE();
+        int initAgent();
+        Stream *initStream();
+        int initBE();
         int initExtBE(int hndl);
         int getIntToken();
-
-        void initListener();
+        int parseEnvStr(string &envStr);
 };
 
 #define gInitializer Initializer::getInstance()

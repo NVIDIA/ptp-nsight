@@ -23,7 +23,6 @@
 
 ****************************************************************************/
 
-#include "socket.hpp"
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -32,8 +31,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 
+#include "socket.hpp"
 #include "ipconverter.hpp"
+
+
+#define CONNECTING_TIMES 200
 
 Socket::Socket(int sockfd)
     : socket(sockfd)
@@ -69,6 +73,11 @@ int Socket::setMode(bool mode)
 
 int Socket::setFd(int fd)
 {
+    if (fd < 0) {
+        throw SocketException(SocketException::NET_ERR_SOCKET, errno);
+    }
+    int nodelay = 1;
+    ::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
     socket = fd;
 
     return 0;
@@ -162,27 +171,41 @@ int Socket::connect(const char *hostName, in_port_t port)
     int rc = -1;
     int sockfd, nodelay;
     char service[NI_MAXSERV] = {0};
-    struct addrinfo hints = {0};
     struct addrinfo *host = NULL;
+    int count = 0;
 
-    ::sprintf(service, "%d", port);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    while (count < CONNECTING_TIMES) {
+        struct addrinfo hints = {0};
+        ::sprintf(service, "%d", port);
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
 
-    ::getaddrinfo(hostName, service, &hints, &host);
-    if (!host) {
-        throw SocketException(SocketException::NET_ERR_GETADDRINFO, errno);
-    }
+        rc = ::getaddrinfo(hostName, service, &hints, &host);
+        if (rc == EAI_NONAME) {
+            hints.ai_flags = 0;
+            rc = ::getaddrinfo(hostName, service, &hints, &host);
+        }
+        if (!host) {
+            throw SocketException(SocketException::NET_ERR_GETADDRINFO, errno);
+        }
 
-    sockfd = ::socket(host->ai_family, host->ai_socktype, host->ai_protocol);
-    if (sockfd < 0) {
+        sockfd = ::socket(host->ai_family, host->ai_socktype, host->ai_protocol);
+        if (sockfd < 0) {
+            ::freeaddrinfo(host);
+            throw SocketException(SocketException::NET_ERR_SOCKET, errno);
+        }
+        nodelay = 1;
+        rc = ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
+
+        rc = ::connect(sockfd, host->ai_addr, host->ai_addrlen);
+        if (rc == 0)
+            break;
+        ::sleep(1);
+        count++;
         ::freeaddrinfo(host);
-        throw SocketException(SocketException::NET_ERR_SOCKET, errno);
+        ::close(sockfd);
     }
-    nodelay = 1;
-    rc = ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
-
-    rc = ::connect(sockfd, host->ai_addr, host->ai_addrlen);
     if (rc < 0) {
         ::freeaddrinfo(host);
         throw SocketException(SocketException::NET_ERR_CONNECT, errno);

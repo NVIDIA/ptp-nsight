@@ -60,8 +60,10 @@ int main()
     char *error = NULL;
     int rc;
 
-#if defined(_SCI_LINUX) || defined(__APPLE__)
-    dlopen_file = ::dlopen(SCI_LIB_PATH, RTLD_NOW|RTLD_GLOBAL);
+#if defined(_SCI_LINUX)
+    dlopen_file = ::dlopen(SCI_LIB_PATH, RTLD_NOW | RTLD_GLOBAL | RTLD_DEEPBIND);
+#elif defined(__APPLE__)
+    dlopen_file = ::dlopen(SCI_LIB_PATH, RTLD_NOW | RTLD_GLOBAL);
 #else  // aix
     dlopen_file = ::dlopen(SCI_LIB_PATH, RTLD_NOW|RTLD_GLOBAL|RTLD_MEMBER);
 #endif
@@ -78,6 +80,7 @@ int main()
         ::exit(1);
     }
     
+    // sleep(20);
     rc = init_hndlr(NULL);
     if (rc != SCI_SUCCESS) {
         ::fprintf(stderr, "scia initialization failed\n");

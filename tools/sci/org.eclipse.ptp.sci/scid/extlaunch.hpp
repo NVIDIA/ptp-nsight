@@ -33,6 +33,7 @@
 #include <map>
 
 #include "thread.hpp"
+
 #define FIVE_MINUTES 5000000 * 60
 
 using namespace std;
@@ -55,7 +56,6 @@ class ExtLauncher : public Thread
         char            sessionKey[64];
         size_t          ssKeyLen;
         LAUNCH_MODE     mode;
-        bool            sync;
 
     private:
         char *getExename(char *path);
@@ -65,7 +65,6 @@ class ExtLauncher : public Thread
         int doVerify(struct iovec &sign, int jobkey, int id, char *path = NULL, char *envStr = NULL);
         int putSessionKey(int fd, struct iovec &sign, int jobkey, int id, char *path, char *envStr, bool suer = true);
         int getSessionKey(int fd);
-        int sendResult(Stream &s, int rc);
     public:
         ExtLauncher(Stream *s);
         virtual ~ExtLauncher();
@@ -81,8 +80,6 @@ class ExtLauncher : public Thread
 typedef map<int, string> TASK_CONFIG;
 typedef struct TASK_INFO {
     string          user;
-    bool            sync;
-    Stream          *stream;
     TASK_CONFIG     config;
     double          timestamp;
     struct iovec    token;
