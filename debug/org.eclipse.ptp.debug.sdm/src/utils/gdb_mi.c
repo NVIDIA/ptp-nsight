@@ -47,7 +47,7 @@ SendCommandWait(MISession *session, MICommand *cmd)
 			DEBUG_PRINTS(DEBUG_LEVEL_BACKEND, "------------------- SendCommandWait sess->out_fd = -1\n");
 			break;
 		}
-	} while (!MISessionCommandCompleted(session));
+	} while (!MICommandCompleted(cmd));
 }
 
 /*
