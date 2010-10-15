@@ -904,22 +904,6 @@ GDBMIInterrupt(void)
 	CHECK_SESSION();
 
 	/*
-	 * Don't do anything if there's an event pending or the
-	 * target is not running.
-	 *
-	if (LastEvent != NULL || !gmi_exec_interrupt(MIHandle))
-		return DBGRES_OK;*/
-
-	/*
-	 * Must check async here due to broken MI implementation. AsyncCallback will
-	 * be called inside gmi_exec_interrupt().
-	 *
-	if (AsyncFunc != NULL) {
-		AsyncFunc(AsyncFuncData);
-		AsyncFunc = NULL;
-	}*/
-
-	/*
 	 * Ignore error if target is not running
 	 */
 
