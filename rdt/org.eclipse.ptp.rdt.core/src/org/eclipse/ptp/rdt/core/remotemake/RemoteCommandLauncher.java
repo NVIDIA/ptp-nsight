@@ -129,6 +129,9 @@ public class RemoteCommandLauncher implements ICommandLauncher {
 		if (executionProvider != null) {
 			
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			if(!remoteServices.isInitialized()) {
+				remoteServices.initialize();
+			}
 			
 			IRemoteConnection connection = executionProvider.getConnection();
 			
@@ -164,8 +167,7 @@ public class RemoteCommandLauncher implements ICommandLauncher {
 			}
 			
 			// combine stdout and stderr
-			// TODO FIXME:  this doesn't currently work for the RSE provider
-			//processBuilder.redirectErrorStream(true);
+			processBuilder.redirectErrorStream(true);
 			
 
 			

@@ -121,6 +121,9 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 		if (executionProvider != null) {
 
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			if(!remoteServices.isInitialized()) {
+				remoteServices.initialize();
+			}
 
 			IRemoteConnection connection = executionProvider.getConnection();
 
@@ -205,6 +208,9 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 		if (executionProvider != null) {
 
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			if(!remoteServices.isInitialized()) {
+				remoteServices.initialize();
+			}
 
 			IRemoteConnection connection = executionProvider.getConnection();
 
