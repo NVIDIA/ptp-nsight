@@ -44,7 +44,7 @@
 	
 	<!-- CDT VERSIONS MUST BE UPDATED FOR NEW CDT VERSION -->
 	
-	<property name="cdtVersion" value="201009141542"/>
+	<property name="cdtVersion" value="201010220608"/>
 	<property name="cdtBranch" value=" -r cdt_7_0"/>
 	
 	<property name="cdtCoreVersion" value="5.2.1.${cdtVersion}"/>
