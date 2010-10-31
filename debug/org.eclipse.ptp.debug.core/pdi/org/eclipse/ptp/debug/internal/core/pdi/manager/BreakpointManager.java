@@ -163,6 +163,30 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 		deletePendingBreakpoint(breakpoint, true);
 	}
 
+	/**
+	 * FIXME work out correct usage of allowUpdate
+	 * 
+	 * Delete a breakpoint from all suspended tasks.
+	 * 
+	 * @param bp
+	 *            breakpoint to delete
+	 * @throws PDIException
+	 */
+	public void deletePendingBreakpoint(IPDIBreakpoint bp, boolean allowUpdate) throws PDIException {
+		TaskSet suspendedTasks = bp.getPendingTasks().copy();
+		if (session.getStatus() == IPDISession.STARTED) {
+			getSession().getTaskManager().getSuspendedTasks(suspendedTasks);
+		}
+		if (!suspendedTasks.isEmpty()) {
+			getSession().getEventRequestManager().addEventRequest(
+					session.getRequestFactory().getDeleteBreakpointRequest(suspendedTasks, bp, allowUpdate));
+			bp.getPendingTasks().andNot(suspendedTasks);
+			if (bp.getPendingTasks().isEmpty() && allowUpdate) {
+				deleteBreakpoint(bp.getBreakpointID());
+			}
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -191,9 +215,7 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 		if (!isValid(breakpoint.getBreakpointID())) {
 			throw new PDIException(tasks, Messages.BreakpointManager_0);
 		}
-		breakpoint.setEnabled(false);
-		getSession().getEventRequestManager().addEventRequest(
-				session.getRequestFactory().getDisableBreakpointRequest(tasks, breakpoint));
+		disableBreakpoint0(tasks, breakpoint);
 	}
 
 	/*
@@ -343,6 +365,38 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 		return bkpt;
 	}
 
+	/**
+	 * Set a breakpoint on all suspended tasks.
+	 * 
+	 * @param bp
+	 *            breakpoint to set
+	 * @throws PDIException
+	 */
+	public void setPendingBreakpoint(IPDIBreakpoint bp) throws PDIException {
+		TaskSet suspendedTasks = bp.getPendingTasks().copy();
+		if (session.getStatus() == IPDISession.STARTED) {
+			getSession().getTaskManager().getSuspendedTasks(suspendedTasks);
+		}
+		if (!suspendedTasks.isEmpty()) {
+			IPDIEventRequest request = null;
+			if (bp instanceof IPDIFunctionBreakpoint) {
+				request = session.getRequestFactory().getSetFunctionBreakpointRequest(suspendedTasks, (IPDIFunctionBreakpoint) bp,
+						true);
+			} else if (bp instanceof IPDIAddressBreakpoint) {
+				request = session.getRequestFactory().getSetAddressBreakpointRequest(suspendedTasks, (IPDIAddressBreakpoint) bp,
+						true);
+			} else if (bp instanceof IPDILineBreakpoint) {
+				request = session.getRequestFactory().getSetLineBreakpointRequest(suspendedTasks, (IPDILineBreakpoint) bp, true);
+			} else if (bp instanceof IPDIWatchpoint) {
+				request = session.getRequestFactory().getSetWatchpointRequest(suspendedTasks, (IPDIWatchpoint) bp, true);
+			} else {
+				throw new PDIException(bp.getTasks(), Messages.BreakpointManager_2);
+			}
+			bp.getPendingTasks().andNot(suspendedTasks);
+			getSession().getEventRequestManager().addEventRequest(request);
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -383,6 +437,24 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 		// TODO
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.ptp.debug.core.pdi.manager.IPDIBreakpointManager#
+	 * updatePendingBreakpoints()
+	 */
+	public void updatePendingBreakpoints() throws PDIException {
+		for (IPDIBreakpoint bp : getAllPDIBreakpoints()) {
+			if (!bp.getPendingTasks().isEmpty()) {
+				if (!bp.isDeleted()) {
+					setPendingBreakpoint(bp);
+				} else {
+					deletePendingBreakpoint(bp, true);
+				}
+			}
+		}
+	}
+
 	/**
 	 * @param breakpoint
 	 */
@@ -408,6 +480,20 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 	}
 
 	/**
+	 * Disable breakpoint without verifying breakpoint is valid. Used to disable
+	 * breakpoint before it is added to breakpoint manager.
+	 * 
+	 * @param tasks
+	 * @param breakpoint
+	 * @throws PDIException
+	 */
+	private void disableBreakpoint0(TaskSet tasks, IPDIBreakpoint breakpoint) throws PDIException {
+		breakpoint.setEnabled(false);
+		getSession().getEventRequestManager().addEventRequest(
+				session.getRequestFactory().getDisableBreakpointRequest(tasks, breakpoint));
+	}
+
+	/**
 	 * @return
 	 */
 	private IPDIBreakpoint[] getAllPDIBreakpoints() {
@@ -424,80 +510,6 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 		return (getBreakpoint(id) != null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ptp.debug.core.pdi.manager.IPDIBreakpointManager#
-	 * updatePendingBreakpoints()
-	 */
-	public void updatePendingBreakpoints() throws PDIException {
-		for (IPDIBreakpoint bp : getAllPDIBreakpoints()) {
-			if (!bp.getPendingTasks().isEmpty()) {
-				if (!bp.isDeleted()) {
-					setPendingBreakpoint(bp);
-				} else {
-					deletePendingBreakpoint(bp, true);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Set a breakpoint on all suspended tasks.
-	 * 
-	 * @param bp
-	 *            breakpoint to set
-	 * @throws PDIException
-	 */
-	public void setPendingBreakpoint(IPDIBreakpoint bp) throws PDIException {
-		TaskSet suspendedTasks = bp.getPendingTasks().copy();
-		if (session.getStatus() == IPDISession.STARTED) {
-			getSession().getTaskManager().getSuspendedTasks(suspendedTasks);
-		}
-		if (!suspendedTasks.isEmpty()) {
-			IPDIEventRequest request = null;
-			if (bp instanceof IPDIFunctionBreakpoint) {
-				request = session.getRequestFactory().getSetFunctionBreakpointRequest(suspendedTasks, (IPDIFunctionBreakpoint) bp,
-						true);
-			} else if (bp instanceof IPDIAddressBreakpoint) {
-				request = session.getRequestFactory().getSetAddressBreakpointRequest(suspendedTasks, (IPDIAddressBreakpoint) bp,
-						true);
-			} else if (bp instanceof IPDILineBreakpoint) {
-				request = session.getRequestFactory().getSetLineBreakpointRequest(suspendedTasks, (IPDILineBreakpoint) bp, true);
-			} else if (bp instanceof IPDIWatchpoint) {
-				request = session.getRequestFactory().getSetWatchpointRequest(suspendedTasks, (IPDIWatchpoint) bp, true);
-			} else {
-				throw new PDIException(bp.getTasks(), Messages.BreakpointManager_2);
-			}
-			bp.getPendingTasks().andNot(suspendedTasks);
-			getSession().getEventRequestManager().addEventRequest(request);
-		}
-	}
-
-	/**
-	 * FIXME work out correct usage of allowUpdate
-	 * 
-	 * Delete a breakpoint from all suspended tasks.
-	 * 
-	 * @param bp
-	 *            breakpoint to delete
-	 * @throws PDIException
-	 */
-	public void deletePendingBreakpoint(IPDIBreakpoint bp, boolean allowUpdate) throws PDIException {
-		TaskSet suspendedTasks = bp.getPendingTasks().copy();
-		if (session.getStatus() == IPDISession.STARTED) {
-			getSession().getTaskManager().getSuspendedTasks(suspendedTasks);
-		}
-		if (!suspendedTasks.isEmpty()) {
-			getSession().getEventRequestManager().addEventRequest(
-					session.getRequestFactory().getDeleteBreakpointRequest(suspendedTasks, bp, allowUpdate));
-			bp.getPendingTasks().andNot(suspendedTasks);
-			if (bp.getPendingTasks().isEmpty() && allowUpdate) {
-				deleteBreakpoint(bp.getBreakpointID());
-			}
-		}
-	}
-
 	/**
 	 * @param bkpt
 	 * @throws PDIException
@@ -505,7 +517,7 @@ public class BreakpointManager extends AbstractPDIManager implements IPDIBreakpo
 	private void setLocationBreakpoint(IPDILocationBreakpoint bkpt) throws PDIException {
 		setPendingBreakpoint(bkpt);
 		if (!bkpt.isEnabled()) {
-			disableBreakpoint(bkpt.getTasks(), bkpt);
+			disableBreakpoint0(bkpt.getTasks(), bkpt);
 		}
 	}
 
