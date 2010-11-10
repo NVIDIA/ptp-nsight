@@ -184,7 +184,7 @@ public class PBSBatchScriptTemplate {
 				if (line == null)
 					break;
 				text.append(line).append(separator);
-				if (line.startsWith("#PBS")) { //$NON-NLS-1$
+				if (line.startsWith("#PBS") && line.indexOf("@") >= 0) { //$NON-NLS-1$ //$NON-NLS-2$
 					ap = handlePBSJobAttribute(line, defs);
 					if (ap != null) {
 						pbsJobAttributes.put(ap.getName(), ap);
@@ -640,8 +640,8 @@ public class PBSBatchScriptTemplate {
 				break;
 		}
 
-		if (!firstAt || !lastAt)
-			throw new ParseException(line + Messages.PBSBatchScriptTemplate_parseError, 0);
-		return name.toString();
+		if ((!firstAt && !lastAt) || (firstAt && lastAt))
+			return name.toString();
+		throw new ParseException(line + Messages.PBSBatchScriptTemplate_parseError, 0);
 	}
 }
