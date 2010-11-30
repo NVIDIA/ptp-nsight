@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007 IBM Corporation and others.
+ * Copyright (c) 2007, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.ptp.remote.remotetools.core;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -302,7 +303,7 @@ public class RemoteToolsConnection implements IRemoteConnection {
 				}
 			}
 		}
-		return fEnv;
+		return Collections.unmodifiableMap(fEnv);
 	}
 
 	/*
