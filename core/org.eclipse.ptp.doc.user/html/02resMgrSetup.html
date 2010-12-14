@@ -11,6 +11,7 @@
 <p>Topics  include:
 <ul>
 <li><a href="#defn">Resource managers</a></li>
+<li><a href="#list">List of PTP-supported Resource managers</a></li>
 <li>Steps for defining a resource manager</li>
 <ol>
 <li><a href="#creat">Creating a resource manager</a></li>
@@ -39,7 +40,23 @@ controls one target system, although a particular target system may have more th
 <p>Resource managers can be <i>local</i> or <i>remote</i>. A local resource manager controls resources on the local machine running 
 Eclipse. A remote resource manager controls resources on a physically remote system. The process of configuring a local or remote 
 resource manager is the same.</p>
+<h2 id="list">List of PTP-Supported Resource Managers</h2>
+<p>
+<ul>
+<li><a href="02resMgrGenericRemoteLaunch.html">Generic Remote Launch</a></li>
+<li>Open MPI - covered in examples below
+<li><a href="PLUGINS_ROOT/org.eclipse.ptp.rm.ibm.ll.help/html/IBMLLMainHelp.html">IBM
+		Loadleveler</a>
+<li><a href="PLUGINS_ROOT/org.eclipse.ptp.rm.ibm.pe.help/html/PEMainHelp.html">IBM
+		Parallel Environment</a>
+<li>MPICH2 - setup is similar to Open MPI (not covered separatly here)
+<li><a href="PLUGINS_ROOT/org.eclipse.ptp.rm.pbs.help/html/toc.html">PBS</a>
+<li><a href="PLUGINS_ROOT/org.eclipse.ptp.rm.slurm.help/html/toc.html">SLURM</a>
 
+</ul>
+<p>More information about PTP Resource Managers and what they support can be
+found on the <a href="http://wiki.eclipse.org/PTP/release_notes">Release Notes page</a> for this version of PTP.
+<p>&nbsp;
 <h2 id="creat">Step 1: Creating a resource manager</h2>
 <p></p>
 <ol>
@@ -55,7 +72,7 @@ list of perspectives.</p><p><br></p>
 <li><p>Choose the resource manager that corresponds to the target system. In this example we 
 will use the <b>Open MPI</b> resource manager, which is used to control the Open MPI Open Runtime 
 Environment.</p><p><br></p>
-<!-- FIXME screenshot needs to include Generic Remote Launch -->
+ 
 <p><img src="images/02chooseResMgrType.png"></p><p><br></p></li>
 <li><p>Select <b>Next &gt;</b></p></li>
 </ol>
