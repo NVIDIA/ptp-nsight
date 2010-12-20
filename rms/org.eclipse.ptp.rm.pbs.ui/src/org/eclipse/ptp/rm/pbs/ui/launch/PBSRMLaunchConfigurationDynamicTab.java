@@ -32,7 +32,6 @@ import org.eclipse.ptp.core.attributes.IllegalValueException;
 import org.eclipse.ptp.core.elements.IPQueue;
 import org.eclipse.ptp.core.elements.IResourceManager;
 import org.eclipse.ptp.launch.ui.extensions.RMLaunchValidation;
-import org.eclipse.ptp.rm.pbs.core.rmsystem.IPBSResourceManagerConfiguration;
 import org.eclipse.ptp.rm.pbs.core.rmsystem.PBSResourceManager;
 import org.eclipse.ptp.rm.pbs.ui.PBSUIPlugin;
 import org.eclipse.ptp.rm.pbs.ui.data.AttributePlaceholder;
@@ -79,10 +78,8 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 	 * the correct options for rebuilding the controls.
 	 */
 	private class PBSRMLaunchDataSource extends RMLaunchConfigurationDynamicTabDataSource {
-		private String currentConfigName;
 		private String currentRMId;
 		private String currentTemplate;
-		private String defaultTemplate;
 		private String lastRMId;
 
 		protected PBSRMLaunchDataSource(BaseRMLaunchConfigurationDynamicTab page) {
@@ -268,35 +265,6 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 				}
 			}
 		}
-
-		private void setCurrentConfiguration() {
-			ILaunchConfigurationWorkingCopy config = getConfigurationWorkingCopy();
-			if (config == null)
-				return;
-			put(config);
-		}
-
-		/*
-		 * Determines whether the template should be the default or not. Because
-		 * of the way RMs are identified, it becomes complex to try to capture
-		 * changes to their template settings which would not span across
-		 * instances of the ResourceTab, so we have just left the mapping of a
-		 * (default) template to the RM fixed. The use of an RM with a different
-		 * template only lasts for the duration of the Resource Tab's
-		 * persistence in memory; on being reopened, the default template is
-		 * restored (but with the last saved attribute values).
-		 */
-		private void setCurrentTemplate(String oldRM) {
-			try {
-				ILaunchConfiguration c = get(currentConfigName);
-				if (c == null)
-					currentTemplate = defaultTemplate;
-				else
-					currentTemplate = c.getAttribute(TAG_CURRENT_TEMPLATE, defaultTemplate);
-			} catch (CoreException ce) {
-				ce.printStackTrace();
-			}
-		}
 	}
 
 	/*
@@ -422,17 +390,6 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 			fireTemplateChange();
 		}
 	}
-
-	/*
-	 * The ResourceTab reconstructs a new LaunchTab object every time a
-	 * different resource manager is selected; in order to be able to maintain
-	 * the proper attribute values between resource manager choices within any
-	 * given ResourceTab, we need a static map.
-	 * 
-	 * This map more properly belongs to the ResourceTab instance, but for the
-	 * moment the static map will probably not cause semantic issues.
-	 */
-	private static final Map<String, ILaunchConfiguration> configurations = new HashMap<String, ILaunchConfiguration>();
 
 	private static final String[] mpiChoices = Messages.MPICommands.split(","); //$NON-NLS-1$ 
 
@@ -560,19 +517,14 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 	 */
 	@Override
 	public RMLaunchValidation performApply(ILaunchConfigurationWorkingCopy configuration, IResourceManager rm, IPQueue queue) {
-		// should not be null
-		dataSource.currentConfigName = configuration.getName();
 		String oldRM = dataSource.lastRMId;
 		RMLaunchValidation rmv = super.performApply(configuration, rm, queue);
 		if (templateChangeListener.isEnabled())
 			if (oldRM == null) {
 				PBSResourceManager pbsRM = (PBSResourceManager) rm;
-				IPBSResourceManagerConfiguration rmConfig = (IPBSResourceManagerConfiguration) pbsRM.getConfiguration();
-				dataSource.defaultTemplate = rmConfig.getDefaultTemplateName();
-				dataSource.setCurrentTemplate(oldRM);
+				pbsRM.getConfiguration();
 				fireTemplateChange();
 			}
-		dataSource.setCurrentConfiguration();
 		return rmv;
 	}
 
@@ -680,7 +632,7 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 					templateChangeListener.disable();
 					dataSource.copyFromFields();
 					dataSource.copyToStorage();
-					ILaunchConfiguration c = get(dataSource.currentConfigName);
+					ILaunchConfiguration c = dataSource.getConfiguration();
 					templateManager.loadTemplate(dataSource.currentTemplate, c);
 					populateControl();
 					dataSource.loadFromStorage();
@@ -749,19 +701,5 @@ public class PBSRMLaunchConfigurationDynamicTab extends BaseRMLaunchConfiguratio
 		 */
 		if (parent != null)
 			parent.setMinSize(control.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-	}
-
-	/*
-	 * For accessing the most recent configuration in memory.
-	 */
-	private static synchronized ILaunchConfiguration get(String name) {
-		return configurations.get(name);
-	}
-
-	/*
-	 * For storing the most recent configuration in memory.
-	 */
-	private static synchronized void put(ILaunchConfiguration configuration) {
-		configurations.put(configuration.getName(), configuration);
 	}
 }
