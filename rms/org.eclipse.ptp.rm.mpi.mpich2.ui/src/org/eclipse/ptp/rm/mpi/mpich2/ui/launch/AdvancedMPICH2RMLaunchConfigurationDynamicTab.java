@@ -39,28 +39,33 @@ import org.eclipse.swt.widgets.Text;
 /**
  * 
  * @author Daniel Felix Ferber
- *
+ * 
  */
-public class AdvancedMPICH2RMLaunchConfigurationDynamicTab extends
-BaseRMLaunchConfigurationDynamicTab {
+public class AdvancedMPICH2RMLaunchConfigurationDynamicTab extends BaseRMLaunchConfigurationDynamicTab {
 
 	Composite control;
 	Button useArgsDefaultsButton;
 	Text argsText;
 
-	class WidgetListener extends RMLaunchConfigurationDynamicTabWidgetListener
-	implements ICheckStateListener {
+	class WidgetListener extends RMLaunchConfigurationDynamicTabWidgetListener implements ICheckStateListener {
 		public WidgetListener(BaseRMLaunchConfigurationDynamicTab dynamicTab) {
 			super(dynamicTab);
 		}
 
 		@Override
 		protected void doWidgetSelected(SelectionEvent e) {
-			super.doWidgetSelected(e);
+			if (e.getSource() == useArgsDefaultsButton) {
+				updateControls();
+			} else {
+				super.doWidgetSelected(e);
+			}
 		}
 
-		public void checkStateChanged(CheckStateChangedEvent event) {
-			// do nothing
+		/**
+		 * @since 2.0
+		 */
+		public void checkStateChanged(CheckStateChangedEvent e) {
+			// Do nothing
 		}
 	}
 
@@ -86,11 +91,8 @@ BaseRMLaunchConfigurationDynamicTab {
 
 		@Override
 		protected void copyToStorage() {
-			getConfigurationWorkingCopy().setAttribute(
-					MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS,
-					useDefArgs);
-			getConfigurationWorkingCopy().setAttribute(
-					MPICH2LaunchConfiguration.ATTR_ARGUMENTS, args);
+			getConfigurationWorkingCopy().setAttribute(MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS, useDefArgs);
+			getConfigurationWorkingCopy().setAttribute(MPICH2LaunchConfiguration.ATTR_ARGUMENTS, args);
 		}
 
 		@Override
@@ -103,12 +105,9 @@ BaseRMLaunchConfigurationDynamicTab {
 		@Override
 		protected void loadFromStorage() {
 			try {
-				args = getConfiguration().getAttribute(
-						MPICH2LaunchConfiguration.ATTR_ARGUMENTS,
+				args = getConfiguration().getAttribute(MPICH2LaunchConfiguration.ATTR_ARGUMENTS,
 						MPICH2LaunchConfigurationDefaults.ATTR_ARGUMENTS);
-				useDefArgs = getConfiguration()
-				.getAttribute(
-						MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS,
+				useDefArgs = getConfiguration().getAttribute(MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS,
 						MPICH2LaunchConfigurationDefaults.ATTR_USEDEFAULTARGUMENTS);
 			} catch (CoreException e) {
 				// TODO handle exception?
@@ -119,31 +118,8 @@ BaseRMLaunchConfigurationDynamicTab {
 		@Override
 		protected void validateLocal() throws ValidationException {
 			if (!useDefArgs && args == null) {
-				throw new ValidationException(
-						Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Validation_EmptyArguments);
+				throw new ValidationException(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Validation_EmptyArguments);
 			}
-		}
-
-		/**
-		 * Convert a comma separated list into one host per line
-		 * 
-		 * @param list
-		 * @return
-		 */
-		private String hostListToText(String list) {
-			if (list == null)
-				return ""; //$NON-NLS-1$
-			String result = ""; //$NON-NLS-1$
-			String[] values = list.split(","); //$NON-NLS-1$
-			for (int i = 0; i < values.length; i++) {
-				if (!values[i].equals("")) { //$NON-NLS-1$
-					if (i > 0) {
-						result += "\r"; //$NON-NLS-1$
-					}
-					result += values[i];
-				}
-			}
-			return result;
 		}
 	}
 
@@ -167,23 +143,19 @@ BaseRMLaunchConfigurationDynamicTab {
 		return Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Title;
 	}
 
-	public void createControl(Composite parent, IResourceManager rm,
-			IPQueue queue) throws CoreException {
+	public void createControl(Composite parent, IResourceManager rm, IPQueue queue) throws CoreException {
 		control = new Composite(parent, SWT.NONE);
 		control.setLayout(new GridLayout());
 
 		final Group argumentsGroup = new Group(control, SWT.NONE);
-		argumentsGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-				false));
+		argumentsGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
 		argumentsGroup.setLayout(layout);
-		argumentsGroup
-		.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_LaunchArguments);
+		argumentsGroup.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_LaunchArguments);
 
 		useArgsDefaultsButton = new Button(argumentsGroup, SWT.CHECK);
-		useArgsDefaultsButton
-		.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_DefaultArguments);
+		useArgsDefaultsButton.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_DefaultArguments);
 		// useArgsDefaultsButton.setSelection(true);
 		GridData gd = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
 		useArgsDefaultsButton.setLayoutData(gd);
@@ -191,15 +163,13 @@ BaseRMLaunchConfigurationDynamicTab {
 
 		Label label = new Label(argumentsGroup, SWT.NONE);
 		label.setLayoutData(new GridData());
-		label
-		.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_Arguments);
+		label.setText(Messages.AdvancedMPICH2RMLaunchConfigurationDynamicTab_Label_Arguments);
 
 		argsText = new Text(argumentsGroup, SWT.BORDER);
 		argsText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 	}
 
-	public IAttribute<?, ?, ?>[] getAttributes(IResourceManager rm,
-			IPQueue queue, ILaunchConfiguration configuration, String mode)
+	public IAttribute<?, ?, ?>[] getAttributes(IResourceManager rm, IPQueue queue, ILaunchConfiguration configuration, String mode)
 			throws CoreException {
 		return null;
 	}
@@ -208,19 +178,25 @@ BaseRMLaunchConfigurationDynamicTab {
 		return control;
 	}
 
-	public RMLaunchValidation setDefaults(
-			ILaunchConfigurationWorkingCopy configuration, IResourceManager rm,
-			IPQueue queue) {
-		configuration.setAttribute(
-				MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS,
+	public RMLaunchValidation setDefaults(ILaunchConfigurationWorkingCopy configuration, IResourceManager rm, IPQueue queue) {
+		configuration.setAttribute(MPICH2LaunchConfiguration.ATTR_USEDEFAULTARGUMENTS,
 				MPICH2LaunchConfigurationDefaults.ATTR_USEDEFAULTARGUMENTS);
-		configuration.setAttribute(MPICH2LaunchConfiguration.ATTR_ARGUMENTS,
-				MPICH2LaunchConfigurationDefaults.ATTR_ARGUMENTS);
+		configuration.setAttribute(MPICH2LaunchConfiguration.ATTR_ARGUMENTS, MPICH2LaunchConfigurationDefaults.ATTR_ARGUMENTS);
 		return new RMLaunchValidation(true, null);
 	}
 
 	@Override
 	public void updateControls() {
 		argsText.setEnabled(!useArgsDefaultsButton.getSelection());
+		if (useArgsDefaultsButton.isEnabled()) {
+			String launchArgs = ""; //$NON-NLS-1$
+			try {
+				launchArgs = MPICH2LaunchConfiguration.calculateArguments(getDataSource().getConfiguration());
+			} catch (CoreException e) {
+				// ignore
+			}
+			argsText.setText(launchArgs);
+		}
+
 	}
 }

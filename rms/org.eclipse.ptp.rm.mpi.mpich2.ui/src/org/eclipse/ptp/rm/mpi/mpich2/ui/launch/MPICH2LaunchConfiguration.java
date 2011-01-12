@@ -10,9 +10,6 @@
  ******************************************************************************/
 package org.eclipse.ptp.rm.mpi.mpich2.ui.launch;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.ptp.rm.mpi.mpich2.ui.MPICH2UIPlugin;
@@ -20,7 +17,7 @@ import org.eclipse.ptp.rm.mpi.mpich2.ui.MPICH2UIPlugin;
 /**
  * 
  * @author Daniel Felix Ferber
- *
+ * 
  */
 public class MPICH2LaunchConfiguration {
 	public static final String ATTR_BASE = MPICH2UIPlugin.PLUGIN_ID + ".launchAttributes"; //$NON-NLS-1$
@@ -38,8 +35,9 @@ public class MPICH2LaunchConfiguration {
 	public static final String ATTR_USEDEFAULTPARAMETERS = ATTR_BASE + ".useDefaultParameters"; //$NON-NLS-1$
 
 	static String calculateArguments(ILaunchConfiguration configuration) throws CoreException {
+		String launchArgs;
 		if (configuration.getAttribute(ATTR_USEDEFAULTARGUMENTS, MPICH2LaunchConfigurationDefaults.ATTR_USEDEFAULTARGUMENTS)) {
-			String launchArgs = "-np " + Integer.toString(configuration.getAttribute(ATTR_NUMPROCS, MPICH2LaunchConfigurationDefaults.ATTR_NUMPROCS)); //$NON-NLS-1$
+			launchArgs = "-np " + Integer.toString(configuration.getAttribute(ATTR_NUMPROCS, MPICH2LaunchConfigurationDefaults.ATTR_NUMPROCS)); //$NON-NLS-1$
 			if (configuration.getAttribute(ATTR_NOLOCAL, MPICH2LaunchConfigurationDefaults.ATTR_NOLOCAL)) {
 				launchArgs += " -nolocal"; //$NON-NLS-1$
 			}
@@ -47,28 +45,20 @@ public class MPICH2LaunchConfiguration {
 				launchArgs += " --prefix " + fixString(configuration.getAttribute(ATTR_PREFIX, MPICH2LaunchConfigurationDefaults.ATTR_PREFIX)); //$NON-NLS-1$
 			}
 			if (configuration.getAttribute(ATTR_USEHOSTFILE, MPICH2LaunchConfigurationDefaults.ATTR_USEHOSTFILE)) {
-				launchArgs += " -hostfile " + fixString(configuration.getAttribute(ATTR_HOSTFILE, MPICH2LaunchConfigurationDefaults.ATTR_HOSTFILE)); //$NON-NLS-1$
+				launchArgs += " -machinefile " + fixString(configuration.getAttribute(ATTR_HOSTFILE, MPICH2LaunchConfigurationDefaults.ATTR_HOSTFILE)); //$NON-NLS-1$
 			}
 			if (configuration.getAttribute(ATTR_USEHOSTLIST, MPICH2LaunchConfigurationDefaults.ATTR_USEHOSTLIST)) {
 				launchArgs += " -host " + fixString(configuration.getAttribute(ATTR_HOSTLIST, MPICH2LaunchConfigurationDefaults.ATTR_HOSTLIST)); //$NON-NLS-1$
 			}
-
-			if (! configuration.getAttribute(ATTR_USEDEFAULTPARAMETERS, MPICH2LaunchConfigurationDefaults.ATTR_USEDEFAULTPARAMETERS)) {
-				Map<String, String> params = configuration.getAttribute(ATTR_PARAMETERS, MPICH2LaunchConfigurationDefaults.ATTR_PARAMETERS);
-				for (Entry<String, String> param : params.entrySet()) {
-					launchArgs += " -mca " + param.getKey() + " " + fixString(param.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
-				}
-			}
-			return launchArgs;
 		} else {
-			String launchArgs = configuration.getAttribute(ATTR_ARGUMENTS, MPICH2LaunchConfigurationDefaults.ATTR_ARGUMENTS);
-			return launchArgs;
+			launchArgs = configuration.getAttribute(ATTR_ARGUMENTS, MPICH2LaunchConfigurationDefaults.ATTR_ARGUMENTS);
 		}
+		return launchArgs;
 	}
 
 	/**
 	 * Make string suitable for passing as an argument
-	 *
+	 * 
 	 * @param s
 	 * @return
 	 */
