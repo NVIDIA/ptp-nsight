@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 University of Utah School of Computing
+ * Copyright (c) 2009, 2011 University of Utah School of Computing
  * 50 S Central Campus Dr. 3190 Salt Lake City, UT 84112
  * http://www.cs.utah.edu/formal_verification/
  *
@@ -21,7 +21,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ptp.gem.GemPlugin;
 
 /**
- * Class used to initialize default preference values.
+ * Class used to initialize default preference values for this plug-in.
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
@@ -30,24 +30,28 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 * 
 	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#
 	 */
+	@Override
 	public void initializeDefaultPreferences() {
 
 		// Preference store for the GEM plug-in
-		IPreferenceStore pstore = GemPlugin.getDefault().getPreferenceStore();
+		final IPreferenceStore pstore = GemPlugin.getDefault().getPreferenceStore();
 
 		// Command line options
-		pstore.setDefault(PreferenceConstants.GEM_PREF_FIB_OPTION, true);
-		pstore.setDefault(PreferenceConstants.GEM_PREF_MPICALLS_OPTION, false);
-		pstore.setDefault(PreferenceConstants.GEM_PREF_OPENMP_OPTION, false);
-		pstore.setDefault(PreferenceConstants.GEM_PREF_BLOCK_OPTION, true);
-		pstore.setDefault(PreferenceConstants.GEM_PREF_REPORT_OPTION, false);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_FIB, true);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_MPICALLS, false);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_OPENMP, false);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_BLOCK, true);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_REPORT, false);
 		pstore.setDefault(PreferenceConstants.GEM_PREF_VERBOSE, false);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_UNIXSOCKETS, true);
 
 		// Miscellaneous options
 		pstore.setDefault(PreferenceConstants.GEM_PREF_PORTNUM, 9999);
 		pstore.setDefault(PreferenceConstants.GEM_PREF_NUMPROCS, 2);
 		pstore.setDefault(PreferenceConstants.GEM_PREF_REPORTNUM, 4);
+		pstore.setDefault(PreferenceConstants.GEM_PREF_HOSTNAME, ""); //$NON-NLS-1$
 		pstore.setDefault(PreferenceConstants.GEM_PREF_CLRCON, false);
+		pstore.setDefault(PreferenceConstants.GEM_ACTIVE_VIEW, "browser"); //$NON-NLS-1$
 
 		// ISP paths, scripts and file names
 		pstore.setDefault(PreferenceConstants.GEM_PREF_ISPEXE_PATH, ""); //$NON-NLS-1$
@@ -58,8 +62,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// Hidden preference for the order MPI calls are stepped
 		pstore.setDefault(PreferenceConstants.GEM_PREF_STEP_ORDER, "issueOrder"); //$NON-NLS-1$
 
-		// Hidden preference for last open file to be accessed
-		pstore.setDefault(PreferenceConstants.GEM_PREF_LAST_FILE, "lastFile"); //$NON-NLS-1$
+		// Hidden preference for last file accessed - URI.toString
+		pstore.setDefault(PreferenceConstants.GEM_PREF_MOST_RECENT_FILE, ""); //$NON-NLS-1$
+
+		// Hidden preference for name of child processes
+		pstore.setDefault(PreferenceConstants.GEM_PREF_PROCESS_NAME, ""); //$NON-NLS-1$
 	}
 
 }

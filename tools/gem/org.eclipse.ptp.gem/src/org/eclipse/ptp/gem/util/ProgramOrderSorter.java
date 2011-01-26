@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 University of Utah School of Computing
+ * Copyright (c) 2009, 2011 University of Utah School of Computing
  * 50 S Central Campus Dr. 3190 Salt Lake City, UT 84112
  * http://www.cs.utah.edu/formal_verification/
  *
@@ -27,32 +27,30 @@ import java.util.Comparator;
  * 
  * Returned int value has the following meanings:
  * 
- * 1. positive:  env1 is greater than env2 
- * 2. zero:      env1 equals to env2 
- * 3. negative:  env1 is less than env2
+ * 1. positive: env1 is greater than env2 2. zero: env1 equals to env2 3.
+ * negative: env1 is less than env2
  */
 public class ProgramOrderSorter implements Comparator<Envelope> {
 
 	/**
 	 * Compares the two Envelopes passed in by Program order.
 	 * 
-	 * @param Envelope env1 The first Envelope.
-	 * @param Envelope env1 The second Envelope.
-	 * @return int The comparison of the two parameters.
+	 * @param env1
+	 *            The first Envelope.
+	 * @param env2
+	 *            The second Envelope.
+	 * @return int The comparison of the two parameters... positive: env1 is
+	 *         greater than env2, zero: env1 equals to env2 negative: env1 is
+	 *         less than env2
 	 */
 	public int compare(Envelope env1, Envelope env2) {
 		if (env1.getOrderIndex() == env2.getOrderIndex()) {
 			if (env1.getRank() != env2.getRank()) {
-				return ((Integer) env1.getRank()).compareTo((Integer) env2
-						.getRank());
-			} else {
-				return ((Integer) env1.getIndex()).compareTo((Integer) env2
-						.getIndex());
+				return ((Integer) env1.getRank()).compareTo(env2.getRank());
 			}
-		} else {
-			return ((Integer) env1.getOrderIndex()).compareTo((Integer) env2
-					.getOrderIndex());
+			return ((Integer) env1.getIndex()).compareTo(env2.getIndex());
 		}
+		return ((Integer) env1.getOrderIndex()).compareTo(env2.getOrderIndex());
 	}
 
 }

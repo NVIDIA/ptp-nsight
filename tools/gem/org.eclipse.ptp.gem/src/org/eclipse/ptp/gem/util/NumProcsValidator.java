@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 University of Utah School of Computing
+ * Copyright (c) 2009, 2011 University of Utah School of Computing
  * 50 S Central Campus Dr. 3190 Salt Lake City, UT 84112
  * http://www.cs.utah.edu/formal_verification/
  *
@@ -29,17 +29,17 @@ public class NumProcsValidator implements IInputValidator {
 		try {
 			num = Integer.parseInt(newText);
 
-		} catch (NumberFormatException nfe) {
+		} catch (final NumberFormatException nfe) {
 			return Messages.NumProcsValidator_0;
 		}
 		if (num < 1) {
 			return Messages.NumProcsValidator_1;
 		}
-		if (num > 64) {
+		if (num > 32) {
 			return Messages.NumProcsValidator_2;
-		} else {
-			return null;
 		}
+
+		return null;
 	}
 
 }
