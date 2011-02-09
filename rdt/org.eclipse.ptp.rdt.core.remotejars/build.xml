@@ -60,7 +60,7 @@
 	<property name="cdtUPCParserVersion" value="5.1.0.${cdtVersion}"/>
 	<property name="cdtUPCParserJar" value="org.eclipse.cdt.core.parser.upc_${cdtUPCParserVersion}.jar"/>
 	
-	<property name="cdtLRParserXLCVersion" value="1.0.0.${cdtVersion}"/>
+	<property name="cdtLRParserXLCVersion" value="5.0.4.${cdtVersion}"/>
 	<property name="cdtLRParserXLCJar" value="org.eclipse.cdt.core.lrparser.xlc_${cdtLRParserXLCVersion}.jar"/>
 	
 	<property name="rdtXLCPropertiesPath" value="${basedir}/../org.eclipse.ptp.rdt.xlc/properties"/>
