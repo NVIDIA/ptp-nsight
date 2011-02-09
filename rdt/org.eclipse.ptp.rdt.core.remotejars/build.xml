@@ -54,7 +54,7 @@
 	<property name="cdtCoreLinuxPPCVersion" value="linux.ppc_5.1.0.${cdtVersion}"/>
 	<property name="cdtCoreLinuxx86Version" value="linux.x86_5.2.0.${cdtVersion}"/>
 	
-	<property name="cdtLRParserVersion" value="5.1.0.${cdtVersion}"/>
+	<property name="cdtLRParserVersion" value="5.1.1.${cdtVersion}"/>
 	<property name="cdtLRParserJar" value="org.eclipse.cdt.core.lrparser_${cdtLRParserVersion}.jar"/>
 	
 	<property name="cdtUPCParserVersion" value="5.1.0.${cdtVersion}"/>
