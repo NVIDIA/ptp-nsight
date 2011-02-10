@@ -155,7 +155,7 @@
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.ptp.utils"/>
 		</copy>
 		<mkdir dir="${buildDirectory}/proxy/org.eclipse.ptp.rm.ibm.ll.proxy_${ptpBranchVersion}.${timestamp}"/>
-		<copy todir="${buildDirectory}/proxy/org.eclipse.ptp.rm.ibm.ll.proxy.${ptpBranchVersion}.${timestamp}">
+		<copy todir="${buildDirectory}/proxy/org.eclipse.ptp.rm.ibm.ll.proxy_${ptpBranchVersion}.${timestamp}">
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.ptp.rm.ibm.ll.proxy"/>
 		</copy>
 		<mkdir dir="${buildDirectory}/proxy/org.eclipse.ptp.rm.ibm.pe.proxy_${ptpBranchVersion}.${timestamp}"/>
