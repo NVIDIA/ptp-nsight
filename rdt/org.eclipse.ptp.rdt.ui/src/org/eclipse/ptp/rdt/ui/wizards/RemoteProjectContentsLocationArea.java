@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 IBM Corporation and others.
+ * Copyright (c) 2008, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.dialogs.IDEResourceInfoUtils;
+import org.eclipse.ptp.rdt.ui.messages.Messages;
 
 /**
  * Allows the user to select a provider of Remote Services for a
@@ -337,7 +338,7 @@ public class RemoteProjectContentsLocationArea {
 
 		// Label for "Provider:"
 		Label providerLabel = new Label(container, SWT.LEFT);
-		providerLabel.setText("Remote Provider:"); //$NON-NLS-1$
+		providerLabel.setText(Messages.getString("RemoteProjectContentsLocationArea.0")); //$NON-NLS-1$
 
 		// combo for providers
 		fProviderCombo = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -379,7 +380,7 @@ public class RemoteProjectContentsLocationArea {
 		// connection combo
 		// Label for "Connection:"
 		Label connectionLabel = new Label(container, SWT.LEFT);
-		connectionLabel.setText("Connection:"); //$NON-NLS-1$
+		connectionLabel.setText(Messages.getString("RemoteProjectContentsLocationArea.1")); //$NON-NLS-1$
 
 		// combo for providers
 		fConnectionCombo = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -397,7 +398,7 @@ public class RemoteProjectContentsLocationArea {
 
 		// new connection button
 		fNewConnectionButton = new Button(container, SWT.PUSH);
-		fNewConnectionButton.setText("New..."); //$NON-NLS-1$
+		fNewConnectionButton.setText(Messages.getString("RemoteProjectContentsLocationArea.2")); //$NON-NLS-1$
 		updateNewConnectionButtonEnabled(fNewConnectionButton);
 		fNewConnectionButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -412,7 +413,7 @@ public class RemoteProjectContentsLocationArea {
 		});
 
 		Label locationLabel = new Label(container, SWT.LEFT);
-		locationLabel.setText("Location:"); //$NON-NLS-1$
+		locationLabel.setText(Messages.getString("RemoteProjectContentsLocationArea.3")); //$NON-NLS-1$
 
 		fLocationText = new Text(container, SWT.SINGLE | SWT.BORDER);
 		gd = new GridData(GridData.FILL_HORIZONTAL);
@@ -428,7 +429,7 @@ public class RemoteProjectContentsLocationArea {
 
 		// new connection button
 		fBrowseButton = new Button(container, SWT.PUSH);
-		fBrowseButton.setText("Browse..."); //$NON-NLS-1$
+		fBrowseButton.setText(Messages.getString("RemoteProjectContentsLocationArea.4")); //$NON-NLS-1$
 		fBrowseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
