@@ -25,7 +25,7 @@
 		<!-- Update for new RSE version -->
 		<property name="rseDist" value="/home/data/httpd/download.eclipse.org/dsdp/tm/downloads/drops/R-3.2.1-201009070720/RSE-SDK-3.2.1.zip"/>
 		<!-- Update for new Mylyn version -->
-		<property name="mylynDist" value="/home/data/httpd/download.eclipse.org/tools/mylyn/update/mylyn-3.4.2-e3.4.zip"/>
+		<property name="mylynDist" value="/home/data/httpd/download.eclipse.org/tools/mylyn/update/mylyn-3.4.3-e3.4.zip"/>
 		<!-- Update to build against a different branch                  -->
 		<!-- NOTE: master/build.properties will also have to be changed! -->
 		<property name="ptpTagBranch" value="-r ptp_4_0"/>
