@@ -1,6 +1,0 @@
-#!/bin/bash
-
-echo EMULATING QSUB LOCALLY
-cat $1
-echo 
-echo 824031.localhost
