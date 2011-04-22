@@ -50,11 +50,9 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 	private static final String JOB_POLL_OPTION = "--job_polling"; //$NON-NLS-1$
 	private static final String LIB_OVERRIDE_OPTION = "--lib_override"; //$NON-NLS-1$
 	private static final String TRACE_OPTION = "--trace"; //$NON-NLS-1$
-	private static final String RUN_MINIPROXY_OPTION = "--runMiniproxy"; //$NON-NLS-1$
 	private Composite optionsPane;
 	private Button loadLevelerOption;
 	private Button suspendOption;
-	private Button runMiniproxy;
 	private Button libOverrideBrowse;
 	private Button llModeLocal;
 	private Button llModeMulticluster;
@@ -69,7 +67,6 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 	private Label llLabel;
 	private Label debugLabel;
 	private Label suspendLabel;
-	private Label runMiniproxyLabel;
 	private Label libOverrideLabel;
 	private Label llModeLabel;
 	private Label nodePollMinLabel;
@@ -267,16 +264,6 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 			libOverridePath.setText(preferenceValue);
 		}
 
-		runMiniproxyLabel = new Label(optionsPane, SWT.NONE);
-		runMiniproxyLabel.setText(Messages
-				.getString("PEDialogs.MiniproxyLabel")); //$NON-NLS-1$
-		runMiniproxy = new Button(optionsPane, SWT.CHECK);
-		preferenceValue = config.getRunMiniproxy();
-		if ((preferenceValue != null)
-				&& (preferenceValue.equals(PEPreferenceConstants.OPTION_YES))) {
-			runMiniproxy.setSelection(true);
-		}
-
 		debugLabel = new Label(optionsPane, SWT.NONE);
 		debugLabel.setText(Messages.getString("PEDialogs.TraceLevelLabel")); //$NON-NLS-1$
 		debugLevel = new Combo(optionsPane, SWT.READ_ONLY);
@@ -316,7 +303,6 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 		jobPollInterval.addModifyListener(eventMonitor);
 		libOverridePath.addModifyListener(eventMonitor);
 		libOverrideBrowse.addSelectionListener(eventMonitor);
-		runMiniproxy.addSelectionListener(eventMonitor);
 		suspendOption.addSelectionListener(eventMonitor);
 		debugLevel.addSelectionListener(eventMonitor);
 		// Ensure that the starting values for this dialog are valid and that
@@ -452,12 +438,6 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 		} else {
 			config.setSuspendProxy(PEPreferenceConstants.OPTION_NO);
 		}
-		if (runMiniproxy.getSelection()) {
-			proxyOptions = proxyOptions + RUN_MINIPROXY_OPTION + " "; //$NON-NLS-1$
-			config.setRunMiniproxy(PEPreferenceConstants.OPTION_YES);
-		} else {
-			config.setRunMiniproxy(PEPreferenceConstants.OPTION_NO);
-		}
 		config.setInvocationOptions(proxyOptions);
 		return true;
 	}
@@ -479,8 +459,6 @@ public class PEResourceManagerOptionDialog extends TitleAreaDialog {
 			if (currentToken.length == 1) {
 				if (currentToken[0].equals(SUSPEND_AT_STARTUP_OPTION)) {
 					config.setSuspendProxy(PEPreferenceConstants.OPTION_YES);
-				} else if (currentToken[0].equals(RUN_MINIPROXY_OPTION)) {
-					config.setRunMiniproxy(PEPreferenceConstants.OPTION_YES);
 				} else if (currentToken[0].equals(USE_LOADLEVELER_OPTION)) {
 					config.setUseLoadLeveler(PEPreferenceConstants.OPTION_YES);
 				}

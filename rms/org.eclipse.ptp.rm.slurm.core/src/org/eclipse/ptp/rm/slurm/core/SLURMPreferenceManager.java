@@ -50,8 +50,7 @@ public class SLURMPreferenceManager {
 				server = ""; //$NON-NLS-1$
 			}
        }
-		
-		preferences.setDefault(RMPreferenceConstants.PROXY_PATH, server);
+
 		preferences.setDefault(RMPreferenceConstants.OPTIONS, OPTIONS);
 	}
 }

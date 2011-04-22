@@ -193,7 +193,7 @@ public class LLServiceProvider extends AbstractRemoteResourceManagerServiceProvi
 	 * @see org.eclipse.ptp.rm.ibm.ll.ui.IIBMLLResourceManagerConfiguration#getLibraryPath()
 	 */
 	public String getLibraryPath() {
-		return getString(TAG_LL_LIBPATH, preferences.getString(IBMLLPreferenceConstants.PROXY_LOADLEVELER_LIBRARY_PATH));
+		return "";
 	}
 	
 	/* (non-Javadoc)
@@ -229,7 +229,7 @@ public class LLServiceProvider extends AbstractRemoteResourceManagerServiceProvi
 	 * @see org.eclipse.ptp.rm.ibm.ll.ui.IIBMLLResourceManagerConfiguration#getTemplateFile()
 	 */
 	public String getTemplateFile() {
-		return getString(TAG_TEMPLATE_FILE, preferences.getString(IBMLLPreferenceConstants.PROXY_LOADLEVELER_TEMPLATE_FILE));
+		return "";
 	}
 	
 	/* (non-Javadoc)

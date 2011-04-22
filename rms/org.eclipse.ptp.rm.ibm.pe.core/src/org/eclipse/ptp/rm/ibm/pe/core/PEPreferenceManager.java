@@ -71,7 +71,7 @@ public class PEPreferenceManager
 	    }
 	}
 
-	preferences.setDefault(RMPreferenceConstants.PROXY_PATH, server);
+
 	preferences.setDefault(RMPreferenceConstants.OPTIONS, OPTIONS);
 	preferences.setDefault(PEPreferenceConstants.LOAD_LEVELER_OPTION, PEPreferenceConstants.OPTION_NO);
 	preferences.setDefault(PEPreferenceConstants.LOAD_LEVELER_MODE, "d"); //$NON-NLS-1$
@@ -79,7 +79,6 @@ public class PEPreferenceManager
 	preferences.setDefault(PEPreferenceConstants.NODE_MIN_POLL_INTERVAL, "30"); //$NON-NLS-1$
 	preferences.setDefault(PEPreferenceConstants.NODE_MAX_POLL_INTERVAL, "120"); //$NON-NLS-1$
 	preferences.setDefault(PEPreferenceConstants.LIBRARY_OVERRIDE, ""); //$NON-NLS-1$
-	preferences.setDefault(PEPreferenceConstants.RUN_MINIPROXY, PEPreferenceConstants.OPTION_YES);
 	preferences.setDefault(PEPreferenceConstants.TRACE_LEVEL, PEPreferenceConstants.TRACE_NOTHING);
     }
 }

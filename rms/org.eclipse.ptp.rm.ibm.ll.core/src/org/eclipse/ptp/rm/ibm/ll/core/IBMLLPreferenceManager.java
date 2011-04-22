@@ -70,7 +70,6 @@ public class IBMLLPreferenceManager {
 			}
        }
 		
-		preferences.setDefault(RMPreferenceConstants.PROXY_PATH, server);
 		preferences.setDefault(RMPreferenceConstants.OPTIONS, OPTIONS); 
 	}
 }

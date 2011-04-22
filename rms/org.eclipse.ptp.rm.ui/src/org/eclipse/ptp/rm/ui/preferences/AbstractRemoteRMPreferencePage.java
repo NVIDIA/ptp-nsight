@@ -18,7 +18,7 @@
  *******************************************************************************/
 package org.eclipse.ptp.rm.ui.preferences;
 
-import java.io.File;
+//import java.io.File;
 
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.jface.preference.FieldEditor;
@@ -28,7 +28,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ptp.remote.core.IRemoteProxyOptions;
 import org.eclipse.ptp.rm.core.RMPreferenceConstants;
 import org.eclipse.ptp.rm.ui.messages.Messages;
-import org.eclipse.ptp.utils.ui.swt.SWTUtil;
+//import org.eclipse.ptp.utils.ui.swt.SWTUtil;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -40,10 +40,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.FileDialog;
+//import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
+//import org.eclipse.swt.widgets.Label;
+//import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -53,8 +53,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	{
 		public void modifyText(ModifyEvent evt) {
 			Object source = evt.getSource();
-			if(!loading && source == serverText)
-				updatePreferencePage();
 		}
 
 		public void propertyChange(PropertyChangeEvent event) {
@@ -64,29 +62,17 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 
 		public void widgetSelected(SelectionEvent e) {
 			Object source = e.getSource();
-			if (source == browseButton)
-				handlePathBrowseButtonSelected();
-			else {
-				if (fStdioButton.getSelection()) {
-					fManualButton.setEnabled(false);
-					fManualButton.setSelection(false);
-				} else {
-					fManualButton.setEnabled(true);
-				}
-				updatePreferencePage();
-			}
+			
+			fManualButton.setEnabled(true);
+			updatePreferencePage();
 		}
 	}
 
 	public static final String EMPTY_STRING = ""; //$NON-NLS-1$
 	private String serverFile = EMPTY_STRING;
 	private boolean loading = true;
-	protected Text serverText = null;
-
-	protected Button browseButton = null;
 
 	protected Button fNoneButton = null;
-	protected Button fStdioButton = null;
 	protected Button fPortForwardingButton = null;
 	protected Button fManualButton = null;
 
@@ -126,7 +112,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	public void performDefaults() 
 	{
 		loadDefaults();
-		defaultSetting();
 		updateApplyButton();
 	}
 
@@ -135,15 +120,9 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	 */
 	public boolean performOk() 
 	{
-		store();
 		Preferences preferences = getPreferences();
-
-		preferences.setValue(RMPreferenceConstants.PROXY_PATH, serverFile);
 		
 		int options = 0;
-		if (fStdioButton.getSelection()) {
-			options |= IRemoteProxyOptions.STDIO;
-		}
 		if (fPortForwardingButton.getSelection()) {
 			options |= IRemoteProxyOptions.PORT_FORWARDING;
 		}
@@ -166,27 +145,14 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	 * Update options fields in UI
 	 */
 	private void updateOptions(int options) {
-		fStdioButton.setSelection(false);
 		fPortForwardingButton.setSelection(false);
 		fNoneButton.setSelection(true);
 
-		if ((options & IRemoteProxyOptions.STDIO) == IRemoteProxyOptions.STDIO) {
-			fStdioButton.setSelection(true);
-			fNoneButton.setSelection(false);
-		} else if ((options & IRemoteProxyOptions.PORT_FORWARDING) == IRemoteProxyOptions.PORT_FORWARDING) {
+		if ((options & IRemoteProxyOptions.PORT_FORWARDING) == IRemoteProxyOptions.PORT_FORWARDING) {
 			fPortForwardingButton.setSelection(true);
 			fNoneButton.setSelection(false);
 		}
-
-		if (fStdioButton.getSelection()) {
-			fManualButton.setEnabled(false);
-			fManualButton.setSelection(false);
-		} else {
-			fManualButton.setSelection(
-				(options & IRemoteProxyOptions.MANUAL_LAUNCH) == IRemoteProxyOptions.MANUAL_LAUNCH);
-		}
-		
-
+		fManualButton.setSelection((options & IRemoteProxyOptions.MANUAL_LAUNCH) == IRemoteProxyOptions.MANUAL_LAUNCH);
 	}
 	
 	/**
@@ -197,9 +163,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 		loading = true;
 		
 		Preferences preferences = getPreferences();
-		
-		serverFile = preferences.getString(RMPreferenceConstants.PROXY_PATH);
-		serverText.setText(serverFile);
 		
 		updateOptions(preferences.getInt(RMPreferenceConstants.OPTIONS));
 		loading = false;
@@ -214,9 +177,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 		
 		Preferences preferences = getPreferences();
 		
-		serverFile = preferences.getDefaultString(RMPreferenceConstants.PROXY_PATH);
-		serverText.setText(serverFile);
-		
 		updateOptions(preferences.getDefaultInt(RMPreferenceConstants.OPTIONS));
 		loading = false;
 	}
@@ -224,10 +184,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	/**
 	 * 
 	 */
-	private void store() 
-	{
-		serverFile = serverText.getText();
-	}
 
 	/**
 	 * @param parent
@@ -282,24 +238,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 		composite.setLayout(createGridLayout(1, true, 0, 0));
 		composite.setLayoutData(spanGridData(GridData.FILL_HORIZONTAL, 2));
 
-		Group bGroup = new Group(composite, SWT.SHADOW_ETCHED_IN);
-		bGroup.setLayout(createGridLayout(1, true, 10, 10));
-		bGroup.setLayoutData(spanGridData(GridData.FILL_HORIZONTAL, 2));
-		bGroup.setText(Messages.AbstractRemotePreferencePage_0);
-		
-		new Label(bGroup, SWT.WRAP).setText(Messages.AbstractRemotePreferencePage_1);
-		
-		Composite orteserver = new Composite(bGroup, SWT.NONE);
-		orteserver.setLayout(createGridLayout(3, false, 0, 0));
-		orteserver.setLayoutData(spanGridData(GridData.FILL_HORIZONTAL, 5));
-		
-		new Label(orteserver, SWT.NONE).setText(Messages.AbstractRemotePreferencePage_2);
-		serverText = new Text(orteserver, SWT.SINGLE | SWT.BORDER);
-		serverText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		serverText.addModifyListener(listener);
-		browseButton = SWTUtil.createPushButton(orteserver, Messages.AbstractRemotePreferencePage_3, null);
-		browseButton.addSelectionListener(listener);
-		
 		Group mxGroup = new Group(composite, SWT.SHADOW_ETCHED_IN);
 		mxGroup.setLayout(createGridLayout(1, true, 10, 10));
 		mxGroup.setLayoutData(spanGridData(GridData.FILL_HORIZONTAL, 2));
@@ -307,7 +245,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 		
 		fNoneButton = createRadioButton(mxGroup, Messages.AbstractRemotePreferencePage_5, "mxGroup", listener); //$NON-NLS-1$
 		fPortForwardingButton = createRadioButton(mxGroup, Messages.AbstractRemotePreferencePage_6, "mxGroup", listener); //$NON-NLS-1$
-		fStdioButton = createRadioButton(mxGroup, Messages.AbstractRemotePreferencePage_7, "mxGroup", listener); //$NON-NLS-1$
 
 		Group otherGroup = new Group(composite, SWT.SHADOW_ETCHED_IN);
 		otherGroup.setLayout(createGridLayout(1, true, 10, 10));
@@ -317,7 +254,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 		fManualButton = createCheckButton(otherGroup, Messages.AbstractRemotePreferencePage_9);
 
 		loadSaved();
-		defaultSetting();
 		return composite;
 	}
 	
@@ -342,7 +278,7 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	 */
 	protected void defaultSetting() 
 	{
-		serverText.setText(serverFile);
+		//Empty
 	}
 
 	/**
@@ -362,19 +298,7 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	 */
 	protected void handlePathBrowseButtonSelected() 
 	{
-		FileDialog dialog = new FileDialog(getShell());
-		dialog.setText(Messages.AbstractRemotePreferencePage_10);
-		String correctPath = getFieldContent(serverText.getText());
-		if (correctPath != null) {
-			File path = new File(correctPath);
-			if (path.exists())
-				dialog.setFilterPath(path.isFile() ? correctPath : path
-						.getParent());
-		}
-
-		String selectedPath = dialog.open();
-		if (selectedPath != null)
-			serverText.setText(selectedPath);
+		//Empty
 	}
 
 	/**
@@ -382,20 +306,6 @@ public abstract class AbstractRemoteRMPreferencePage extends PreferencePage impl
 	 */
 	protected boolean isValidSetting() 
 	{
-		String name = getFieldContent(serverText.getText());
-		if (name == null) {
-			setErrorMessage(Messages.AbstractRemotePreferencePage_11);
-			setValid(false);
-			return false;
-		} else {
-			File path = new File(name);
-			if (!path.exists() || !path.isFile()) {
-				setErrorMessage(Messages.AbstractRemotePreferencePage_11);
-				setValid(false);
-				return false;
-			}
-		}
-
 		return true;
 	}
 

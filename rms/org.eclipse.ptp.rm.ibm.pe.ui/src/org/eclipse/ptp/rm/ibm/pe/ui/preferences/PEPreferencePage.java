@@ -48,7 +48,6 @@ public class PEPreferencePage extends AbstractRemoteRMPreferencePage
 {
 
     private Button loadLevelerOption;
-    private Button runMiniproxy;
     private Button libOverrideBrowse;
     private Button llModeLocal;
     private Button llModeMulticluster;
@@ -62,7 +61,6 @@ public class PEPreferencePage extends AbstractRemoteRMPreferencePage
     private Combo traceOptions;
     private Label loadLevelerLabel;
     private Label traceLabel;
-    private Label runMiniproxyLabel;
     private Label libOverrideLabel;
     private Label llModeLabel;
     private Label nodePollMinLabel;
@@ -218,13 +216,6 @@ public class PEPreferencePage extends AbstractRemoteRMPreferencePage
 	preferenceValue = preferences.getString(PEPreferenceConstants.LIBRARY_OVERRIDE);
 	libOverridePath.setText(preferenceValue);
 
-	runMiniproxyLabel = new Label(optionsGroup, SWT.NONE);
-	runMiniproxyLabel.setText(Messages.getString("PEDialogs.MiniproxyLabel")); //$NON-NLS-1$
-	runMiniproxy = new Button(optionsGroup, SWT.CHECK);
-	preferenceValue = preferences.getString(PEPreferenceConstants.RUN_MINIPROXY);
-	if (preferenceValue.equals(PEPreferenceConstants.OPTION_YES)) {
-	    runMiniproxy.setSelection(true);
-	}
 	traceLabel = new Label(optionsGroup, SWT.NONE);
 	traceLabel.setText(Messages.getString("PEDialogs.TraceLevelLabel")); //$NON-NLS-1$
 	traceOptions = new Combo(optionsGroup, SWT.READ_ONLY);
@@ -246,7 +237,6 @@ public class PEPreferencePage extends AbstractRemoteRMPreferencePage
 	libOverridePath.addModifyListener(eventMonitor);
 	libOverrideBrowse.addSelectionListener(eventMonitor);
 	traceOptions.addSelectionListener(eventMonitor);
-	runMiniproxy.addSelectionListener(eventMonitor);
 
 	return preferencePane;
     }
@@ -332,13 +322,6 @@ public class PEPreferencePage extends AbstractRemoteRMPreferencePage
 	}
 	if (traceOptions != null) {
 	    preferences.setValue(PEPreferenceConstants.TRACE_LEVEL, traceOptions.getText());
-	}
-	if (runMiniproxy != null) {
-	    if (runMiniproxy.getSelection()) {
-		preferences.setValue(PEPreferenceConstants.RUN_MINIPROXY, PEPreferenceConstants.OPTION_YES);
-	    } else {
-		preferences.setValue(PEPreferenceConstants.RUN_MINIPROXY, PEPreferenceConstants.OPTION_NO);
-	    }
 	}
     }
 }
