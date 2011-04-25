@@ -216,10 +216,10 @@ public class RemoteToolsConnection implements IRemoteConnection {
 		 * has been added to avoid API change and is deprecated for future
 		 * releases.
 		 */
-		if (remotePort == -1) {
+		if (fwdPort == -1) {
 			try {
 				IRemotePortForwarding portForwarding = fTargetControl.getExecutionManager().getPortForwardingTools()
-						.getRemotePortForwarding(fwdPort);
+						.getRemotePortForwarding(remotePort);
 				fTargetControl.getExecutionManager().getPortForwardingTools().releaseForwarding(portForwarding);
 			} catch (Exception e) {
 				throw new RemoteConnectionException(e.getMessage());
