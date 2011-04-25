@@ -146,28 +146,14 @@ public class RemoteToolsConnection implements IRemoteConnection {
 		if (!isOpen()) {
 			throw new RemoteConnectionException(Messages.RemoteToolsConnection_connectionNotOpen);
 		}
-		/*
-		 * Overload this method to allow forwarded ports to be released. This has been added to avoid API change
-		 * and is deprecated for future releases.
-		 */
-		if (localPort == -1) {
-			try {
-				IRemotePortForwarding portForwarding = fTargetControl.getExecutionManager().getPortForwardingTools()
-						.getRemotePortForwarding(fwdPort);
-				fTargetControl.getExecutionManager().getPortForwardingTools().releaseForwarding(portForwarding);
-			} catch (Exception e) {
-				throw new RemoteConnectionException(e.getMessage());
-			}
-		} else {
-			try {
-				fTargetControl.getExecutionManager().createTunnel(localPort, fwdAddress, fwdPort);
-			} catch (LocalPortBoundException e) {
-				throw new AddressInUseException(e.getMessage());
-			} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
-				throw new RemoteConnectionException(e.getMessage());
-			} catch (CancelException e) {
-				throw new RemoteConnectionException(e.getMessage());
-			}
+		try {
+			fTargetControl.getExecutionManager().createTunnel(localPort, fwdAddress, fwdPort);
+		} catch (LocalPortBoundException e) {
+			throw new AddressInUseException(e.getMessage());
+		} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
+			throw new RemoteConnectionException(e.getMessage());
+		} catch (CancelException e) {
+			throw new RemoteConnectionException(e.getMessage());
 		}
 	}
 
@@ -225,14 +211,29 @@ public class RemoteToolsConnection implements IRemoteConnection {
 		if (!isOpen()) {
 			throw new RemoteConnectionException(Messages.RemoteToolsConnection_connectionNotOpen);
 		}
-		try {
-			fTargetControl.getExecutionManager().getPortForwardingTools().forwardRemotePort(remotePort, fwdAddress, fwdPort);
-		} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
-			throw new RemoteConnectionException(e.getMessage());
-		} catch (CancelException e) {
-			throw new RemoteConnectionException(e.getMessage());
-		} catch (PortForwardingException e) {
-			throw new AddressInUseException(e.getMessage());
+		/*
+		 * Overload this method to allow forwarded ports to be released. This
+		 * has been added to avoid API change and is deprecated for future
+		 * releases.
+		 */
+		if (remotePort == -1) {
+			try {
+				IRemotePortForwarding portForwarding = fTargetControl.getExecutionManager().getPortForwardingTools()
+						.getRemotePortForwarding(fwdPort);
+				fTargetControl.getExecutionManager().getPortForwardingTools().releaseForwarding(portForwarding);
+			} catch (Exception e) {
+				throw new RemoteConnectionException(e.getMessage());
+			}
+		} else {
+			try {
+				fTargetControl.getExecutionManager().getPortForwardingTools().forwardRemotePort(remotePort, fwdAddress, fwdPort);
+			} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
+				throw new RemoteConnectionException(e.getMessage());
+			} catch (CancelException e) {
+				throw new RemoteConnectionException(e.getMessage());
+			} catch (PortForwardingException e) {
+				throw new AddressInUseException(e.getMessage());
+			}
 		}
 	}
 
