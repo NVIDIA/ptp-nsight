@@ -30,6 +30,7 @@ import org.eclipse.ptp.remote.core.exception.UnableToForwardPortException;
 import org.eclipse.ptp.remote.remotetools.core.environment.PTPTargetControl;
 import org.eclipse.ptp.remote.remotetools.core.messages.Messages;
 import org.eclipse.ptp.remotetools.core.IRemoteExecutionManager;
+import org.eclipse.ptp.remotetools.core.IRemotePortForwarding;
 import org.eclipse.ptp.remotetools.environment.control.ITargetStatus;
 import org.eclipse.ptp.remotetools.environment.core.ITargetElement;
 import org.eclipse.ptp.remotetools.exception.CancelException;
@@ -111,17 +112,27 @@ public class RemoteToolsConnection implements IRemoteConnection {
 	 * @param event
 	 */
 	public void fireConnectionChangeEvent(final IRemoteConnection connection, final int type) {
-		IRemoteConnectionChangeEvent event = new IRemoteConnectionChangeEvent() {
-			public IRemoteConnection getConnection() {
-				return connection;
-			}
+		/*
+		 * Overload this method to dispose of the connection when it is removed
+		 * by the connection manager. This has been added to avoid API change
+		 * and is deprecated for future releases.
+		 */
+		if (connection == this && type == -1) {
+			fTargetElement.getType().removeElement(fTargetElement);
+			fListeners.clear();
+		} else {
+			IRemoteConnectionChangeEvent event = new IRemoteConnectionChangeEvent() {
+				public IRemoteConnection getConnection() {
+					return connection;
+				}
 
-			public int getType() {
-				return type;
+				public int getType() {
+					return type;
+				}
+			};
+			for (Object listener : fListeners.getListeners()) {
+				((IRemoteConnectionChangeListener) listener).connectionChanged(event);
 			}
-		};
-		for (Object listener : fListeners.getListeners()) {
-			((IRemoteConnectionChangeListener) listener).connectionChanged(event);
 		}
 	}
 
@@ -135,14 +146,28 @@ public class RemoteToolsConnection implements IRemoteConnection {
 		if (!isOpen()) {
 			throw new RemoteConnectionException(Messages.RemoteToolsConnection_connectionNotOpen);
 		}
-		try {
-			fTargetControl.getExecutionManager().createTunnel(localPort, fwdAddress, fwdPort);
-		} catch (LocalPortBoundException e) {
-			throw new AddressInUseException(e.getMessage());
-		} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
-			throw new RemoteConnectionException(e.getMessage());
-		} catch (CancelException e) {
-			throw new RemoteConnectionException(e.getMessage());
+		/*
+		 * Overload this method to allow forwarded ports to be released. This has been added to avoid API change
+		 * and is deprecated for future releases.
+		 */
+		if (localPort == -1) {
+			try {
+				IRemotePortForwarding portForwarding = fTargetControl.getExecutionManager().getPortForwardingTools()
+						.getRemotePortForwarding(fwdPort);
+				fTargetControl.getExecutionManager().getPortForwardingTools().releaseForwarding(portForwarding);
+			} catch (Exception e) {
+				throw new RemoteConnectionException(e.getMessage());
+			}
+		} else {
+			try {
+				fTargetControl.getExecutionManager().createTunnel(localPort, fwdAddress, fwdPort);
+			} catch (LocalPortBoundException e) {
+				throw new AddressInUseException(e.getMessage());
+			} catch (org.eclipse.ptp.remotetools.exception.RemoteConnectionException e) {
+				throw new RemoteConnectionException(e.getMessage());
+			} catch (CancelException e) {
+				throw new RemoteConnectionException(e.getMessage());
+			}
 		}
 	}
 

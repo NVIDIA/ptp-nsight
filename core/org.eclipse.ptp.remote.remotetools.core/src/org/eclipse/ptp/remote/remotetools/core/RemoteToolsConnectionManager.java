@@ -105,6 +105,9 @@ public class RemoteToolsConnectionManager implements IRemoteConnectionManager {
 	 */
 	public void removeConnection(IRemoteConnection conn) {
 		fConnections.remove(conn);
+		if (conn instanceof RemoteToolsConnection && !conn.isOpen()) {
+			((RemoteToolsConnection) conn).fireConnectionChangeEvent(conn, -1);
+		}
 	}
 
 	/**
