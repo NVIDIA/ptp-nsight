@@ -13,6 +13,11 @@
  *     Anton Leherbauer (Wind River Systems)
  *******************************************************************************/
 
+/* -- ST-Origin --
+ * Source folder: org.eclipse.cdt.ui/src
+ * Class: org.eclipse.cdt.internal.ui.editor.OpenIncludeAction
+ * Version: 1.34
+ */
 package org.eclipse.ptp.internal.rdt.ui.editor;
 
 import java.io.File;
@@ -53,6 +58,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.ptp.rdt.core.RDTLog;
+import org.eclipse.ptp.rdt.core.resources.RemoteNature;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
@@ -98,7 +104,10 @@ public class OpenIncludeAction extends
 			if (fullFileName != null) {
 				IPath fullPath= new Path(fullFileName);
 				if (fullPath.isAbsolute() && fullPath.toFile().exists()) { //local
-					filesFound.add(fullPath.toFile().toURI());
+					//Bug 343648 - Remote project outline displays header file from local host
+					if (!RemoteNature.hasRemoteNature(include.getCProject().getProject())) {
+						filesFound.add(fullPath.toFile().toURI());
+					}
 				}
 				if (filesFound.isEmpty()) {
 					//remote: get host information and try again
