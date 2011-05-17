@@ -71,6 +71,29 @@ public class GemConsole extends ViewPart {
 	}
 
 	/**
+	 * Brings this ViewPart to the front and gives it focus.
+	 * 
+	 * @param none
+	 * @return none
+	 */
+	public void activate() {
+		final Thread activationThread = new Thread() {
+			@Override
+			public void run() {
+				final IWorkbench wb = PlatformUI.getWorkbench();
+				final IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+				final IWorkbenchPage page = window.getActivePage();
+				if (page != null) {
+					page.activate(GemConsole.this);
+				}
+			}
+		};
+
+		// We need to switch to the thread that is allowed to change the UI
+		Display.getDefault().syncExec(activationThread);
+	}
+
+	/**
 	 * Changes status of the terminate process button (Action) to disabled.
 	 * 
 	 * @param none
@@ -239,22 +262,12 @@ public class GemConsole extends ViewPart {
 				.getImageDescriptor(ISharedImages.IMG_LCL_LINKTO_HELP));
 	}
 
+	/**
+	 * see org.eclipse.ui.IWorkbenchPart
+	 */
 	@Override
 	public void setFocus() {
-		final Thread setFocusThread = new Thread() {
-			@Override
-			public void run() {
-				final IWorkbench wb = PlatformUI.getWorkbench();
-				final IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-				final IWorkbenchPage page = window.getActivePage();
-				if (page != null) {
-					page.activate(GemConsole.this);
-				}
-			}
-		};
-
-		// We need to switch to the thread that is allowed to change the UI
-		Display.getDefault().syncExec(setFocusThread);
+		this.txtConViewer.setFocus();
 	}
 
 	/**

@@ -166,6 +166,29 @@ public class GemBrowser extends ViewPart {
 	}
 
 	/**
+	 * Brings this ViewPart to the front and gives it focus.
+	 * 
+	 * @param none
+	 * @return none
+	 */
+	public void activate() {
+		final Thread activationThread = new Thread() {
+			@Override
+			public void run() {
+				final IWorkbench wb = PlatformUI.getWorkbench();
+				final IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+				final IWorkbenchPage page = window.getActivePage();
+				if (page != null) {
+					page.activate(GemBrowser.this);
+				}
+			}
+		};
+
+		// We need to switch to the thread that is allowed to change the UI
+		Display.getDefault().syncExec(activationThread);
+	}
+
+	/**
 	 * Runs a thread that clears the Browser view.
 	 * 
 	 * @param none
@@ -978,22 +1001,12 @@ public class GemBrowser extends ViewPart {
 		Display.getDefault().syncExec(GemBrowser.this.disableTerminateButtonThread);
 	}
 
+	/**
+	 * see org.eclipse.ui.IWorkbenchPart
+	 */
 	@Override
 	public void setFocus() {
-		final Thread setFocusThread = new Thread() {
-			@Override
-			public void run() {
-				final IWorkbench wb = PlatformUI.getWorkbench();
-				final IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-				final IWorkbenchPage page = window.getActivePage();
-				if (page != null) {
-					page.activate(GemBrowser.this);
-				}
-			}
-		};
-
-		// We need to switch to the thread that is allowed to change the UI
-		Display.getDefault().syncExec(setFocusThread);
+		this.runGemButton.setFocus();
 	}
 
 	/*

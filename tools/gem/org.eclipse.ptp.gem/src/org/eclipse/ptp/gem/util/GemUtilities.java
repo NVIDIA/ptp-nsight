@@ -703,12 +703,12 @@ public class GemUtilities {
 					final IPreferenceStore pstore = GemPlugin.getDefault().getPreferenceStore();
 					final String activeView = pstore.getString(PreferenceConstants.GEM_ACTIVE_VIEW);
 					if (activeView.equals(PreferenceConstants.GEM_ANALYZER)) {
-						analyzer.setFocus();
+						analyzer.activate();
 					} else if (activeView.equals(PreferenceConstants.GEM_BROWSER)) {
-						browser.setFocus();
+						browser.activate();
 					}
 					else {
-						console.setFocus();
+						console.activate();
 					}
 				}
 			}
