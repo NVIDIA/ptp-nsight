@@ -3,7 +3,7 @@
   	<extensionContent id="orgeclipseptppldtwelcome-introExtension" style="css/sample.css" name="Sample Extension" path="tutorials/@">
 		<group style-id="content-group" id="orgeclipseptppldtwelcome-introLink-group">
        		<link label="Parallel Language Development Tools" 
-       		url="http://org.eclipse.ui.intro/showHelpTopic?id=/org.eclipse.ptp.pldt.help/html/setup.html" 
+       		url="http://org.eclipse.ui.intro/showHelpTopic?id=/org.eclipse.ptp.pldt.doc.user/html/setup.html" 
        		id="orgeclipseptppldtwelcome-introLink" style-id="content-link">
           		<text>Learn how to use the development tools for parallel programming in PLDT.</text>
        		</link>
