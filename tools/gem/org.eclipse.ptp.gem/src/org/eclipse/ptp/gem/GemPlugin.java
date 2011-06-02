@@ -143,7 +143,7 @@ public class GemPlugin extends AbstractUIPlugin {
 	 * @return Version The current version of this plug-in.
 	 */
 	public Version getVersion() {
-		return new Version(getBundle().getHeaders().get(org.osgi.framework.Constants.BUNDLE_VERSION));
+		return new Version((String) getBundle().getHeaders().get(org.osgi.framework.Constants.BUNDLE_VERSION));
 	}
 
 	/**
