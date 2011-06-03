@@ -123,12 +123,6 @@ public class RemoteMakefileWizardHandler extends STDWizardHandler {
 			doTemplatesPostProcess(project);
 			doCustom(project);
 			
-			//turn off append local environment variables for remote projects
-			ICConfigurationDescription c_cfgs[] = des.getConfigurations();
-			for (ICConfigurationDescription c_cfg : c_cfgs) {
-				EnvironmentVariableManager.fUserSupplier.setAppendContributedEnvironment(false, c_cfg);
-				EnvironmentVariableManager.fUserSupplier.setAppendEnvironment(false, c_cfg);
-			}
 		} finally {
 			monitor.done();
 		}
