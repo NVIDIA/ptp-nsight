@@ -28,8 +28,8 @@
 		<property name="mylynDist" value="/home/data/httpd/download.eclipse.org/tools/mylyn/update/mylyn-3.4.3-e3.4.zip"/>
 		<!-- Update to build against a different branch                  -->
 		<!-- NOTE: master/build.properties will also have to be changed! -->
-		<property name="ptpTagBranch" value="-r ptp_4_0"/>
-		<property name="photranTagBranch" value="-r ptp_4_0"/>
+		<property name="ptpTagBranch" value="-r ptp_4_1"/>
+		<property name="photranTagBranch" value="-r ptp_4_1"/>
 		<!-- Properties below here shouldn't need to be changed -->
 		<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
 		<property name="buildType" value="I" />
