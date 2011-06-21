@@ -1,5 +1,0 @@
-*.64o
-.deps
-Makefile
-libcmn.a
-libcmn64.a
