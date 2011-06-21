@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.ptp.gem"
       label="%featureName"
-      version="4.0.8.qualifier"
+      version="4.1.0.qualifier"
       provider-name="%featureProvider"
       plugin="org.eclipse.ptp.gem">
 
