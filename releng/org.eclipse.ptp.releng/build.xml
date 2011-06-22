@@ -12,7 +12,7 @@
 		<touch file="${user.home}/.cvspass" />
 		<tstamp/>
 		<!-- Update for new simultaneous release -->
-		<property name="eclipseRelease" value="helios"/>
+		<property name="eclipseRelease" value="4.1"/>
 		<!-- Update for new PTP branch -->
 		<property name="ptpBranchVersion" value="4.1.0"/>
 		<property name="photranBranchVersion" value="6.1.0"/>
