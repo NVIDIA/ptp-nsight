@@ -44,8 +44,8 @@
 	
 	<!-- CDT VERSIONS MUST BE UPDATED FOR NEW CDT VERSION -->
 	
-	<property name="cdtVersion" value="201105041732"/>
-	<property name="cdtBranch" value=" -r cdt_7_0"/>
+	<property name="cdtVersion" value="201107111421"/>
+	<property name="cdtBranch" value="cdt_7_0"/>
 	
 	<property name="cdtCoreVersion" value="5.2.1.${cdtVersion}"/>
 	<property name="cdtCoreJar" value="org.eclipse.cdt.core_${cdtCoreVersion}.jar"/>
@@ -169,50 +169,88 @@
 	
 	<target name="get.cdt">
 		<!--Get cdt.core source from CVS-->
+		<!--
         <cvs cvsroot=":pserver:anonymous@dev.eclipse.org:/cvsroot/tools"
                 package="org.eclipse.cdt/all/org.eclipse.cdt.core"
                 command="checkout -d org.eclipse.cdt.core${cdtBranch}"
                 dest="${basedir}/.."
         />
+        -->
+        <!--Clone cdt Git repo-->
+		<mkdir dir="${basedir}/gitrepo"/>
+		<exec dir="${basedir}/gitrepo" executable="git">
+		    <arg value="clone"/>
+			<arg value="git://git.eclipse.org/gitroot/cdt/org.eclipse.cdt.git"/>
+		</exec>
+
+		<exec dir="${basedir}/gitrepo/org.eclipse.cdt" executable="git">
+		    <arg line="checkout -b ${cdtBranch} origin/${cdtBranch}"/>
+		</exec>
+		
+		<!--Get cdt.core source from Git-->
+		<copy todir="${basedir}/../org.eclipse.cdt.core">
+    			<fileset dir="${basedir}/gitrepo/org.eclipse.cdt/core/org.eclipse.cdt.core"/>
+  		</copy>		
+		
 		<!--Get cdt.core bin from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtCoreJar}"
 			dest="${basedir}/../org.eclipse.cdt.core/@dot"
 		/>
 	</target>
 	
-	<target name="get.cdt.core.lrparser">
+	<target name="get.cdt.core.lrparser" depends="get.cdt">
 		<!--Get cdt.core.lrparser source from CVS-->
+		<!--
         <cvs cvsroot=":pserver:anonymous@dev.eclipse.org:/cvsroot/tools"
                 package="org.eclipse.cdt/lrparser/org.eclipse.cdt.core.lrparser"
-                command="checkout -d org.eclipse.cdt.core.lrparser"
+                command="checkout -d org.eclipse.cdt.core.lrparser${cdtBranch}"
                 dest="${basedir}/.."
-        />
+        />-->
+		<!--Get cdt.core.lrparser source from Git -->
+		<copy todir="${basedir}/../org.eclipse.cdt.core.lrparser">
+			<fileset dir="${basedir}/gitrepo/org.eclipse.cdt/lrparser/org.eclipse.cdt.core.lrparser"/>
+  		</copy>
+		
 		<!--Get cdt.core.lrparser bin from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtLRParserJar}"
 			dest="${basedir}/../org.eclipse.cdt.core.lrparser/@dot"
 		/>
 	</target>
 	
-	<target name="get.cdt.core.parser.upc">
+	<target name="get.cdt.core.parser.upc" depends="get.cdt">
 		<!--Get cdt.core.parser.upc source from CVS-->
+        <!--
         <cvs cvsroot=":pserver:anonymous@dev.eclipse.org:/cvsroot/tools"
                 package="org.eclipse.cdt/upc/org.eclipse.cdt.core.parser.upc"
-                command="checkout -d org.eclipse.cdt.core.parser.upc"
+                command="checkout -d org.eclipse.cdt.core.parser.upc${cdtBranch}"
                 dest="${basedir}/.."
-        />
+        />-->
+        
+        <!--Get cdt.core.parser.upc source from Git-->
+		<copy todir="${basedir}/../org.eclipse.cdt.core.parser.upc">
+			<fileset dir="${basedir}/gitrepo/org.eclipse.cdt/upc/org.eclipse.cdt.core.parser.upc"/>
+  		</copy>
+		
 		<!--Get cdt.core.parser.upc bin from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtUPCParserJar}"
 			dest="${basedir}/../org.eclipse.cdt.core.parser.upc/@dot"
 		/>
 	</target>
 	
-	<target name="get.cdt.core.lrparser.xlc">
+	<target name="get.cdt.core.lrparser.xlc" depends="get.cdt">
 		<!--Get cdt.core.lrparser.xlc source from CVS-->
-        <cvs cvsroot=":pserver:anonymous@dev.eclipse.org:/cvsroot/tools"
+        <!--
+		<cvs cvsroot=":pserver:anonymous@dev.eclipse.org:/cvsroot/tools"
                 package="org.eclipse.cdt/xlc/org.eclipse.cdt.core.lrparser.xlc"
                 command="checkout -d org.eclipse.cdt.core.lrparser.xlc"
                 dest="${basedir}/.."
-        />
+        />-->
+		
+		<!--Get cdt.core.lrparser.xlc source from Git-->
+		<copy todir="${basedir}/../org.eclipse.cdt.core.lrparser.xlc">
+			<fileset dir="${basedir}/gitrepo/org.eclipse.cdt/xlc/org.eclipse.cdt.core.lrparser.xlc"/>
+  		</copy>
+		
 		<!--Get cdt.core.lrparser.xlc bin from PTP build-->
 		<unzip src="${basedir}/../../eclipse/plugins/${cdtLRParserXLCJar}"
 			dest="${basedir}/../org.eclipse.cdt.core.lrparser.xlc/@dot"
@@ -301,6 +339,7 @@
 			<include name="${serverBaseName}-unix-*.tar"/>
 			<include name="${serverBaseName}-windows-*.zip"/>
 		</delete>
+		<delete dir="${basedir}/gitrepo"/>
 	</target>
 	
 	<target name="clean.except.jars">
