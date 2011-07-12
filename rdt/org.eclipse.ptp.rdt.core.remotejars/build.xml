@@ -178,12 +178,12 @@
         -->
         <!--Clone cdt Git repo-->
 		<mkdir dir="${basedir}/gitrepo"/>
-		<exec dir="${basedir}/gitrepo" executable="git">
+		<exec dir="${basedir}/gitrepo" executable="/usr/local/bin/git">
 		    <arg value="clone"/>
 			<arg value="git://git.eclipse.org/gitroot/cdt/org.eclipse.cdt.git"/>
 		</exec>
 
-		<exec dir="${basedir}/gitrepo/org.eclipse.cdt" executable="git">
+		<exec dir="${basedir}/gitrepo/org.eclipse.cdt" executable="/usr/local/bin/git">
 		    <arg line="checkout -b ${cdtBranch} origin/${cdtBranch}"/>
 		</exec>
 		
