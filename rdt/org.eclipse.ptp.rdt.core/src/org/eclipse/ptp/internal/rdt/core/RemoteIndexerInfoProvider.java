@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corporation and others.
+ * Copyright (c) 2009, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,7 +35,9 @@ import org.eclipse.cdt.internal.core.indexer.FileEncodingRegistry;
  */
 public class RemoteIndexerInfoProvider implements IRemoteIndexerInfoProvider, Serializable {
 	private static final long serialVersionUID = 2L;
-
+	
+	
+	
 	private Map<String, RemoteScannerInfo> pathMap; // file path -> scanner info
 	private Map<Integer, RemoteScannerInfo> linkageMap; // used by the
 														// "parse up front"
@@ -51,10 +53,10 @@ public class RemoteIndexerInfoProvider implements IRemoteIndexerInfoProvider, Se
 	private FileEncodingRegistry fFileEncodingRegistry;
 
 	//
-	RemoteIndexerInfoProvider() {
+	public RemoteIndexerInfoProvider() {
 	}
 
-	RemoteIndexerInfoProvider(Map<String, RemoteScannerInfo> pathMap, Map<Integer, RemoteScannerInfo> linkageMap,
+	public RemoteIndexerInfoProvider(Map<String, RemoteScannerInfo> pathMap, Map<Integer, RemoteScannerInfo> linkageMap,
 			Map<String, String> languageMap, Map<String, Map<String, String>> languagePropertyMap, Set<String> headerSet,
 			Set<String> indexerPreferences, List<String> filesToParseUpFront, FileEncodingRegistry fileEncodingRegistry) {
 
@@ -141,7 +143,6 @@ public class RemoteIndexerInfoProvider implements IRemoteIndexerInfoProvider, Se
 	public FileEncodingRegistry getFileEncodingRegistry() {
 		return fFileEncodingRegistry;
 	}
-
 	@Override
 	public String toString() {
 		return "pathMap:" + pathMap + //$NON-NLS-1$
@@ -151,7 +152,7 @@ public class RemoteIndexerInfoProvider implements IRemoteIndexerInfoProvider, Se
 				" isHeaderMap:" + headerSet + //$NON-NLS-1$
 				" preferences: " + indexerPreferences + //$NON-NLS-1$
 				" filesToParseUpFront: " + filesToParseUpFront + //$NON-NLS-1$
-				" fFileEncodingRegistry: " + fFileEncodingRegistry; //$NON-NLS-1$
+				" fFileEncodingRegistry: " + fFileEncodingRegistry ;  //$NON-NLS-1$
 	}
 
 }

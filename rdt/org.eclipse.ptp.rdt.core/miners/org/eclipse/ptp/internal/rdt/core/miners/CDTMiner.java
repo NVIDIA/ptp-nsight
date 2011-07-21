@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 IBM Corporation and others.
+ * Copyright (c) 2008, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -87,6 +87,8 @@ import org.eclipse.rse.dstore.universal.miners.UniversalServerUtilities;
  */
 public class CDTMiner extends Miner {
 	
+	public static final String CLASSNAME="org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"; //$NON-NLS-1$
+
 	// index management
 	public static final String C_INDEX_REINDEX = "C_INDEX_REINDEX"; //$NON-NLS-1$
 	public static final String C_INDEX_DELTA = "C_INDEX_DELTA"; //$NON-NLS-1$
@@ -161,7 +163,7 @@ public class CDTMiner extends Miner {
 	
 	public static final boolean DEBUG = true; // must be true for debug messages to be logged 
 	
-	private IndexerThread indexerThread = null;
+	protected IndexerThread indexerThread = null;
 	
 
 	/* (non-Javadoc)
@@ -184,7 +186,7 @@ public class CDTMiner extends Miner {
 		}
 	}
 	
-	private DataElement doHandleCommand(DataElement theCommand) {
+	protected DataElement doHandleCommand(DataElement theCommand) {
 		String name = getCommandName(theCommand);
 		DataElement status = getCommandStatus(theCommand);
 		//DataElement subject = getCommandArgument(theCommand, 0);
@@ -331,7 +333,7 @@ public class CDTMiner extends Miner {
 				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}
 		}
-		
+						
 		else if (name.equals(C_CALL_HIERARCHY_GET_CALLERS)) {
 			try {
 				String scopeName = getString(theCommand, 1);
@@ -682,7 +684,7 @@ public class CDTMiner extends Miner {
 		statusDone(status);
 	}
 	
-	
+			
 	protected void handleIndexFileRemove(DataElement scopeName, DataElement status) {
 		String scope = scopeName.getName();
 		RemoteIndexManager.getInstance().removeIndexFile(scope, _dataStore);
@@ -1325,7 +1327,7 @@ public class CDTMiner extends Miner {
 		return Boolean.parseBoolean(element.getName());
 	}
 
-	private String getString(DataElement command, int index) {
+	protected String getString(DataElement command, int index) {
 		DataElement element = getCommandArgument(command, index);
 		return element.getName();
 	}
@@ -1358,6 +1360,7 @@ public class CDTMiner extends Miner {
 
 		createCommandDescriptor(schemaRoot, "Remove Index File", C_REMOVE_INDEX_FILE, false); //$NON-NLS-1$
 		createCommandDescriptor(schemaRoot, "Move Index File", C_MOVE_INDEX_FILE, false); //$NON-NLS-1$
+		
 		
 		// call hierarchy
 		createCommandDescriptor(schemaRoot, "Get Callers", C_CALL_HIERARCHY_GET_CALLERS, false); //$NON-NLS-1$

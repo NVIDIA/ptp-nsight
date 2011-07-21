@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 IBM Corporation and others.
+ * Copyright (c) 2008, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,6 @@ import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.model.CModelException;
-import org.eclipse.cdt.core.model.CoreModelUtil;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
@@ -35,7 +33,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -54,14 +51,17 @@ import org.eclipse.dstore.core.model.DataStoreResources;
 import org.eclipse.dstore.core.model.DataStoreSchema;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ptp.internal.rdt.core.IRemoteIndexerInfoProvider;
+import org.eclipse.ptp.internal.rdt.core.RemoteProjectResourcesUtil;
 import org.eclipse.ptp.internal.rdt.core.Serializer;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CalledByResult;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CallsToResult;
 import org.eclipse.ptp.internal.rdt.core.contentassist.Proposal;
 import org.eclipse.ptp.internal.rdt.core.contentassist.RemoteContentAssistInvocationContext;
 import org.eclipse.ptp.internal.rdt.core.includebrowser.IIndexIncludeValue;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerProgress;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.miners.CDTMiner;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
@@ -108,9 +108,20 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 
 	private Map<IProject, String> fInitializedProjects = new HashMap<IProject, String>();
 	private ProjectChangeListener fProjectOpenListener;
-	private List<String> fErrorMessages = new ArrayList<String>();
+	/**
+	 * @since 3.2
+	 */
+	protected List<String> fErrorMessages = new ArrayList<String>();
 
-	private boolean fIsInitializing = false;
+	/**
+	 * @since 3.2
+	 */
+	protected boolean fIsInitializing = false;
+	
+	/**
+	 * @since 3.2
+	 */
+	protected String miner_class;
 	
 	protected RSECIndexSubsystem(IHost host,
 			IConnectorService connectorService) {
@@ -128,6 +139,13 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	
 	// index management
 	
+	/**
+	 * @since 3.2
+	 */
+	protected void initializeMinerClass(){
+		miner_class = CDTMiner.CLASSNAME;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.rse.core.subsystems.SubSystem#initializeSubSystem(org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -141,11 +159,12 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 
 		try {
 			super.initializeSubSystem(monitor);
+			initializeMinerClass();
 			fProjectOpenListener = new ProjectChangeListener(this);
 			ResourcesPlugin.getWorkspace().addResourceChangeListener(fProjectOpenListener);
 
 			DataStore dataStore = getDataStore(monitor);
-			DataElement status = dataStore.activateMiner("org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"); //$NON-NLS-1$
+			DataElement status = dataStore.activateMiner(miner_class); 
 
 			if (status != null) {
 				DStoreStatusMonitor statusMonitor = new DStoreStatusMonitor(dataStore);
@@ -166,6 +185,8 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 		}
 
 	}
+	
+	
 
 	@Override
 	public synchronized void uninitializeSubSystem(IProgressMonitor monitor) {
@@ -489,7 +510,10 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	}
 	
 	
-	private RemoteIndexerProgress getIndexerProgress(DataElement status) {
+	/**
+	 * @since 3.2
+	 */
+	protected RemoteIndexerProgress getIndexerProgress(DataElement status) {
 		int num = status.getNestedSize();
     	if (num > 0) {    	
     		boolean foundProgressInfo = false;
@@ -698,6 +722,8 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 		String actualLocation = sendRequestStringResult(CDTMiner.C_MOVE_INDEX_FILE, new Object[] {scopeName, newIndexLocation}, monitor);
 		return actualLocation;
 	}
+	
+	
 	
 	
 	public OpenDeclarationResult openDeclaration(Scope scope, ITranslationUnit unit, String selectedText, int selectionStart, int selectionLength, IProgressMonitor monitor) {
@@ -1073,25 +1099,10 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 
 		// if so, initialize a scope for the project consisting of all
 		// its translation units
-		final List<ICElement> cElements = new LinkedList<ICElement>();
+		
+		
+		final List<ICElement> cElements = RemoteProjectResourcesUtil.getCElements(project);
 
-		IResourceVisitor fileCollector = new IResourceVisitor() {
-
-			public boolean visit(IResource resource) throws CoreException {
-				if (resource instanceof IFile) {
-					// add the path
-					ITranslationUnit tu = CoreModelUtil.findTranslationUnit((IFile) resource);
-					if (tu != null) {
-						cElements.add(tu);
-						return false;
-					}
-				}
-				return true;
-			}
-		};
-
-		// collect the translation units
-		project.accept(fileCollector);
 		
 		Scope scope = new Scope(project);
 		String configLocation = ((IIndexServiceProvider)provider).getIndexLocation();
@@ -1164,5 +1175,17 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 		//the working copy	
 		return (ITranslationUnit) result;
 	}
+
+	/**
+	 * @since 3.2
+	 */
+	public EventType getReIndexEventType() {
+		
+		return IRemoteFastIndexerUpdateEvent.EventType.EVENT_REINDEX;
+	}
+
+	
+
+	
 	
 }

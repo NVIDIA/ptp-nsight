@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2009 IBM Corporation and others.
+ * Copyright (c) 2008, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,7 @@ import org.eclipse.ptp.internal.rdt.core.callhierarchy.ICallHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.contentassist.Proposal;
 import org.eclipse.ptp.internal.rdt.core.index.IIndexLifecycleService;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
@@ -46,7 +47,6 @@ import org.eclipse.rse.core.model.IHost;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.ISearchResult;
 import org.eclipse.search.ui.ISearchResultListener;
-import org.eclipse.ui.IMemento;
 
 /**
  * A C/C++ indexing service provider that does nothing.
@@ -196,6 +196,13 @@ public class NullCIndexServiceProvider extends
 			public String moveIndexFile(String scopeName, String newIndexLocation, IProgressMonitor monitor) {
 				return null; // vacuously true
 			}
+
+			public EventType getReIndexEventType() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			
 			
 		};
 	}

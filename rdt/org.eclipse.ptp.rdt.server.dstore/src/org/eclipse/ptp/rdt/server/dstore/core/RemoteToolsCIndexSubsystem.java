@@ -16,7 +16,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +23,6 @@ import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.model.CModelException;
-import org.eclipse.cdt.core.model.CoreModelUtil;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
@@ -36,7 +34,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -55,14 +52,17 @@ import org.eclipse.dstore.core.model.DataStoreResources;
 import org.eclipse.dstore.core.model.DataStoreSchema;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ptp.internal.rdt.core.IRemoteIndexerInfoProvider;
+import org.eclipse.ptp.internal.rdt.core.RemoteProjectResourcesUtil;
 import org.eclipse.ptp.internal.rdt.core.Serializer;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CalledByResult;
 import org.eclipse.ptp.internal.rdt.core.callhierarchy.CallsToResult;
 import org.eclipse.ptp.internal.rdt.core.contentassist.Proposal;
 import org.eclipse.ptp.internal.rdt.core.contentassist.RemoteContentAssistInvocationContext;
 import org.eclipse.ptp.internal.rdt.core.includebrowser.IIndexIncludeValue;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerProgress;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.miners.CDTMiner;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
@@ -81,6 +81,8 @@ import org.eclipse.ptp.services.core.IService;
 import org.eclipse.ptp.services.core.IServiceConfiguration;
 import org.eclipse.ptp.services.core.IServiceProvider;
 import org.eclipse.ptp.services.core.ServiceModelManager;
+import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
+
 
 /**
  * An Remote Tools subsystem which is used to provide C/C++ indexing services
@@ -921,25 +923,7 @@ public class RemoteToolsCIndexSubsystem implements ICIndexSubsystem {
 
 		// if so, initialize a scope for the project consisting of all
 		// its translation units
-		final List<ICElement> cElements = new LinkedList<ICElement>();
-
-		IResourceVisitor fileCollector = new IResourceVisitor() {
-
-			public boolean visit(IResource resource) throws CoreException {
-				if (resource instanceof IFile) {
-					// add the path
-					ITranslationUnit tu = CoreModelUtil.findTranslationUnit((IFile) resource);
-					if (tu != null) {
-						cElements.add(tu);
-						return false;
-					}
-				}
-				return true;
-			}
-		};
-
-		// collect the translation units
-		project.accept(fileCollector);
+		final List<ICElement> cElements = RemoteProjectResourcesUtil.getCElements(project);
 
 		String configLocation = ((IIndexServiceProvider) provider).getIndexLocation();
 		Scope scope = new Scope(project);
@@ -1211,6 +1195,13 @@ public class RemoteToolsCIndexSubsystem implements ICIndexSubsystem {
 			}
 		}
 		return wholeMessage;
+	}
+
+	/**
+	 * @since 1.1
+	 */
+	public EventType getReIndexEventType() {
+		return IRemoteFastIndexerUpdateEvent.EventType.EVENT_REINDEX;
 	}
 
 }
