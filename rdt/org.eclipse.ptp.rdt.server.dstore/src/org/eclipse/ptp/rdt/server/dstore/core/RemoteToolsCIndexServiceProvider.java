@@ -70,6 +70,9 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 	}
 
 	
+	/**
+	 * @since 2.0
+	 */
 	public boolean isRemote() {
 		return true;
 	}
@@ -189,6 +192,9 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 	 * 
 	 * @see org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider#
 	 * getNavigationService()
+	 */
+	/**
+	 * @since 2.0
 	 */
 	public synchronized INavigationService getNavigationService() {
 		if (!isConfigured())
