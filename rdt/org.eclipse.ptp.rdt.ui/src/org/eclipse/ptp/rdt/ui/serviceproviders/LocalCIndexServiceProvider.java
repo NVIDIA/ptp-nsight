@@ -6,9 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *    IBM Corporation - initial API and implementation
+ *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.ptp.rdt.ui.serviceproviders;
 
 import org.eclipse.ptp.internal.rdt.core.serviceproviders.AbstractLocalCIndexServiceProvider;
