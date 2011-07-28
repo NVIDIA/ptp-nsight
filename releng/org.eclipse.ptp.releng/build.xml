@@ -21,7 +21,7 @@
 		<!-- Update for new Eclipse version -->
 		<property name="eclipseDist" value="/home/data/httpd/download.eclipse.org/eclipse/downloads/drops/R-3.6.2-201102101200/eclipse-SDK-3.6.2-linux-gtk-x86_64.tar.gz"/>
 		<!-- Update for new CDT version -->
-		<property name="cdtDist" value="/home/data/httpd/download.eclipse.org/tools/cdt/builds/7.0.2/201107112045/cdt-master-7.0.2-201107112045.zip"/>
+		<property name="cdtDist" value="/home/data/httpd/download.eclipse.org/tools/cdt/builds/7.0.2/201107261701/cdt-master-7.0.2-201107261701.zip"/>
 		<!-- Update for new RSE version -->
 		<property name="rseDist" value="/home/data/httpd/download.eclipse.org/tm/downloads/drops/R-3.2.2-201102130444/RSE-SDK-3.2.2.zip"/>
 		<!-- Update for new Mylyn version -->
