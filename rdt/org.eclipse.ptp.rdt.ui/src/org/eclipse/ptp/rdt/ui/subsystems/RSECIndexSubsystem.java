@@ -109,17 +109,17 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	private Map<IProject, String> fInitializedProjects = new HashMap<IProject, String>();
 	private ProjectChangeListener fProjectOpenListener;
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	protected List<String> fErrorMessages = new ArrayList<String>();
 
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	protected boolean fIsInitializing = false;
 	
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	protected String miner_class;
 	
@@ -140,7 +140,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	// index management
 	
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	protected void initializeMinerClass(){
 		miner_class = CDTMiner.CLASSNAME;
@@ -511,7 +511,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	
 	
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	protected RemoteIndexerProgress getIndexerProgress(DataElement status) {
 		int num = status.getNestedSize();
@@ -1177,7 +1177,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	}
 
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	public EventType getReIndexEventType() {
 		

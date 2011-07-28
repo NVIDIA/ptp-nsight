@@ -78,6 +78,7 @@ public class ServiceProviderConfigurationWidget extends Composite {
 
 	private Tree servicesTree;
 	private Button enabledCheckbox;
+	private Label providerLabel;
 	private Combo providerCombo;
 	private Composite configurationComposite;
 	private Group providerComposite;
@@ -182,10 +183,10 @@ public class ServiceProviderConfigurationWidget extends Composite {
 		});
 		enabledCheckbox.setEnabled(false);
 		
-		Label provider = new Label(selectionComposite, SWT.NONE);
-		provider.setText(Messages.ServiceProviderConfigurationWidget_2);
-		provider.setLayoutData(new GridData());
-		provider.setEnabled(false);
+		providerLabel = new Label(selectionComposite, SWT.NONE);
+		providerLabel.setText(Messages.ServiceProviderConfigurationWidget_2);
+		providerLabel.setLayoutData(new GridData());
+		providerLabel.setEnabled(false);
 		
 		providerCombo = new Combo(selectionComposite, SWT.DROP_DOWN | SWT.READ_ONLY);
 		GridData providerComboData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -390,6 +391,7 @@ public class ServiceProviderConfigurationWidget extends Composite {
 		// clear everything out
 		providerCombo.removeAll();
 		enabledCheckbox.setEnabled(false);
+		providerLabel.setEnabled(false);
 		stackLayout.topControl = null;
 		configurationComposite.layout();
 		
@@ -429,6 +431,7 @@ public class ServiceProviderConfigurationWidget extends Composite {
 		
 		// set the enabled/disabled state appropriately
 		providerCombo.setEnabled(!disabled);
+		providerLabel.setEnabled(!disabled);
 		enabledCheckbox.setSelection(!disabled);
 		enabledCheckbox.setEnabled(true);
 	}
@@ -506,7 +509,7 @@ public class ServiceProviderConfigurationWidget extends Composite {
 		 * If no service provider configuration UI is provided, see if there is a wizard
 		 * and use that.
 		 */
-		if (comp.getChildren().length == 0) {
+		if (comp.getChildren().length == 0 && contributor != null) {
 			final IWizard wizard = contributor.getWizard(newProvider, null);
 			if (wizard != null) {
 				Button button = new Button(comp, SWT.PUSH);

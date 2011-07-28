@@ -22,6 +22,7 @@ package org.eclipse.ptp.internal.rdt.ui.search.actions;
 import java.net.URI;
 import java.text.MessageFormat;
 
+import org.eclipse.cdt.core.EFSExtensionProvider;
 import org.eclipse.cdt.core.dom.IName;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.model.ICElement;
@@ -30,6 +31,7 @@ import org.eclipse.cdt.core.model.ISourceRange;
 import org.eclipse.cdt.core.model.ISourceReference;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.model.util.CElementBaseLabels;
+import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 import org.eclipse.cdt.internal.ui.actions.OpenActionUtil;
 import org.eclipse.cdt.internal.ui.editor.CEditor;
 import org.eclipse.cdt.internal.ui.editor.CEditorMessages;
@@ -47,8 +49,8 @@ import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.ptp.internal.rdt.core.model.ModelAdapter;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.model.WorkingCopy;
-import org.eclipse.ptp.internal.rdt.core.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
+import org.eclipse.ptp.internal.rdt.ui.navigation.INavigationService;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2;
@@ -101,31 +103,15 @@ class OpenDeclarationsJob extends Job{
 
 	IStatus performNavigation(IProgressMonitor monitor) throws CoreException {
 		ITranslationUnit workingCopy = CUIPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(fEditor.getEditorInput());
-		
 		if (workingCopy == null)
 			return Status.CANCEL_STATUS;
 				
 		ICProject project = workingCopy.getCProject();
-		
-		// go to the remote index
-		if (fEditor.isDirty()) { 
-			// need to send the working copy to the remote side
-			String contents = fEditor.getViewer().getDocument().get();
-			workingCopy = new WorkingCopy(null, workingCopy, contents);
-		}
-		else {
-			workingCopy = ModelAdapter.adaptElement(null, workingCopy, 0, true);
-		}
-		
-		
-		Scope scope = new Scope(workingCopy.getCProject().getProject());
 		int selectionStart  = fTextSelection.getOffset();
 		int selectionLength = fTextSelection.getLength();
 		
-		INavigationService service = getNavigationService(workingCopy.getCProject().getProject());
-		
-		OpenDeclarationResult result = service.openDeclaration(scope, workingCopy, fSelectedText, selectionStart, selectionLength, monitor);
-		
+		INavigationService service = getNavigationService(project.getProject());
+		OpenDeclarationResult result = service.openDeclaration(fEditor, fSelectedText, selectionStart, selectionLength, monitor);
 		
 		if(result == null) // can happen when using the null service provider
 			return Status.OK_STATUS;
@@ -141,7 +127,7 @@ class OpenDeclarationsJob extends Job{
 				break;
 			case RESULT_INCLUDE_PATH:
 				String path = (String) result.getResult();
-				open(path, project);
+				open(project.getProject(), path, project);
 				break;
 			case RESULT_NAME:
 				IName name = (IName) result.getResult();
@@ -167,20 +153,26 @@ class OpenDeclarationsJob extends Job{
 		return Status.OK_STATUS;
 	}
 	
+	
 	/**
 	 * Replaces the path portion of the given URI.
 	 */
-	private URI replacePath(URI u, String path) {
+	private URI replacePath(IProject project, URI u, String path) {
+		// TODO: PATHFIX this is a HACK, fix EFSExtensionProvider please!
+		if("org.eclipse.cdt.core.fastIndexer".equals(IndexerPreferences.get(project, IndexerPreferences.KEY_INDEXER_ID, null))) { // //$NON-NLS-1$
+			return new EFSExtensionProvider(){}.createNewURIFromPath(u, path);
+		}
+		
 		return EFSExtensionManager.getDefault().createNewURIFromPath(u, path);
 	}
 	
 	
-	private void open(String path, ICElement element) {
-		open(path, element, -1, -1);
+	private void open(IProject project, String path, ICElement element) {
+		open(project, path, element, -1, -1);
 	}
 	
-	private void open(String path, final ICElement element, final int offset, final int length) {
-		final URI uri = replacePath(element.getLocationURI(), path);
+	private void open(IProject project, String path, final ICElement element, final int offset, final int length) {
+		final URI uri = replacePath(project, element.getLocationURI(), path);
 		if(uri == null)
 			return;
 		open(uri, element, offset, length);
@@ -194,7 +186,6 @@ class OpenDeclarationsJob extends Job{
 			public void run() {
 				try {
 					fAction.clearStatusLine();
-					
 					IEditorPart editor = EditorUtility.openInEditor(uri, element);
 					if (editor instanceof ITextEditor) {
 						ITextEditor textEditor = (ITextEditor)editor;
@@ -231,7 +222,7 @@ class OpenDeclarationsJob extends Job{
 				if (target instanceof ISourceReference) {
 					try {
 						ISourceRange sourceRange = ((ISourceReference) target).getSourceRange();
-						URI uri = replacePath(target.getLocationURI(), target.getPath().toString());
+						URI uri = replacePath(project.getProject(), target.getLocationURI(), target.getPath().toString());
 						
 						open(uri, project, sourceRange.getIdStartPos(), sourceRange.getIdLength());
 						
@@ -264,7 +255,7 @@ class OpenDeclarationsJob extends Job{
 				int offset = fileloc.getNodeOffset();
 				int length = fileloc.getNodeLength();
 				
-				open(filePath, project, offset, length);
+				open(project.getProject(), filePath, project, offset, length);
 				return;
 			}
 		}
@@ -280,7 +271,7 @@ class OpenDeclarationsJob extends Job{
 			int offset = fileloc.getNodeOffset();
 			int length = fileloc.getNodeLength();
 			
-			open(filePath, project, offset, length);
+			open(project.getProject(), filePath, project, offset, length);
 		}
 	}
 

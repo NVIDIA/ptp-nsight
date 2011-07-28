@@ -51,10 +51,11 @@ import org.eclipse.cdt.core.index.IIndexBinding;
 import org.eclipse.cdt.core.index.IIndexFile;
 import org.eclipse.cdt.core.index.IIndexFileLocation;
 import org.eclipse.cdt.core.index.IIndexInclude;
-import org.eclipse.cdt.core.index.IIndexLocationConverter;
 import org.eclipse.cdt.core.index.IIndexName;
 import org.eclipse.cdt.core.index.IndexFilter;
 import org.eclipse.cdt.core.index.IndexLocationFactory;
+import org.eclipse.cdt.core.model.CModelException;
+import org.eclipse.cdt.core.model.CoreModelUtil;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IInclude;
@@ -63,6 +64,7 @@ import org.eclipse.cdt.core.model.ISourceReference;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.ICPPInstanceCache;
 import org.eclipse.cdt.internal.core.index.IndexFileLocation;
+import org.eclipse.cdt.utils.EFSExtensionManager;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -72,6 +74,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.ptp.internal.rdt.core.model.BindingAdapter;
 import org.eclipse.ptp.internal.rdt.core.model.CElement;
 import org.eclipse.ptp.internal.rdt.core.model.ICProjectFactory;
+import org.eclipse.ptp.internal.rdt.core.model.IIndexLocationConverterFactory;
 import org.eclipse.ptp.internal.rdt.core.model.TranslationUnit;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.activator.Activator;
@@ -205,8 +208,9 @@ public class IndexQueries {
 				
 				IIndexFileLocation location = null;
 				
-				if(uri != null)
-					location = new IndexFileLocation(uri, null);
+				if(uri != null) {
+					location = new IndexFileLocation(uri, path);
+				}
 
 				if (location != null) {
 					IIndexFile[] files= index.getFiles(location);
@@ -290,7 +294,7 @@ public class IndexQueries {
 	}
 
 
-	public static ICElement[] findRepresentative(IIndex index, IBinding binding, IIndexLocationConverter converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
+	public static ICElement[] findRepresentative(IIndex index, IBinding binding, IIndexLocationConverterFactory converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
 		ICElement[] defs = findAllDefinitions(index, binding, converter, preferProject, projectFactory);
 		if (defs.length == 0) {
 			ICElement elem = findAnyDeclaration(index, preferProject, binding, converter, projectFactory);
@@ -301,7 +305,7 @@ public class IndexQueries {
 		return defs;
 	}
 	
-	public static String[] findRepresentitivePaths(IIndex index, IBinding binding, IIndexLocationConverter converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
+	public static String[] findRepresentitivePaths(IIndex index, IBinding binding, IIndexLocationConverterFactory converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
 		IIndexName[] defs= index.findNames(binding, IIndex.FIND_DEFINITIONS | IIndex.SEARCH_ACROSS_LANGUAGE_BOUNDARIES);
 		ArrayList<String> paths = new ArrayList<String>();
 		
@@ -312,7 +316,7 @@ public class IndexQueries {
 		return paths.toArray(new String[0]);
 	}
 	
-	public static ICElement[] findAllDefinitions(IIndex index, IBinding binding, IIndexLocationConverter converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
+	public static ICElement[] findAllDefinitions(IIndex index, IBinding binding, IIndexLocationConverterFactory converter, ICProject preferProject, ICProjectFactory projectFactory) throws CoreException {
 		if (binding != null) {
 			IIndexName[] defs= index.findNames(binding, IIndex.FIND_DEFINITIONS | IIndex.SEARCH_ACROSS_LANGUAGE_BOUNDARIES);
 			
@@ -338,7 +342,7 @@ public class IndexQueries {
 	 * @param declName
 	 * @return the ICElementHandle or <code>null</code>.
 	 */
-	public static ICElement getCElementForName(ICProject preferProject, IIndex index, IASTName declName, IIndexLocationConverter converter, ICProjectFactory projectFactory) 
+	public static ICElement getCElementForName(ICProject preferProject, IIndex index, IASTName declName, IIndexLocationConverterFactory converter, ICProjectFactory projectFactory) 
 			throws CoreException {
 		assert !declName.isReference();
 		IBinding binding= declName.resolveBinding();
@@ -369,19 +373,26 @@ public class IndexQueries {
 		return null;
 	}
 	
-	public static ITranslationUnit getTranslationUnit(ICProject cproject, IName name, IIndexLocationConverter converter) {
+	public static ITranslationUnit getTranslationUnit(ICProject cproject, IName name, IIndexLocationConverterFactory converter) {
 		return getTranslationUnit(cproject, name.getFileLocation(), converter);
 	}
 
 	private static ITranslationUnit getTranslationUnit(ICProject cproject, final IASTFileLocation fileLocation,
-			IIndexLocationConverter converter) {
+			IIndexLocationConverterFactory converter) {
 		if (converter == null)
 			throw new IllegalArgumentException();
 
 		if (fileLocation != null) {
 			IPath path = Path.fromOSString(fileLocation.getFileName());
 			if (converter != null) {
-				IIndexFileLocation location = converter.fromInternalFormat(fileLocation.getFileName());
+				IIndexFileLocation location = converter.getConverter(cproject).fromInternalFormat(fileLocation.getFileName());
+				if(location == null) {
+					try {
+						return CoreModelUtil.findTranslationUnitForLocation(path, cproject);
+					} catch (CModelException e) {
+						RDTLog.logError(e);
+					}
+				}
 				TranslationUnit unit = new TranslationUnit(cproject, path.lastSegment(), cproject == null ? null : cproject
 						.getElementName(), location.getURI());
 				return unit;
@@ -391,7 +402,7 @@ public class IndexQueries {
 		return null;
 	}
 
-	public static ICElement getCElementForName(ICProject preferProject, IIndex index, IIndexName declName, IIndexLocationConverter converter, ICProjectFactory projectFactory) 
+	public static ICElement getCElementForName(ICProject preferProject, IIndex index, IIndexName declName, IIndexLocationConverterFactory converter, ICProjectFactory projectFactory) 
 			throws CoreException {
 		assert !declName.isReference();
 		
@@ -419,7 +430,7 @@ public class IndexQueries {
 		}
 	}
 
-	public static ICElement findAnyDeclaration(IIndex index, ICProject preferProject, IBinding binding, IIndexLocationConverter converter, ICProjectFactory projectFactory) 
+	public static ICElement findAnyDeclaration(IIndex index, ICProject preferProject, IBinding binding, IIndexLocationConverterFactory converter, ICProjectFactory projectFactory) 
 			throws CoreException {
 		if (binding != null) {
 			IIndexName[] names= index.findNames(binding, IIndex.FIND_DECLARATIONS);
@@ -433,7 +444,7 @@ public class IndexQueries {
 		return null;
 	}
 
-	public static ICElement attemptConvertionToHandle(IIndex index, ICElement input, IIndexLocationConverter converter, ICProjectFactory projectFactory) throws CoreException {
+	public static ICElement attemptConvertionToHandle(IIndex index, ICElement input, IIndexLocationConverterFactory converter, ICProjectFactory projectFactory) throws CoreException {
 		if (input instanceof CElement) {
 			return input;
 		}

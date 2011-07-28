@@ -18,7 +18,7 @@ public class Messages extends NLS {
 	
 
 	/**
-	 * @since 3.2
+	 * @since 4.0
 	 */
 	public static String 
 		RemoteCIndexServiceProvider_0,

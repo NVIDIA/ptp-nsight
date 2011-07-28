@@ -60,9 +60,9 @@ import org.eclipse.ptp.internal.rdt.core.contentassist.Proposal;
 import org.eclipse.ptp.internal.rdt.core.contentassist.RemoteContentAssistInvocationContext;
 import org.eclipse.ptp.internal.rdt.core.includebrowser.IIndexIncludeValue;
 import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent;
+import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerProgress;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
-import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.miners.CDTMiner;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
@@ -81,7 +81,6 @@ import org.eclipse.ptp.services.core.IService;
 import org.eclipse.ptp.services.core.IServiceConfiguration;
 import org.eclipse.ptp.services.core.IServiceProvider;
 import org.eclipse.ptp.services.core.ServiceModelManager;
-import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 
 
 /**
@@ -1198,7 +1197,7 @@ public class RemoteToolsCIndexSubsystem implements ICIndexSubsystem {
 	}
 
 	/**
-	 * @since 1.1
+	 * @since 2.0
 	 */
 	public EventType getReIndexEventType() {
 		return IRemoteFastIndexerUpdateEvent.EventType.EVENT_REINDEX;
