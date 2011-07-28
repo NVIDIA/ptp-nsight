@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2006, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -64,10 +64,10 @@ public class LocalNavigationService implements INavigationService {
 		}
 
 		final INavigationErrorLogger logger = new INavigationErrorLogger() {
-			@Override public void logDebugMessage(String message) {
+			public void logDebugMessage(String message) {
 				RDTLog.logInfo(message);
 			}
-			@Override public void logError(String message, Throwable e) {
+			public void logError(String message, Throwable e) {
 				RDTLog.logError(e, message);
 			}
 		};
