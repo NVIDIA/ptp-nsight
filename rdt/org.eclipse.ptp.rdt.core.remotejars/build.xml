@@ -161,7 +161,7 @@
 		<mkdir dir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/@dot"/>
 		<javac srcdir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/src"
 				destdir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/@dot"
-				classpath="${basedir}/../org.eclipse.ptp.rdt.core/@dot:${platformTempDir}/eclipse/plugins/${coreRuntimeJar}:${platformTempDir}/eclipse/plugins/${equinoxJar}:${platformTempDir}/eclipse/plugins/${filesystemJar}"
+				classpath="${basedir}/../../eclipse/plugins/*:${basedir}/../org.eclipse.ptp.rdt.core/@dot:${platformTempDir}/eclipse/plugins/${coreRuntimeJar}:${platformTempDir}/eclipse/plugins/${equinoxJar}:${platformTempDir}/eclipse/plugins/${filesystemJar}"
 				source="1.5"
 				target="1.5"
 	  	/>
