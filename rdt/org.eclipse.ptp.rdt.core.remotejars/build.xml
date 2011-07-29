@@ -160,9 +160,9 @@
 		<antcall target="unpack.platform"></antcall>
 		<copy todir="${platformTempDir}/eclipse/plugins">
 			<fileset dir="${basedir}/../../eclipse/plugins">
-				<filename name="**/org.eclipse.cdt.*.jar"/>
-				<filename name="**/org.eclipse.rse.*.jar"/>
-				<filename name="**/org.eclipse.dstore.*.jar"/>
+				<include name="**/org.eclipse.cdt.*.jar"/>
+				<include name="**/org.eclipse.rse.*.jar"/>
+				<include name="**/org.eclipse.dstore.*.jar"/>
 			</fileset>
 		</copy>
 		<path id="javaclasspath">
