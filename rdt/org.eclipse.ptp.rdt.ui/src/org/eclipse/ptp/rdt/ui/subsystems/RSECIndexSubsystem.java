@@ -175,6 +175,22 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 				} catch (InterruptedException e) {
 					UIPlugin.log(e);
 				}
+				
+				if(status.getValue().equals("failed")){ //$NON-NLS-1$
+					//the initialization is failed, try to initialize the default miner
+					status = dataStore.activateMiner(CDTMiner.CLASSNAME); 
+
+					if (status != null) {
+						
+						// wait for the miner to be fully initialized
+						try {
+							statusMonitor.waitForUpdate(status, monitor);
+						} catch (InterruptedException e) {
+							UIPlugin.log(e);
+						}
+					}
+					
+				}
 			}
 
 		}

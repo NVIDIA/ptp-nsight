@@ -182,11 +182,9 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 	}
 	public boolean isIndexAfterBuildSet(){
 		
-		//if(isBuildServiceEnabled()){
-		      return checkStatus(INDEX_AFTER_BUILD_OPTION_KEY, TRUE);
-		//}else{
-			//return false;
-		//}
+		
+		return checkStatus(INDEX_AFTER_BUILD_OPTION_KEY, TRUE);
+		
 	}
 
 	public boolean isIndexNeverRun() {
@@ -242,13 +240,8 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 	
 	
 	private void setIndexCompletedTemorory() {
-		if(isIndexStartingByBuild()){
-			setIndexCompletedByBuild();
-		}
+		setStatus(INDEX_STATUS_KEY, STATUS_COMPLETE);
 		
-		else{
-			setStatus(INDEX_STATUS_KEY, STATUS_COMPLETE);
-		}
 	}
 	
 	
@@ -312,8 +305,10 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 	 */
 	public void setStatus(String status_property_key, String status_to_set) {
 		try {
-			project.setPersistentProperty(new QualifiedName("", //$NON-NLS-1$
-					status_property_key), status_to_set);
+			if(project.exists()){
+				project.setPersistentProperty(new QualifiedName("", //$NON-NLS-1$
+						status_property_key), status_to_set);
+			}
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -344,11 +339,7 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 			
 			return false;
 		}
-		if(isIndexCompletedByBuild()){
 			
-			return false;
-		}
-		
 		return true;
 	}
 	
@@ -378,17 +369,12 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 				if(this.isIndexStartingByBuild()){
 					return false;
 				}
-				
-				//the query may from reindexing by add project call(the project initial indexing), 
-				//if we have done by indexing following build or import, we should skip it since it is a duplicate operation. 
-				if(this.isIndexCompletedByBuild()){
-					//we just skip the duplicate reindex once, so we should turn index completedByBuild to real completed.
-					this.setIndexCompleted();
-					return true;
+				//from index import action
+				if(this.isIndexStartingByImport()){
+					return false;
 				}
-				
-								
-				return false;
+											
+				return true;
 			}
 			
 		}else{
@@ -428,7 +414,7 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 							ICProject cProject = CModelManager.getDefault().getCModel().getCProject(project);
 							setIndexStartingByBuild();
 							CCorePlugin.getIndexManager().reindex(cProject);
-							//System.out.println("running invoke indexing job. "); //$NON-NLS-1$
+							
 						}
 						
 					
@@ -443,7 +429,6 @@ public class IndexBuildSequenceController implements IResourceChangeListener {
 			setFinalBuildStatus();
 		}
     	
-    	//System.out.println("schedule invoke indexing job. "); //$NON-NLS-1$
 	
 		
 	}
