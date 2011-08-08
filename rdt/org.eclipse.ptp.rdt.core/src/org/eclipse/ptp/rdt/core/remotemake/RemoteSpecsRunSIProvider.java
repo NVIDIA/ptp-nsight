@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 IBM Corporation and others.
+ * Copyright (c) 2008, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -121,6 +121,10 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 		if (executionProvider != null) {
 
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			
+			if (remoteServices == null)
+				return null;
+			
 			if(!remoteServices.isInitialized()) {
 				remoteServices.initialize();
 			}
@@ -208,6 +212,10 @@ public class RemoteSpecsRunSIProvider extends RemoteRunSIProvider {
 		if (executionProvider != null) {
 
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			
+			if (remoteServices == null)
+				return null;
+			
 			if(!remoteServices.isInitialized()) {
 				remoteServices.initialize();
 			}

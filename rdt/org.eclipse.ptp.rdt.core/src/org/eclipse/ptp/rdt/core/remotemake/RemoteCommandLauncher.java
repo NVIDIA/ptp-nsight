@@ -129,6 +129,10 @@ public class RemoteCommandLauncher implements ICommandLauncher {
 		if (executionProvider != null) {
 			
 			IRemoteServices remoteServices = executionProvider.getRemoteServices();
+			
+			if (remoteServices == null)
+				return null;
+			
 			if(!remoteServices.isInitialized()) {
 				remoteServices.initialize();
 			}
