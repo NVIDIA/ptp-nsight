@@ -55,6 +55,7 @@ public interface IRemoteIndexerInfoProvider extends IStandaloneScannerInfoProvid
 	public static final List<String> EXCLUDED_DIRECTORIES= new ArrayList<String>() {{
 		add(".standalone_index");  //$NON-NLS-1$
 		add(".settings"); //$NON-NLS-1$
+		add(".par"); //$NON-NLS-1$
 	}};
 	public static final List<String> EXCLUDED_FILES= new ArrayList<String>(){{
 		add(".project");  //$NON-NLS-1$
