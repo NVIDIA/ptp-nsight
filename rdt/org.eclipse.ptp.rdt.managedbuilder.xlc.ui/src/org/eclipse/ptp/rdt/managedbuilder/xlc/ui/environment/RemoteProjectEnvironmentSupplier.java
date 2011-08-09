@@ -50,9 +50,8 @@ public class RemoteProjectEnvironmentSupplier implements
 	public IBuildEnvironmentVariable getVariable(String variableName,
 			IManagedProject project, IEnvironmentVariableProvider provider) {
 		Map<String, String> envMap = getRemoteEnvironment(project);
-		String value = new String();
 		if (envMap != null) {
-			value = envMap.get(variableName) == null ? new String() : envMap.get(variableName);
+			String value = envMap.get(variableName) == null ? new String() : envMap.get(variableName);
 			IBuildEnvironmentVariable envVar = new BuildEnvVar(variableName, value);
 			return envVar;
 		}
