@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -557,7 +557,8 @@ public class OpenDeclarationHandler {
 			}
 			ICElement[] elements = convertToCElements(tu, index, (nameList.toArray(new IName[nameList.size()])), logger);
 			for (ICElement element : elements) {
-				elems.add(element);
+				if(!elems.contains(element))
+					elems.add(element);
 			}			
 			
 			Collection<IBinding> secondaryBindings;
@@ -581,7 +582,8 @@ public class OpenDeclarationHandler {
 					names = (IName[]) ArrayUtil.removeNulls(IName.class, names);					
 					elements = convertToCElements(tu, index, names, logger);
 					for (ICElement element : elements) {
-						elems.add(element);
+						if(!elems.contains(element))
+							elems.add(element);
 					}			
 				}
 				// In case we did not find anything, consider the secondary bindings.
@@ -589,8 +591,10 @@ public class OpenDeclarationHandler {
 					break;
 				bs= secondaryBindings;
 			}			
-			if(!elems.isEmpty())
-				return OpenDeclarationResult.resultCElements((ICElement[])elems.toArray());
+			if(!elems.isEmpty()){
+							
+				return OpenDeclarationResult.resultCElements(elems.toArray(new ICElement[elems.size()] ));
+			}
 			if (sourceName != null && sourceName.isDeclaration()) {
 				// Select the name at the current location as the last resort.
 				return OpenDeclarationResult.resultName(new SimpleName(sourceName));
