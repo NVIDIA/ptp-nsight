@@ -191,7 +191,11 @@ public class RemoteIndexManager {
 		
 		if(indexFile == null) {
 			indexFile = new File(scope + PDOM_EXTENSION); // creates a file object located in the server working directory
-			UniversalServerUtilities.logWarning(CLASS_NAME, "Can't create index file at " + path + " attempting to use " + indexFile.getParent() + " instead", dataStore); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			if(dataStore!=null){
+				UniversalServerUtilities.logWarning(CLASS_NAME, "Can't create index file at " + path + " attempting to use " + indexFile.getParent() + " instead", dataStore); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			}else{
+				StandaloneLogService.getInstance().traceLog(CLASS_NAME + "Can't create index file at " + path + " attempting to use " + indexFile.getParent() + " instead");   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+			}
 			scopeToIndexLocationMap.put(scope, indexFile.getParent());
 		}
 		if(dataStore!=null){
