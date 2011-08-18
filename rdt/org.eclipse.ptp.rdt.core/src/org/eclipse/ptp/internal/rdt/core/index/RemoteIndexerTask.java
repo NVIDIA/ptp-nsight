@@ -76,40 +76,43 @@ public class RemoteIndexerTask implements IPDOMIndexerTask {
 
 	public void run(IProgressMonitor monitor) throws InterruptedException {
 		IIndexLifecycleService service = fIndexServiceProvider.getIndexLifeCycleService();
-		IProject project = fIndexer.getProject().getProject();
 
-		Scope scope = new Scope(project);
-		
-		IndexBuildSequenceController projectStatus = IndexBuildSequenceController.getIndexBuildSequenceController(fIndexer.getProject().getProject());
-		
-		if (fUpdate) {
-			monitor.subTask(Messages.RemoteIndexTask_updateIndex_JobName); 
-			// notify listeners
-			for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {
-				listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(IRemoteFastIndexerUpdateEvent.EventType.EVENT_UPDATE, this, scope));
-			}
-			
-			// perform the indexer update
-			service.update(scope, Arrays.<ICElement>asList(fAdded), Arrays.<ICElement>asList(fChanged), Arrays.<ICElement>asList(fRemoved), monitor, this);
-		} else {
-			
-			
-			//perform the re-index
-			EventType eventType = service.getReIndexEventType();
-			if(eventType!=null){
+		if (service != null) {
+			IProject project = fIndexer.getProject().getProject();
+
+			Scope scope = new Scope(project);
+
+			IndexBuildSequenceController projectStatus = IndexBuildSequenceController
+					.getIndexBuildSequenceController(fIndexer.getProject().getProject());
+
+			if (fUpdate) {
+				monitor.subTask(Messages.RemoteIndexTask_updateIndex_JobName);
+				// notify listeners
 				for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {
-					listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(eventType, this, scope));
+					listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(
+							IRemoteFastIndexerUpdateEvent.EventType.EVENT_UPDATE, this, scope));
 				}
+
+				// perform the indexer update
+				service.update(scope, Arrays.<ICElement> asList(fAdded), Arrays.<ICElement> asList(fChanged),
+						Arrays.<ICElement> asList(fRemoved), monitor, this);
+			} else {
+
+				// perform the re-index
+				EventType eventType = service.getReIndexEventType();
+				if (eventType != null) {
+					for (IRemoteFastIndexerListener listener : RemoteFastIndexer.getRemoteFastIndexerListeners()) {
+						listener.indexerUpdating(new RemoteFastIndexerUpdateEvent(eventType, this, scope));
+					}
+				}
+				service.reindex(scope, fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement> asList(fAdded),
+						monitor, this);
+
+				projectStatus.setIndexCompleted();
+
 			}
-			service.reindex(scope, fIndexServiceProvider.getIndexLocation(), Arrays.<ICElement>asList(fAdded), monitor, this);
-			
-			projectStatus.setIndexCompleted();
-					
-				
-			
-			
 		}
-		
+
 	}
 
 }
