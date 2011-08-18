@@ -36,6 +36,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 
+/**
+ * @since 4.0
+ */
 public class ScannerConfigExporter {
 	
 	protected static final String NONE = ""; //$NON-NLS-1$

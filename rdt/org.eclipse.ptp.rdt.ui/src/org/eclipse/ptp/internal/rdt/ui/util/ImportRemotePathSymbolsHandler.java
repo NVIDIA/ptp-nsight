@@ -39,6 +39,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 
+/**
+ * @since 4.0
+ */
 public class ImportRemotePathSymbolsHandler {
 	
 	public static final List<ISettingsProcessor> processors = Arrays.<ISettingsProcessor>asList(
