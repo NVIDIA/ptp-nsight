@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.Vector;
 
 
-import org.eclipse.cdt.make.core.MakeCorePlugin;
-import org.eclipse.cdt.make.internal.core.MakeMessages;
+
 import org.eclipse.cdt.make.internal.core.scannerconfig.util.CCommandDSC;
 import org.eclipse.cdt.make.internal.core.scannerconfig.util.KVStringPair;
 import org.eclipse.cdt.make.internal.core.scannerconfig.util.SCDOptionsEnum;
@@ -481,7 +480,7 @@ public class OfflineBuildOutputParserUtility {
 				}
 			}
 		} catch (CoreException e) {
-			MakeCorePlugin.log(e.getStatus());
+			OfflineTraceUtil.outputError("catch a coreException when clollect files", "collectFiles"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -513,7 +512,7 @@ public class OfflineBuildOutputParserUtility {
 					// check if file name starts with ".."
 					if (fileName.startsWith("..")) {	//$NON-NLS-1$
 						// probably multiple choices for cwd, hopeless
-						final String error = MakeMessages.getString("ConsoleParser.Working_Directory_Error_Message"); //$NON-NLS-1$
+						final String error = "ConsoleParser.Working_Directory_Error_Message"; //$NON-NLS-1$
 						OfflineTraceUtil.outputError(error, fileName);
 								
 						break;
@@ -537,7 +536,7 @@ public class OfflineBuildOutputParserUtility {
 				File dir = candidatePath.toFile();
 				include = candidatePath.toString();
 				if (!dir.exists()) {
-					final String error = MakeMessages.getString("ConsoleParser.Nonexistent_Include_Path_Error_Message"); //$NON-NLS-1$
+					final String error = "ConsoleParser.Nonexistent_Include_Path_Error_Message"; //$NON-NLS-1$
 					OfflineTraceUtil.outputError(error, include);
 //					generateMarker(file, -1, error+include, IMarkerGenerator.SEVERITY_WARNING, fileName);				
 				}
@@ -593,7 +592,7 @@ public class OfflineBuildOutputParserUtility {
 				File dir = candidatePath.toFile();
 				include = candidatePath.toString();
 				if (!dir.exists()) {
-					final String error = MakeMessages.getString("ConsoleParser.Nonexistent_Include_Path_Error_Message"); //$NON-NLS-1$
+					final String error = "ConsoleParser.Nonexistent_Include_Path_Error_Message"; //$NON-NLS-1$
 					OfflineTraceUtil.outputError(error, include);
 //					generateMarker(file, -1, error+include, IMarkerGenerator.SEVERITY_WARNING, fileName);				
 				}

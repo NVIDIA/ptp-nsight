@@ -25,8 +25,7 @@ import org.eclipse.cdt.core.IMarkerGenerator;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoCollector;
 import org.eclipse.cdt.make.core.scannerconfig.IScannerInfoConsoleParser;
 import org.eclipse.cdt.make.core.scannerconfig.ScannerInfoTypes;
-import org.eclipse.cdt.make.internal.core.MakeMessages;
-import org.eclipse.cdt.make.internal.core.scannerconfig.gnu.AbstractGCCBOPConsoleParserUtility;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -177,9 +176,7 @@ public class OfflineGCCScannerInfoConsoleParser implements IScannerInfoConsolePa
 	        	}
 	        }
 
-	        if (fileName != null && fileName.startsWith("/cygdrive/")) { //$NON-NLS-1$
-	        	fileName= AbstractGCCBOPConsoleParserUtility.convertCygpath(new Path(fileName)).toOSString();
-	        }
+	     
 	        if (fileName == null || fileName.trim().length()==0) {
 	        	return false;  // return when no file was given (analogous to GCCPerFileBOPConsoleParser)
 	        }
@@ -266,8 +263,8 @@ public class OfflineGCCScannerInfoConsoleParser implements IScannerInfoConsolePa
 	        if (firstColon != -1 && make.indexOf("make") != -1) { //$NON-NLS-1$
 	            boolean enter = false;
 	            String msg = line.substring(firstColon + 1).trim();     
-	            if ((enter = msg.startsWith(MakeMessages.getString("AbstractGCCBOPConsoleParser_EnteringDirectory"))) || //$NON-NLS-1$
-	                (msg.startsWith(MakeMessages.getString("AbstractGCCBOPConsoleParser_LeavingDirectory")))) { //$NON-NLS-1$
+	            if ((enter = msg.startsWith("AbstractGCCBOPConsoleParser_EnteringDirectory")) || //$NON-NLS-1$
+	                (msg.startsWith("AbstractGCCBOPConsoleParser_LeavingDirectory"))) { //$NON-NLS-1$
 	                int s = msg.indexOf('`');
 	                int e = msg.indexOf('\'');
 	                if (s != -1 && e != -1) {
