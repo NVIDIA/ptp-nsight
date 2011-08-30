@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -64,7 +64,8 @@ import org.eclipse.cdt.core.model.ISourceReference;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.ICPPInstanceCache;
 import org.eclipse.cdt.internal.core.index.IndexFileLocation;
-import org.eclipse.cdt.utils.EFSExtensionManager;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -75,6 +76,7 @@ import org.eclipse.ptp.internal.rdt.core.model.BindingAdapter;
 import org.eclipse.ptp.internal.rdt.core.model.CElement;
 import org.eclipse.ptp.internal.rdt.core.model.ICProjectFactory;
 import org.eclipse.ptp.internal.rdt.core.model.IIndexLocationConverterFactory;
+import org.eclipse.ptp.internal.rdt.core.model.LocalIndexLocationConverterFactory;
 import org.eclipse.ptp.internal.rdt.core.model.TranslationUnit;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.ptp.rdt.core.activator.Activator;
@@ -310,8 +312,24 @@ public class IndexQueries {
 		ArrayList<String> paths = new ArrayList<String>();
 		
 		for(IIndexName name : defs) {
-			String path = name.getFile().getLocation().getURI().getPath();
-			paths.add(path);
+			String path=null;
+			URI locationURI = name.getFile().getLocation().getURI();
+			if(converter instanceof LocalIndexLocationConverterFactory){
+				//this is a local query
+				IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(locationURI);
+				
+				
+				if(files != null && files.length > 0) {
+					path = files[0].getFullPath().toString();
+				}
+				
+			}else{
+				path = locationURI.getPath();
+			}
+						
+			if(path!=null){
+				paths.add(path);
+			}
 		}
 		return paths.toArray(new String[0]);
 	}
