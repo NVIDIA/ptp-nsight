@@ -1180,6 +1180,7 @@
  </builder>
  <toolChain
        archList="all"
+       configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
        id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
        name="%ToolChainName.Dbg"
        osList="linux,qnx"
@@ -1274,16 +1275,22 @@
        buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe"
        id="org.eclipse.ptp.rdt.managedbuild.target.gnu.exe"
        isAbstract="false"
-       isTest="false">
+       isTest="false"
+       name="org.eclipse.ptp.rdt.managedbuild.target.gnu.exe"
+       projectEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteProjectEnvironmentSupplier">
     <configuration
+          buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe"
           buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug"
           cleanCommand="rm -rf"
           id="org.eclipse.ptp.rdt.managedbuild.config.gnu.exe.debug"
           name="%ConfigName.Dbg"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.exe.debug"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.exe.debug"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
@@ -1331,14 +1338,20 @@
        </toolChain>
     </configuration>
     <configuration
+          buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe"
           buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release"
           cleanCommand="rm -rf"
           id="org.eclipse.ptp.rdt.managedbuild.config.gnu.exe.release"
           name="%ConfigName.Rel"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             archList="all"
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.exe.release"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             osList="all"
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.exe.release"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
@@ -1390,7 +1403,9 @@
        buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib"
        id="org.eclipse.ptp.rdt.managedbuild.target.gnu.so"
        isAbstract="false"
-       isTest="false">
+       isTest="false"
+       name="org.eclipse.ptp.rdt.managedbuild.target.gnu.so"
+       projectEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteProjectEnvironmentSupplier">
     <configuration
           buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug"
           cleanCommand="rm -rf"
@@ -1398,8 +1413,11 @@
           name="%ConfigName.Dbg"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.so.debug"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.so.debug"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
@@ -1469,8 +1487,11 @@
           name="%ConfigName.Rel"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.so.release"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.so.release"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
@@ -1538,7 +1559,9 @@
        buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib"
        id="org.eclipse.ptp.rdt.managedbuild.target.gnu.lib"
        isAbstract="false"
-       isTest="false">
+       isTest="false"
+       name="org.eclipse.ptp.rdt.managedbuild.target.gnu.lib"
+       projectEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteProjectEnvironmentSupplier">
     <configuration
           buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug"
           cleanCommand="rm -rf"
@@ -1546,8 +1569,11 @@
           name="%ConfigName.Dbg"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.lib.debug"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.lib.debug"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
@@ -1597,8 +1623,11 @@
           name="%ConfigName.Rel"
           parent="org.eclipse.ptp.rdt.managedbuild.config.gnu.base">
        <toolChain
+             configurationEnvironmentSupplier="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.environment.RemoteConfigurationEnvironmentSupplier"
              id="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.lib.release"
-             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base">
+             scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerProjectProfileCpp|org.eclipse.ptp.rdt.managedbuilder.gnu.ui.RemoteGCCPerFileProfileCpp"
+             superClass="org.eclipse.ptp.rdt.managedbuild.toolchain.gnu.base"
+             supportsManagedBuild="true">
           <targetPlatform
                 id="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.lib.release"
                 superClass="org.eclipse.ptp.rdt.managedbuild.target.gnu.platform.base">
