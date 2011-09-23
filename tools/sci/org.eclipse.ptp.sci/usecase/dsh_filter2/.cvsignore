@@ -1,7 +1,0 @@
-.libs
-.deps
-*.lo
-*.la
-dsh_fe
-dsh_be
-Makefile
