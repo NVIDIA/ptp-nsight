@@ -9,17 +9,17 @@
 
 	<groupId>org.eclipse.ptp</groupId>
 	<artifactId>ptp-parent</artifactId>
-	<version>6.0.0-SNAPSHOT</version>
+	<version>4.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>PTP Parent</name>
 
 	<properties>
 		<tycho-version>0.13.0-SNAPSHOT</tycho-version>
-		<platform-version>3.7</platform-version>
+		<platform-version>3.6</platform-version>
 		<platform-site>http://download.eclipse.org/eclipse/updates/${platform-version}</platform-site>
 		<orbit-version>R20110523182458</orbit-version>
 		<orbit-site>http://download.eclipse.org/tools/orbit/downloads/drops/${orbit-version}/repository</orbit-site>
-		<tm-version>3.3</tm-version>
+		<tm-version>3.2</tm-version>
 		<tm-site>http://download.eclipse.org/tm/updates/${tm-version}</tm-site>
 	</properties>
 
@@ -53,11 +53,8 @@
 		<module>core/org.eclipse.ptp.ui</module>
 		<module>core/org.eclipse.ptp.utils</module>
 		<module>core/org.eclipse.ptp.utils.core</module>
-		<module>core/org.eclipse.ptp.utils.extensionpoints.core</module>
-		<module>core/org.eclipse.ptp.utils.file.core</module>
 		<module>core/org.eclipse.ptp.utils.ui</module>
 		<module>core/org.eclipse.ptp.doc.user</module>
-		<module>core/org.eclipse.ptp.doc.isv</module>
 		<module>debug/org.eclipse.ptp.debug.core</module>
 		<module>debug/org.eclipse.ptp.debug.sdm</module>
 		<module>debug/org.eclipse.ptp.debug.sdm.core</module>
@@ -96,11 +93,6 @@
 		<module>rdt/org.eclipse.ptp.rdt.managedbuilder.xlc.ui</module>
 		<module>rdt/org.eclipse.ptp.rdt.managedbuilder.xlupc.ui</module>
 		<module>rdt/org.eclipse.ptp.rdt.server.dstore</module>
-		<module>rdt/org.eclipse.ptp.rdt.sync.core</module>
-		<module>rdt/org.eclipse.ptp.rdt.sync.git.core</module>
-		<module>rdt/org.eclipse.ptp.rdt.sync.git.ui</module>
-		<module>rdt/org.eclipse.ptp.rdt.sync.ui</module>
-		<module>rdt/org.eclipse.ptp.rdt.sync.ui.fortran</module>
 		<module>rdt/org.eclipse.ptp.rdt.ui</module>
 		<module>rdt/org.eclipse.ptp.rdt.xlc</module>
 		<module>releng/org.eclipse.ptp</module>
@@ -119,14 +111,11 @@
 		<module>releng/org.eclipse.ptp.macosx.ppc</module>
 		<module>releng/org.eclipse.ptp.macosx.x86</module>
 		<module>releng/org.eclipse.ptp.pldt-feature</module>
-		<module>releng/org.eclipse.ptp.pldt.fortran-feature</module>
 		<module>releng/org.eclipse.ptp.pldt.lapi-feature</module>
 		<module>releng/org.eclipse.ptp.pldt.upc-feature</module>
 		<module>releng/org.eclipse.ptp.rdt-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.remotejars-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.remotetools-feature</module>
-		<module>releng/org.eclipse.ptp.rdt.sync-feature</module>
-		<module>releng/org.eclipse.ptp.rdt.sync.fortran-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.xlc-feature</module>
 		<module>releng/org.eclipse.ptp.remote-feature</module>
 		<module>releng/org.eclipse.ptp.remote.remotetools-feature</module>
@@ -134,17 +123,11 @@
 		<module>releng/org.eclipse.ptp.remotetools-feature</module>
 		<module>releng/org.eclipse.ptp.rm.ibm.ll-feature</module>
 		<module>releng/org.eclipse.ptp.rm.ibm.pe-feature</module>
-		<module>releng/org.eclipse.ptp.rm.jaxb-feature</module>
-		<module>releng/org.eclipse.ptp.rm.jaxb.contrib-feature</module>
-		<module>releng/org.eclipse.ptp.rm.jaxb.openmpi-feature</module>
-		<module>releng/org.eclipse.ptp.rm.jaxb.pbs-feature</module>
-		<module>releng/org.eclipse.ptp.rm.lml-feature</module>
-		<module>releng/org.eclipse.ptp.rm.lml_jaxb-feature</module>
 		<module>releng/org.eclipse.ptp.rm.mpich2-feature</module>
 		<module>releng/org.eclipse.ptp.rm.openmpi-feature</module>
+		<module>releng/org.eclipse.ptp.rm.pbs-feature</module>
 		<module>releng/org.eclipse.ptp.rm.slurm-feature</module>
 		<module>releng/org.eclipse.ptp.sci-feature</module>
-		<module>releng/org.eclipse.ptp.sdk-feature</module>
 		<module>releng/org.eclipse.ptp.sdm-feature</module>
 		<module>releng/org.eclipse.ptp.services-feature</module>
 		<module>releng/org.eclipse.ptp.utils-feature</module>
@@ -159,26 +142,14 @@
 		<module>rms/org.eclipse.ptp.rm.ibm.pe.help</module>
 		<module>rms/org.eclipse.ptp.rm.ibm.pe.proxy</module>
 		<module>rms/org.eclipse.ptp.rm.ibm.pe.ui</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.contrib</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.control.core</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.control.ui</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.core</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.doc.isv</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.openmpi</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.pbs</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.pbs.doc.user</module>
-		<module>rms/org.eclipse.ptp.rm.jaxb.ui</module>
-		<module>rms/org.eclipse.ptp.rm.lml.core</module>
-		<module>rms/org.eclipse.ptp.rm.lml.da</module>
-		<module>rms/org.eclipse.ptp.rm.lml.da.server</module>
-		<module>rms/org.eclipse.ptp.rm.lml_jaxb</module>
-		<module>rms/org.eclipse.ptp.rm.lml.monitor.core</module>
-		<module>rms/org.eclipse.ptp.rm.lml.monitor.ui</module>
-		<module>rms/org.eclipse.ptp.rm.lml.ui</module>
 		<module>rms/org.eclipse.ptp.rm.mpi.mpich2.core</module>
 		<module>rms/org.eclipse.ptp.rm.mpi.mpich2.ui</module>
 		<module>rms/org.eclipse.ptp.rm.mpi.openmpi.core</module>
 		<module>rms/org.eclipse.ptp.rm.mpi.openmpi.ui</module>
+		<module>rms/org.eclipse.ptp.rm.pbs.core</module>
+		<module>rms/org.eclipse.ptp.rm.pbs.help</module>
+		<module>rms/org.eclipse.ptp.rm.pbs.jproxy</module>
+		<module>rms/org.eclipse.ptp.rm.pbs.ui</module>
 		<module>rms/org.eclipse.ptp.rm.proxy.core</module>
 		<module>rms/org.eclipse.ptp.rm.slurm.core</module>
 		<module>rms/org.eclipse.ptp.rm.slurm.help</module>
@@ -186,7 +157,6 @@
 		<module>rms/org.eclipse.ptp.rm.slurm.ui</module>
 		<module>rms/org.eclipse.ptp.rm.ui</module>
 		<module>tools/etfw/org.eclipse.ptp.etfw</module>
-		<module>tools/etfw/org.eclipse.ptp.etfw.doc.user</module>
 		<module>tools/etfw/org.eclipse.ptp.etfw.feedback</module>
 		<module>tools/etfw/org.eclipse.ptp.etfw.parallel</module>
 		<module>tools/etfw/org.eclipse.ptp.etfw.tau</module>
@@ -203,7 +173,6 @@
 		<module>tools/pldt/org.eclipse.ptp.pldt.mpi.analysis</module>
 		<module>tools/pldt/org.eclipse.ptp.pldt.mpi.analysis.cdt</module>
 		<module>tools/pldt/org.eclipse.ptp.pldt.mpi.core</module>
-		<module>tools/pldt/org.eclipse.ptp.pldt.mpi.fortran</module>
 		<module>tools/pldt/org.eclipse.ptp.pldt.openmp.analysis</module>
 		<module>tools/pldt/org.eclipse.ptp.pldt.openmp.core</module>
 		<module>tools/pldt/org.eclipse.ptp.pldt.openmp.fortran</module>
@@ -239,8 +208,8 @@
 			<layout>p2</layout>
 		</repository>
 		<repository>
-			<id>indigo</id>
-			<url>http://download.eclipse.org/releases/indigo</url>
+			<id>helios</id>
+			<url>http://download.eclipse.org/releases/helios</url>
 			<layout>p2</layout>
 		</repository>
 	</repositories>
