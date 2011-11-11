@@ -54,7 +54,7 @@
 	
 	<property name="rseSiteUrl" value="http://download.eclipse.org/tm/updates/3.2"/>
 	<property name="dstoreCoreJar" value="org.eclipse.dstore.core_3.2.2.R32x_v201102121806.jar"/>
-	<property name="rseServicesDstoreJar" value="oorg.eclipse.rse.services.dstore_3.1.102.R32x_v201102011435.jar"/>
+	<property name="rseServicesDstoreJar" value="org.eclipse.rse.services.dstore_3.1.102.R32x_v201102011435.jar"/>
 	
 
 	<!-- CDT PROPERTIES -->
