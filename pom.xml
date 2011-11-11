@@ -284,7 +284,7 @@
 						<environment>
 							<os>aix</os>
 							<ws>gtk</ws>
-							<arch>ppc</arch>
+							<arch>ppc64</arch>
 						</environment>
 						<environment>
 							<os>solaris</os>
