@@ -48,9 +48,14 @@
 	<property name="jdtUIJar" value="org.eclipse.jdt.ui_${jdtUIVersion}.jar"/>
 
 	<!-- RSE VERSIONS MUST BE UPDATED FOR NEW TM VERSION -->
-	<property name="rseBaseUrl" value="http://download.eclipse.org/dsdp/tm/downloads/drops"/>
+	<property name="rseBaseUrl" value="http://download.eclipse.org/tm/downloads/drops"/>
 	<property name="rseVersion" value="R-3.2.2-201102130444"/>
 	<property name="dStoreBaseName" value="rseserver-3.2.2"/>
+	
+	<property name="rseSiteUrl" value="http://download.eclipse.org/tm/updates/3.2"/>
+	<property name="dstoreCoreJar" value="org.eclipse.dstore.core_3.2.2.R32x_v201102121806.jar"/>
+	<property name="rseServicesDstoreJar" value="oorg.eclipse.rse.services.dstore_3.1.102.R32x_v201102011435.jar"/>
+	
 
 	<!-- CDT PROPERTIES -->
 	<property name="cdtBaseUrl" value="http://download.eclipse.org/tools/cdt/builds/7.0.2/201108221634"/>
@@ -147,13 +152,23 @@
 				target="1.5"
 	  	/>		
 		<antcall target="unpack.platform"></antcall>
+		
+		<get src="${cdtBaseUrl}/plugins/${cdtCoreJar}" dest="${platformTempDir}/eclipse/plugins/${cdtCoreJar}"/>
+		<get src="${rseSiteUrl}/plugins/${dstoreCoreJar}" dest="${platformTempDir}/eclipse/plugins/${dstoreCoreJar}"/>
+		<get src="${rseSiteUrl}/plugins/${rseServicesDstoreJar}" dest="${platformTempDir}/eclipse/plugins/${rseServicesDstoreJar}"/>
+		
+		<path id="javaclasspath">
+			<fileset dir="${platformTempDir}/eclipse/plugins" includes="**/*.jar" />
+			<pathelement location="${basedir}/../org.eclipse.ptp.rdt.core/target/classes" />
+		</path>
+		
 		<mkdir dir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/target/classes"/>
 		<javac srcdir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/src"
 				destdir="${basedir}/../org.eclipse.ptp.rdt.core.stubs/target/classes"
-				classpath="${platformTempDir}/eclipse/plugins/${coreRuntimeJar}:${platformTempDir}/eclipse/plugins/${equinoxJar}:${platformTempDir}/eclipse/plugins/${filesystemJar}"
 				source="1.5"
-				target="1.5"
-	  	/>
+				target="1.5">
+			<classpath refid="javaclasspath"/>
+	  	</javac>
 	</target>
 	
 	<target name="fetch.cdt.versions">
