@@ -21,6 +21,9 @@
 		<orbit-site>http://download.eclipse.org/tools/orbit/downloads/drops/${orbit-version}/updateSite</orbit-site>
 		<tm-version>3.2</tm-version>
 		<tm-site>http://download.eclipse.org/tm/updates/${tm-version}</tm-site>
+		<cdt-version>7.0.2</cdt-version>
+		<cdt-date>201108221634</cdt-date>
+		<cdt-site>http://download.eclipse.org/tools/cdt/builds/${cdt-version}/${cdt-date}</cdt-site>
 	</properties>
 
 	<licenses>
@@ -199,6 +202,11 @@
 		<repository>
 			<id>orbit-${orbit-version}</id>
 			<url>${orbit-site}</url>
+			<layout>p2</layout>
+		</repository>
+		<repository>
+			<id>cdt-${cdt-version}</id>
+			<url>${cdt-site}</url>
 			<layout>p2</layout>
 		</repository>
 		<repository>
