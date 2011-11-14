@@ -328,18 +328,20 @@
 	
 	<target name="clean" depends="clean.except.jars">
 		<delete dir="${basedir}" failonerror="false">
-			<include name="cdtminer.jar"/>
-			<include name="cdtmodel.jar"/>
-			<include name="cdtparser.jar"/>
-			<include name="stubs.jar"/>
-			<include name="lrparser.jar"/>
-			<include name="upcparser.jar"/>
-			<include name="xlcparser.jar"/>
-			<include name="spawner.jar"/>
-			<include name="${serverBaseName}-linux-*.tar"/>
-			<include name="${serverBaseName}-macosx-*.tar"/>
-			<include name="${serverBaseName}-unix-*.tar"/>
-			<include name="${serverBaseName}-windows-*.zip"/>
+			<fileset dir="${basedir}">
+				<filename name="cdtminer.jar"/>
+				<filename name="cdtmodel.jar"/>
+				<filename name="cdtparser.jar"/>
+				<filename name="stubs.jar"/>
+				<filename name="lrparser.jar"/>
+				<filename name="upcparser.jar"/>
+				<filename name="xlcparser.jar"/>
+				<filename name="spawner.jar"/>
+				<filename name="${serverBaseName}-linux-*.tar"/>
+				<filename name="${serverBaseName}-macosx-*.tar"/>
+				<filename name="${serverBaseName}-unix-*.tar"/>
+				<filename name="${serverBaseName}-windows-*.zip"/>
+			</fileset>
 		</delete>
 		<exec executable="rm">
 			<arg value="-f"/>
@@ -360,23 +362,25 @@
 	</target>
 	
 	<target name="clean.except.jars">
-		<delete dir="${basedir}" failonerror="false">
-			<include name="build.cdtminer.xml"/>
-			<include name="build.cdtmodel.xml"/>
-			<include name="build.cdtparser.xml"/>
-			<include name="build.stubs.xml"/>
-			<include name="build.lrparser.xml"/>
-			<include name="build.upcparser.xml"/>
-			<include name="build.xlcparser.xml"/>
-			<include name="build.spawner.xml"/>
-			<include name="cdtminer.files.xml"/>
-			<include name="cdtmodel.files.xml"/>
-			<include name="cdtparser.files.xml"/>
-			<include name="stubs.files.xml"/>
-			<include name="lrparser.files.xml"/>
-			<include name="upcparser.files.xml"/>
-			<include name="xlcparser.files.xml"/>
-			<include name="spawner.files.xml"/>
+		<delete failonerror="false">
+			<fileset dir="${basedir}">
+				<filename name="build.cdtminer.xml"/>
+				<filename name="build.cdtmodel.xml"/>
+				<filename name="build.cdtparser.xml"/>
+				<filename name="build.stubs.xml"/>
+				<filename name="build.lrparser.xml"/>
+				<filename name="build.upcparser.xml"/>
+				<filename name="build.xlcparser.xml"/>
+				<filename name="build.spawner.xml"/>
+				<filename name="cdtminer.files.xml"/>
+				<filename name="cdtmodel.files.xml"/>
+				<filename name="cdtparser.files.xml"/>
+				<filename name="stubs.files.xml"/>
+				<filename name="lrparser.files.xml"/>
+				<filename name="upcparser.files.xml"/>
+				<filename name="xlcparser.files.xml"/>
+				<filename name="spawner.files.xml"/>
+			</fileset>
 		</delete>
 	</target>
 	
