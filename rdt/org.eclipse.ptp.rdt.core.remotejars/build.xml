@@ -327,7 +327,7 @@
 	</target>
 	
 	<target name="clean" depends="clean.except.jars">
-		<delete dir="${basedir}" failonerror="false">
+		<delete failonerror="false">
 			<fileset dir="${basedir}">
 				<filename name="cdtminer.jar"/>
 				<filename name="cdtmodel.jar"/>
