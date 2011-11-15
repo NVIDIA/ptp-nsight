@@ -95,9 +95,9 @@
 								<configuration>
 									<tasks>
 										<mkdir dir="${ptp-install}" />
-										<delete>
+										<delete includeemptydirs="true">
 											<fileset dir="${ptp-install}">
-												<include name="**" />
+												<include name="**/*" />
 											</fileset>
 										</delete>
 										<copy includeemptydirs="false" todir="${ptp-install}">
