@@ -223,6 +223,10 @@
 
 	<pluginRepositories>
 		<pluginRepository>
+			<id>maven.eclipse.org</id>
+			<url>http://maven.eclipse.org/nexus/content/repositories/nightly-indigo</url>
+		</pluginRepository>
+		<pluginRepository>
 			<id>sonatype</id>
 			<url>https://repository.sonatype.org/content/repositories/public</url>
 			<snapshots>
@@ -231,10 +235,6 @@
 			<releases>
 				<enabled>true</enabled>
 			</releases>
-		</pluginRepository>
-		<pluginRepository>
-			<id>maven.eclipse.org</id>
-			<url>http://maven.eclipse.org/nexus/content/repositories/nightly-indigo</url>
 		</pluginRepository>
 	</pluginRepositories>
 
