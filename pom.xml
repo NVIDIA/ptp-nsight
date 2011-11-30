@@ -22,7 +22,7 @@
 		<tm-version>3.2</tm-version>
 		<tm-site>http://download.eclipse.org/tm/updates/${tm-version}</tm-site>
 		<cdt-version>7.0.2</cdt-version>
-		<cdt-date>201108221634</cdt-date>
+		<cdt-date>201111301023</cdt-date>
 		<cdt-site>http://download.eclipse.org/tools/cdt/builds/${cdt-version}/${cdt-date}</cdt-site>
 	</properties>
 
@@ -209,6 +209,7 @@
 			<url>${cdt-site}</url>
 			<layout>p2</layout>
 		</repository>
+		
 		<repository>
 			<id>tm-${tm-version}</id>
 			<url>${tm-site}</url>
