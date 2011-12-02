@@ -196,11 +196,6 @@
 			<url>${photran-site}</url>
 			<layout>p2</layout>
 		</repository>		
-		<repository>
-			<id>helios</id>
-			<url>http://download.eclipse.org/releases/helios</url>
-			<layout>p2</layout>
-		</repository>
 	</repositories>
 
 	<pluginRepositories>
