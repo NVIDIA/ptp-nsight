@@ -24,6 +24,7 @@
 		<cdt-version>7.0.2</cdt-version>
 		<cdt-date>201111301023</cdt-date>
 		<cdt-site>http://download.eclipse.org/tools/cdt/builds/${cdt-version}/${cdt-date}</cdt-site>
+		<photran-site>file://home/data/httpd/download.eclipse.org/tools/ptp/builds/hudson/ptp-photran-4.1</photran-site>
 	</properties>
 
 	<licenses>
@@ -63,30 +64,6 @@
 		<module>debug/org.eclipse.ptp.debug.sdm.core</module>
 		<module>debug/org.eclipse.ptp.debug.sdm.ui</module>
 		<module>debug/org.eclipse.ptp.debug.ui</module>
-		<module>photran/org.eclipse.photran.cdtinterface</module>
-		<module>photran/org.eclipse.photran.cdtinterface.vpg</module>
-		<module>photran/org.eclipse.photran.core</module>
-		<module>photran/org.eclipse.photran.core.intel</module>
-		<module>photran/org.eclipse.photran.core.vpg</module>
-		<module>photran/org.eclipse.photran.doc.user</module>
-		<module>photran/org.eclipse.photran.errorparsers.xlf</module>
-		<module>photran/org.eclipse.photran-feature</module>
-		<module>photran/org.eclipse.photran.intel-feature</module>
-		<module>photran/org.eclipse.photran.managedbuilder.core</module>
-		<module>photran/org.eclipse.photran.managedbuilder.gnu.ui</module>
-		<module>photran/org.eclipse.photran.managedbuilder.intel.ui</module>
-		<module>photran/org.eclipse.photran.managedbuilder.ui</module>
-		<module>photran/org.eclipse.photran.managedbuilder.xlf.ui</module>
-		<module>photran/org.eclipse.photran.ui</module>
-		<module>photran/org.eclipse.photran.ui.vpg</module>
-		<module>photran/org.eclipse.photran.xlf-feature</module>
-		<module>photran/org.eclipse.rephraserengine.core</module>
-		<module>photran/org.eclipse.rephraserengine.core.refactoring</module>
-		<module>photran/org.eclipse.rephraserengine.core.vpg</module>
-		<module>photran/org.eclipse.rephraserengine-feature</module>
-		<module>photran/org.eclipse.rephraserengine.ui</module>
-		<module>photran/org.eclipse.rephraserengine.ui.refactoring</module>
-		<module>photran/org.eclipse.rephraserengine.ui.vpg</module>
 		<module>rdt/org.eclipse.ptp.rdt.core</module>
 		<module>rdt/org.eclipse.ptp.rdt.core.remotejars</module>
 		<module>rdt/org.eclipse.ptp.rdt.core.stubs</module>
@@ -214,6 +191,11 @@
 			<url>${tm-site}</url>
 			<layout>p2</layout>
 		</repository>
+		<repository>
+			<id>photran</id>
+			<url>${photran-site}</url>
+			<layout>p2</layout>
+		</repository>		
 		<repository>
 			<id>helios</id>
 			<url>http://download.eclipse.org/releases/helios</url>
