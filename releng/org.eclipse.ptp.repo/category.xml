@@ -90,7 +90,7 @@
    <feature url="features/org.eclipse.photran_0.0.0.jar" id="org.eclipse.photran" version="0.0.0">
       <category name="Fortran Development Tools (Photran)"/>
    </feature>
-   <feature url="features/org.eclipse.photran.intel_0.0.0.jar" id="org.eclipse.photran.intel" version="0.0.0" os="linux">
+   <feature url="features/org.eclipse.photran.intel_0.0.0.jar" id="org.eclipse.photran.intel" version="0.0.0">
       <category name="Fortran Development Tools (Photran)"/>
    </feature>
    <feature url="features/org.eclipse.photran.xlf_0.0.0.jar" id="org.eclipse.photran.xlf" version="0.0.0">
