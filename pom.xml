@@ -24,7 +24,7 @@
 		<cdt-version>7.0.2</cdt-version>
 		<cdt-date>201111301023</cdt-date>
 		<cdt-site>http://download.eclipse.org/tools/cdt/builds/${cdt-version}/${cdt-date}</cdt-site>
-		<photran-site>http://download.eclipse.org/tools/ptp/builds/hudson/ptp-photran-4.1</photran-site>
+		<photran-site>file://home/data/httpd/download.eclipse.org/tools/ptp/builds/hudson/ptp-photran-4.1</photran-site>
 	</properties>
 
 	<licenses>
