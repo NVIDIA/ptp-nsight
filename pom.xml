@@ -14,7 +14,7 @@
 	<name>PTP Parent</name>
 
 	<properties>
-		<tycho-version>0.13.0-SNAPSHOT</tycho-version>
+		<tycho-version>0.13.0</tycho-version>
 		<platform-version>3.6</platform-version>
 		<platform-site>http://download.eclipse.org/eclipse/updates/${platform-version}</platform-site>
 		<orbit-version>R20090825191606</orbit-version>
@@ -201,7 +201,7 @@
 	<pluginRepositories>
 		<pluginRepository>
 			<id>maven.eclipse.org</id>
-			<url>http://maven.eclipse.org/nexus/content/repositories/nightly-indigo</url>
+			<url>http://maven.eclipse.org/nexus/content/repositories/public</url>
 		</pluginRepository>
 		<pluginRepository>
 			<id>sonatype</id>
