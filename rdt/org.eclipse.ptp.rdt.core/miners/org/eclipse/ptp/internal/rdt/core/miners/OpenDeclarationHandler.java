@@ -29,6 +29,7 @@ import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionStyleMacroParameter;
 import org.eclipse.cdt.core.dom.ast.IASTImplicitName;
 import org.eclipse.cdt.core.dom.ast.IASTImplicitNameOwner;
@@ -283,6 +284,7 @@ public class OpenDeclarationHandler {
 				min(loc1.getNodeOffset() + loc1.getNodeLength(), loc2.getNodeOffset() + loc2.getNodeLength());
 	}
 
+	/*
 	private static boolean isInSameFunction(IASTName name1, IName name2) {
 		IASTDeclaration decl1 = getEnclosingDeclaration(name1);
 		IASTDeclaration decl2 = name2 instanceof IASTName ? getEnclosingDeclaration((IASTName) name2) : null;
@@ -291,6 +293,21 @@ public class OpenDeclarationHandler {
 
 	private static IASTDeclaration getEnclosingDeclaration(IASTNode node) {
 		while (node != null && !(node instanceof IASTDeclaration)) {
+			node= node.getParent();
+		}
+		return (IASTDeclaration) node;
+	}*/
+	
+	private static boolean isInSameFunction(IASTName refName, IName funcDeclName) {
+		if (funcDeclName instanceof IASTName) {
+			IASTDeclaration fdef = getEnclosingFunctionDefinition((IASTNode) funcDeclName);
+			return fdef != null && fdef.contains(refName);
+		} 
+		return false;
+	}
+
+	private static IASTDeclaration getEnclosingFunctionDefinition(IASTNode node) {
+		while (node != null && !(node instanceof IASTFunctionDefinition)) {
 			node= node.getParent();
 		}
 		return (IASTDeclaration) node;
