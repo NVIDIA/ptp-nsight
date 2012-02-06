@@ -28,4 +28,5 @@
    <feature url="features/org.eclipse.ptp.rdt_0.0.0.jar" id="org.eclipse.ptp.rdt" version="0.0.0"/>
    <feature url="features/org.eclipse.ptp.rdt.xlc_0.0.0.jar" id="org.eclipse.ptp.rdt.xlc" version="0.0.0"/>
    <feature url="features/org.eclipse.ptp.rdt.remotetools_0.0.0.jar" id="org.eclipse.ptp.rdt.remotetools" version="0.0.0"/>
+   <feature url="features/org.eclipse.ptp.rdt.editor_0.0.0.jar" id="org.eclipse.ptp.rdt.editor" version="0.0.0"/>
 </site>

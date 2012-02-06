@@ -18,7 +18,7 @@
 		<platform-version>3.6</platform-version>
 		<platform-site>http://download.eclipse.org/eclipse/updates/${platform-version}</platform-site>
 		<orbit-version>R20090825191606</orbit-version>
-		<orbit-site>http://download.eclipse.org/tools/orbit/downloads/drops/${orbit-version}/updateSite</orbit-site>
+		<orbit-site>http://archive.eclipse.org/tools/orbit/downloads/drops/${orbit-version}/updateSite</orbit-site>
 		<tm-version>3.2</tm-version>
 		<tm-site>http://download.eclipse.org/tm/updates/${tm-version}</tm-site>
 		<cdt-version>7.0.2</cdt-version>
@@ -68,6 +68,7 @@
 		<module>rdt/org.eclipse.ptp.rdt.core.remotejars</module>
 		<module>rdt/org.eclipse.ptp.rdt.core.stubs</module>
 		<module>rdt/org.eclipse.ptp.rdt.doc.user</module>
+		<module>rdt/org.eclipse.ptp.rdt.editor</module>
 		<module>rdt/org.eclipse.ptp.rdt.make.ui</module>
 		<module>rdt/org.eclipse.ptp.rdt.managedbuilder.gnu.ui</module>
 		<module>rdt/org.eclipse.ptp.rdt.managedbuilder.xlc.ui</module>
@@ -94,6 +95,7 @@
 		<module>releng/org.eclipse.ptp.pldt.lapi-feature</module>
 		<module>releng/org.eclipse.ptp.pldt.upc-feature</module>
 		<module>releng/org.eclipse.ptp.rdt-feature</module>
+		<module>releng/org.eclipse.ptp.rdt.editor-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.remotejars-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.remotetools-feature</module>
 		<module>releng/org.eclipse.ptp.rdt.xlc-feature</module>
