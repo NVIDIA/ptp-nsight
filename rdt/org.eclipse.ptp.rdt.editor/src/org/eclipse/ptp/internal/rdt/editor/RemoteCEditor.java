@@ -299,7 +299,6 @@ public class RemoteCEditor extends CEditor implements HelpListener {
 		return viewer;
 	}
 
-	@Override
 	public void helpRequested(HelpEvent e) {
 		if (provider != null)
 			provider.helpRequested(e);
