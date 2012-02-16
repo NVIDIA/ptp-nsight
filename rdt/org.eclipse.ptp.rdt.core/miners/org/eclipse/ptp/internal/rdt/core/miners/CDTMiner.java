@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2011 IBM Corporation and others.
+ * Copyright (c) 2008, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -144,13 +144,17 @@ public class CDTMiner extends Miner {
 	
 	// includes
 	public static final String C_INCLUDES_FIND_INCLUDES_TO = "C_INCLUDES_FIND_INCLUDES_TO"; //$NON-NLS-1$
-	public static final String C_INCLUDES_FIND_INCLUDES_TO_RESULT = "C_INCLUDES_FIND_INCLUDES_TO_RESULT"; //$NON-NLS-1$
+	public static final String T_INCLUDES_FIND_INCLUDES_TO_RESULT = "Type.Includes.Find.Includes.To.Result"; //$NON-NLS-1$
 	public static final String C_INCLUDES_FIND_INCLUDED_BY = "C_INCLUDES_FIND_INCLUDED_BY"; //$NON-NLS-1$
-	public static final String C_INCLUDES_FIND_INCLUDED_BY_RESULT = "C_INCLUDES_FIND_INCLUDED_BY_RESULT"; //$NON-NLS-1$
+	public static final String T_INCLUDES_FIND_INCLUDED_BY_RESULT = "Type.Includes.Find.Included.By.Result"; //$NON-NLS-1$
 	public static final String C_INCLUDES_IS_INDEXED = "C_INCLUDES_IS_INDEXED"; //$NON-NLS-1$
-	public static final String C_INCLUDES_IS_INDEXED_RESULT = "C_INCLUDES_IS_INDEXED_RESULT"; //$NON-NLS-1$
+	public static final String T_INCLUDES_IS_INDEXED_RESULT = "Type.Includes.Is.Indexed.Result"; //$NON-NLS-1$
 	public static final String C_INCLUDES_FIND_INCLUDE = "C_INCLUDES_FIND_INCLUDE"; //$NON-NLS-1$
-	public static final String C_INCLUDES_FIND_INCLUDE_RESULT = "C_INCLUDES_FIND_INCLUDE_RESULT"; //$NON-NLS-1$
+	public static final String T_INCLUDES_FIND_INCLUDE_RESULT = "Type.Includes.Find.Include.Result"; //$NON-NLS-1$
+	
+	//semantic highlighting
+	public static final String C_SEMANTIC_HIGHTLIGHTING_COMPUTE_POSITIONS = "C_SEMANTIC_HIGHTLIGHTING_COMPUTE_POSITIONS"; //$NON-NLS-1$
+	public static final String T_HIGHTLIGHTING_POSITIONS_RESULT = "Highlighting.Positions.Result"; //$NON-NLS-1$
 	
 	public static String LINE_SEPARATOR;
 	
@@ -158,7 +162,7 @@ public class CDTMiner extends Miner {
 	
 	//model builder
 	public static final String C_MODEL_BUILDER = "C_MODEL_BUILDER"; //$NON-NLS-1$;
-	public static final String C_MODEL_RESULT= "C_MODEL_RESULT"; //$NON-NLS-1$;
+	public static final String T_MODEL_RESULT= "Type.Model.Result"; //$NON-NLS-1$;
 
 	
 	public static final String LOG_TAG = "CDTMiner"; //$NON-NLS-1$
@@ -676,8 +680,51 @@ public class CDTMiner extends Miner {
 				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
 			}			
 		}
+		else if (name.equals(C_SEMANTIC_HIGHTLIGHTING_COMPUTE_POSITIONS)) {
+			try {
+				String scopeName = getString(theCommand, 1);
+				ITranslationUnit tu = (ITranslationUnit) Serializer.deserialize(getString(theCommand, 2));
+
+				hanleComputeSemanticHightlightingPositions(scopeName, tu, status);
+			} catch (IOException e) {
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+			} catch (ClassNotFoundException e) {
+				UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+			}
+		}
 		
 		return status;
+	}
+	
+	protected void hanleComputeSemanticHightlightingPositions(String scopeName, ITranslationUnit tu, DataElement status) {
+		try {
+			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+			index.acquireReadLock();
+			try  {
+				IASTTranslationUnit ast = tu.getAST(index,  ITranslationUnit.AST_SKIP_ALL_HEADERS);
+				PositionCollector collector = new PositionCollector(true);
+				ast.accept(collector);
+				ArrayList<ArrayList<Integer>> positionList = collector.getPositions();
+				String clumpedPositions = new String();
+				for (ArrayList<Integer> position : positionList) {
+					clumpedPositions += position.get(0) + "," + position.get(1) + "," + position.get(2) + ","; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				}
+				String resultString = Serializer.serialize(clumpedPositions);
+				status.getDataStore().createObject(status, T_HIGHTLIGHTING_POSITIONS_RESULT, resultString);
+			}
+			finally {
+				index.releaseReadLock();
+			}
+		} catch (IOException e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+		} catch (CoreException e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+		} catch (InterruptedException e) {
+			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+		}
+		finally {
+			statusDone(status);
+		}
 	}
 	
 	protected void handleIndexFileMove(String scopeName, String newIndexLocation, DataElement status) throws IOException {
@@ -734,7 +781,7 @@ public class CDTMiner extends Miner {
 	
 				// create the result object
 				String resultString = Serializer.serialize(workingCopy);
-				status.getDataStore().createObject(status, C_MODEL_RESULT, resultString);
+				status.getDataStore().createObject(status, T_MODEL_RESULT, resultString);
 			}
 		} catch (IOException e) {
 			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
@@ -822,7 +869,7 @@ public class CDTMiner extends Miner {
 	
 				// create the result object
 				String resultString = Serializer.serialize(includesToReturn);
-				status.getDataStore().createObject(status, C_INCLUDES_FIND_INCLUDES_TO_RESULT, resultString);
+				status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDES_TO_RESULT, resultString);
 			}			         
 			finally 
 			{
@@ -899,7 +946,7 @@ public class CDTMiner extends Miner {
 	
 				// create the result object
 				String resultString = Serializer.serialize(includeToReturn);
-				status.getDataStore().createObject(status, C_INCLUDES_FIND_INCLUDE_RESULT, resultString);
+				status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDE_RESULT, resultString);
 			}			         
 			finally 
 			{
@@ -996,7 +1043,7 @@ public class CDTMiner extends Miner {
 	
 				// create the result object
 				String resultString = Serializer.serialize(includesToReturn);
-				status.getDataStore().createObject(status, C_INCLUDES_FIND_INCLUDED_BY_RESULT, resultString);
+				status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDED_BY_RESULT, resultString);
 			}			         
 			finally 
 			{
@@ -1034,7 +1081,7 @@ public class CDTMiner extends Miner {
 
 				// create the result object
 				String resultString = Serializer.serialize(new Boolean(files.length > 0));
-				status.getDataStore().createObject(status, C_INCLUDES_IS_INDEXED_RESULT, resultString);
+				status.getDataStore().createObject(status, T_INCLUDES_IS_INDEXED_RESULT, resultString);
 			}			         
 			finally 
 			{
@@ -1380,6 +1427,9 @@ public class CDTMiner extends Miner {
 		createCommandDescriptor(schemaRoot, "Compute type graph", C_TYPE_HIERARCHY_COMPUTE_TYPE_GRAPH, false); //$NON-NLS-1$
 		createCommandDescriptor(schemaRoot, "Find input from element", C_TYPE_HIERARCHY_FIND_INPUT1, false); //$NON-NLS-1$
 		createCommandDescriptor(schemaRoot, "Find input from text selection", C_TYPE_HIERARCHY_FIND_INPUT2, false); //$NON-NLS-1$
+		
+		// semantic highlighting
+		createCommandDescriptor(schemaRoot, "Compute added & removed positions for semantic highlighting", C_SEMANTIC_HIGHTLIGHTING_COMPUTE_POSITIONS, false); //$NON-NLS-1$
 		
 		// navigation
 		createCommandDescriptor(schemaRoot, "Open declaration", C_NAVIGATION_OPEN_DECLARATION, false); //$NON-NLS-1$

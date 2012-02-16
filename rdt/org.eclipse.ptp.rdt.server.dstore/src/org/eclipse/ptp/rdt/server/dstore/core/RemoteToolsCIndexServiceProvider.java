@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 IBM Corporation and others.
+ * Copyright (c) 2008, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,8 @@ import org.eclipse.ptp.internal.rdt.core.typehierarchy.ITypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.RemoteTypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.IContentAssistService;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.RemoteContentAssistService;
+import org.eclipse.ptp.internal.rdt.ui.editor.IRemoteSemanticHighlightingService;
+import org.eclipse.ptp.internal.rdt.ui.editor.RemoteSemanticHighlightingService;
 import org.eclipse.ptp.internal.rdt.ui.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.ui.navigation.RemoteNavigationService;
 import org.eclipse.ptp.internal.rdt.ui.search.ISearchService;
@@ -48,6 +50,10 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 	protected IModelBuilderService fModelBuilderService = null;
 	protected RemoteSearchService fSearchService = null;
 	protected IContentAssistService fContentAssistService = null;
+	/**
+	 * @since 2.1
+	 */
+	protected RemoteSemanticHighlightingService fRemoteSemanticHighlightingService = null;
 	protected RemoteToolsCIndexSubsystem fSubsystem = null;
 	protected boolean fIsDirty = false;
 	protected RemoteToolsCIndexServiceProvider fProvider = null;
@@ -409,5 +415,17 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 		fSubsystem = new RemoteToolsCIndexSubsystem(this);
 		setConfigured(true);
 	}
+	
+	/**
+	 * @since 2.1
+	 */
+	public IRemoteSemanticHighlightingService getRemoteSemanticHighlightingService() {
+		if(!isConfigured())
+			return null;
 
+		if(fRemoteSemanticHighlightingService== null)
+			fRemoteSemanticHighlightingService = new RemoteSemanticHighlightingService(fSubsystem);
+
+		return fRemoteSemanticHighlightingService;
+	}
 }

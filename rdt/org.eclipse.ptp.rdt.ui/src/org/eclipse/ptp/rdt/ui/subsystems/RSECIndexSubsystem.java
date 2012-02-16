@@ -822,6 +822,57 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 		return (List<RemoteSearchMatch>) result;
 	}
 	
+	/**
+	 * @since 4.1
+	 */
+	@SuppressWarnings("unchecked")
+	public String computeHighlightPositions(ITranslationUnit targetUnit) {
+		// If something goes wrong, return an empty string.
+
+		checkAllProjects(new NullProgressMonitor());
+		DataStore dataStore = getDataStore(null);
+	    if (dataStore == null) {
+	    	return ""; //$NON-NLS-1$
+	    }
+        DataElement queryCmd = dataStore.localDescriptorQuery(dataStore.getDescriptorRoot(), CDTMiner.C_SEMANTIC_HIGHTLIGHTING_COMPUTE_POSITIONS);
+        if (queryCmd == null) {
+	    	return ""; //$NON-NLS-1$
+        }
+     	NullProgressMonitor monitor = new NullProgressMonitor();
+     	StatusMonitor smonitor = StatusMonitorFactory.getInstance().getStatusMonitorFor(getConnectorService(), dataStore);
+    	ArrayList<Object> args = new ArrayList<Object>();
+		Scope scope = new Scope(targetUnit.getCProject().getProject());
+    	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
+
+    	args.add(dataElement);
+    	args.add(createSerializableElement(dataStore, targetUnit));
+
+    	// execute the command
+    	DataElement status = dataStore.command(queryCmd, args, dataStore.getDescriptorRoot());
+
+    	try {
+        	smonitor.waitForUpdate(status, monitor);
+        }
+        catch (Exception e) {
+        	RDTLog.logError(e);
+        }
+
+    	DataElement element = status.get(0);
+    	String data = element.getName();
+    	try {
+			Object result = Serializer.deserialize(data);
+			if (result == null || !(result instanceof String)) {
+				return ""; //$NON-NLS-1$;
+			}
+			return (String) result;
+		} catch (IOException e) {
+			RDTLog.logError(e);
+		} catch (ClassNotFoundException e) {
+			RDTLog.logError(e);
+		}
+    	return ""; //$NON-NLS-1$
+	}
+	
 	@SuppressWarnings("unchecked")
 	public List<Proposal> computeCompletionProposals(Scope scope, RemoteContentAssistInvocationContext context, ITranslationUnit unit) {
 		checkAllProjects(new NullProgressMonitor());

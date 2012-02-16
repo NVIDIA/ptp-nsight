@@ -14,9 +14,11 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.internal.ui.editor.CContentOutlinePage;
+import org.eclipse.cdt.internal.ui.editor.SemanticHighlightings;
 import org.eclipse.cdt.internal.ui.text.CTextTools;
 import org.eclipse.cdt.internal.ui.util.EditorUtility;
 import org.eclipse.cdt.ui.CUIPlugin;
+import org.eclipse.cdt.ui.PreferenceConstants;
 import org.eclipse.cdt.ui.actions.CdtActionConstants;
 import org.eclipse.cdt.ui.text.ICPartitions;
 import org.eclipse.core.resources.IProject;
@@ -25,8 +27,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.help.IContextProvider;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
+import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
 import org.eclipse.ptp.internal.rdt.ui.RDTHelpContextIds;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
@@ -48,6 +52,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.cdt.internal.ui.editor.CSourceViewer;
 
 /**
  * Remote enabled version of the CEditor. If this editor is opened on a file from a remote project then it will use
@@ -58,6 +63,11 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	
 	private RemoteCEditor editor;
 	private IEditorInput input;
+	
+	/**
+	 * Remote Semantic highlighting manager
+	 */
+	private RemoteSemanticHighlightingManager fRemoteSemanticManager;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider#initializeEditor(org.eclipse.ptp.internal.rdt.editor.RemoteCEditor)
@@ -146,7 +156,9 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	 * @see org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider#doPostCreatePartControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void doPostCreatePartControl(Composite parent) {
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, RDTHelpContextIds.REMOTE_C_CPP_EDITOR);
+		if (isRemote()) {
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, RDTHelpContextIds.REMOTE_C_CPP_EDITOR);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -187,10 +199,12 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	 * @see org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider#editorContextMenuAboutToShow(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void editorContextMenuAboutToShow(IMenuManager menu) {
-		// remove text search
-		menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
-		// remove refactoring for now
-		menu.remove("org.eclipse.cdt.ui.refactoring.menu"); //$NON-NLS-1$
+		if (isRemote()) {
+			// remove text search
+			menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
+			// remove refactoring for now
+			menu.remove("org.eclipse.cdt.ui.refactoring.menu"); //$NON-NLS-1$
+		}
 	}
 
 	/* (non-Javadoc)
@@ -392,8 +406,17 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 		return isLocalServiceProvider();
 	}
 
-	public Boolean isSemanticHighlightingEnabled() {
-		return isRemote() ? new Boolean(false) : null;
+	/**
+	 * Install Semantic Highlighting.
+	 */
+	public void installSemanticHighlighting(ISourceViewer sourceViewer, IPreferenceStore prefStore) {
+		if (isRemote() && fRemoteSemanticManager == null && isSemanticHighlightingEnabled(prefStore)) {
+			fRemoteSemanticManager= new RemoteSemanticHighlightingManager();
+			fRemoteSemanticManager.install(editor, (CSourceViewer) sourceViewer, CUIPlugin.getDefault().getTextTools().getColorManager(), prefStore);
+		}
 	}
-
+	
+	public boolean isSemanticHighlightingEnabled(IPreferenceStore prefStore) {
+		return SemanticHighlightings.isEnabled(prefStore) && !(editor.isEnableScalablilityMode() && prefStore.getBoolean(PreferenceConstants.SCALABILITY_SEMANTIC_HIGHLIGHT));
+	}
 }

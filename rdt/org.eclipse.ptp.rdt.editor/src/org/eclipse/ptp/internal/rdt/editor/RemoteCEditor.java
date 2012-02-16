@@ -89,8 +89,11 @@ public class RemoteCEditor extends CEditor implements HelpListener {
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
 		
-		if (provider != null)
+		if (provider != null){
+			if (isSemanticHighlightingEnabled())
+				provider.installSemanticHighlighting(getSourceViewer(), getPreferenceStore());
 			provider.doPostCreatePartControl(parent);
+		}
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -223,9 +226,7 @@ public class RemoteCEditor extends CEditor implements HelpListener {
 	@Override
 	protected boolean isSemanticHighlightingEnabled() {
 		if (provider != null) {
-			Boolean enabled = provider.isSemanticHighlightingEnabled();
-			if (enabled != null)
-				return enabled.booleanValue();
+			return provider.isSemanticHighlightingEnabled(getPreferenceStore());
 		}		
 		return super.isSemanticHighlightingEnabled();	
 	}
