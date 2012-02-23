@@ -14,6 +14,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.internal.ui.editor.CContentOutlinePage;
+import org.eclipse.cdt.internal.ui.editor.CSourceViewer;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlightings;
 import org.eclipse.cdt.internal.ui.text.CTextTools;
 import org.eclipse.cdt.internal.ui.util.EditorUtility;
@@ -30,7 +31,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
-import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
 import org.eclipse.ptp.internal.rdt.ui.RDTHelpContextIds;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
@@ -52,7 +52,6 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.texteditor.IDocumentProvider;
-import org.eclipse.cdt.internal.ui.editor.CSourceViewer;
 
 /**
  * Remote enabled version of the CEditor. If this editor is opened on a file from a remote project then it will use
@@ -202,8 +201,23 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 		if (isRemote()) {
 			// remove text search
 			menu.remove("org.eclipse.search.text.ctxmenu"); //$NON-NLS-1$
-			// remove refactoring for now
+			// remove refactoring menu for now
 			menu.remove("org.eclipse.cdt.ui.refactoring.menu"); //$NON-NLS-1$
+			
+			//remove some refactor menu items in the Source submenu
+			IMenuManager sourceMenu = (IMenuManager) menu.find("org.eclipse.cdt.ui.source.menu"); //$NON-NLS-1$
+			if (sourceMenu != null) {
+				sourceMenu.remove("AddIncludeOnSelection"); //$NON-NLS-1$
+				sourceMenu.remove("org.eclipse.cdt.ui.refactor.getters.and.setters"); //$NON-NLS-1$
+				sourceMenu.remove("org.eclipse.cdt.ui.refactor.implement.method"); //$NON-NLS-1$
+			}
+			
+			//remove items that don't work well for remote projects
+			menu.remove("OpenMacroExplorer"); //$NON-NLS-1$
+			menu.remove("ToggleSourceHeader"); //$NON-NLS-1$
+			
+			//quick type hierarchy
+			menu.remove("OpenHierarchy"); //$NON-NLS-1$
 		}
 	}
 
