@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?><component id="org.eclipse.ptp.rdt.ui" version="2">
+    <resource path="META-INF/MANIFEST.MF">
+        <filter id="923795461">
+            <message_arguments>
+                <message_argument value="4.1.0"/>
+                <message_argument value="4.0.0"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/ptp/rdt/ui/serviceproviders/IIndexServiceProvider2.java" type="org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2">
+        <filter id="403804204">
+            <message_arguments>
+                <message_argument value="org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2"/>
+                <message_argument value="getRemoteSemanticHighlightingService()"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>
