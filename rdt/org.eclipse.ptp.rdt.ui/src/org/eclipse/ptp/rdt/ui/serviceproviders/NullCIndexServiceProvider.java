@@ -35,11 +35,13 @@ import org.eclipse.ptp.internal.rdt.core.index.IIndexLifecycleService;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
 import org.eclipse.ptp.internal.rdt.core.index.IRemoteFastIndexerUpdateEvent.EventType;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
+import org.eclipse.ptp.internal.rdt.core.navigation.FoldingRegionsResult;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 import org.eclipse.ptp.internal.rdt.core.serviceproviders.AbstractRemoteCIndexServiceProvider;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.ITypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.THGraph;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.IContentAssistService;
+import org.eclipse.ptp.internal.rdt.ui.editor.IRemoteCCodeFoldingService;
 import org.eclipse.ptp.internal.rdt.ui.editor.IRemoteSemanticHighlightingService;
 import org.eclipse.ptp.internal.rdt.ui.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.ui.search.ISearchService;
@@ -315,6 +317,17 @@ public class NullCIndexServiceProvider extends
 		 return new IRemoteSemanticHighlightingService() {
 			public String computeSemanticHighlightingPositions(
 					IWorkingCopy workingCopy) {
+				return null;
+			}
+		 };
+	}
+
+	/**
+	 * @since 4.1
+	 */
+	public IRemoteCCodeFoldingService getRemoteCodeFoldingService() {
+		 return new IRemoteCCodeFoldingService() {
+			public FoldingRegionsResult computeCodeFoldingRegions(IWorkingCopy workingCopy, int docLength, boolean fPreprocessorBranchFoldingEnabled, boolean fStatementsFoldingEnabled) {
 				return null;
 			}
 		 };

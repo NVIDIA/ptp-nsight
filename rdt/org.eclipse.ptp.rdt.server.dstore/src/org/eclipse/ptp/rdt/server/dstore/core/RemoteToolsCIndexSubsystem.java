@@ -65,6 +65,7 @@ import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerProgress;
 import org.eclipse.ptp.internal.rdt.core.index.RemoteIndexerTask;
 import org.eclipse.ptp.internal.rdt.core.miners.CDTMiner;
 import org.eclipse.ptp.internal.rdt.core.model.Scope;
+import org.eclipse.ptp.internal.rdt.core.navigation.FoldingRegionsResult;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchQuery;
@@ -81,7 +82,6 @@ import org.eclipse.ptp.services.core.IService;
 import org.eclipse.ptp.services.core.IServiceConfiguration;
 import org.eclipse.ptp.services.core.IServiceProvider;
 import org.eclipse.ptp.services.core.ServiceModelManager;
-import org.eclipse.rse.connectorservice.dstore.util.StatusMonitorFactory;
 
 
 /**
@@ -1252,6 +1252,58 @@ public class RemoteToolsCIndexSubsystem implements ICIndexSubsystem {
 			RDTLog.logError(e);
 		}
     	return ""; //$NON-NLS-1$
+	}
+
+	/**
+	 * @since 2.1
+	 */
+	public FoldingRegionsResult computeFoldingRegions(ITranslationUnit targetUnit, int docLength, boolean fPreprocessorBranchFoldingEnabled, boolean fStatementsFoldingEnabled) {
+		checkAllProjects(new NullProgressMonitor());
+		DataStore dataStore = getDataStore(null);
+	    if (dataStore == null) {
+	    	return null;
+	    }
+        DataElement queryCmd = dataStore.localDescriptorQuery(dataStore.getDescriptorRoot(), CDTMiner.C_CODE_FOLDING_COMPUTE_REGIONS);
+        if (queryCmd == null) {
+	    	return null;
+        }
+     	NullProgressMonitor monitor = new NullProgressMonitor();
+     	StatusMonitor smonitor = StatusMonitor.getStatusMonitorFor(fProvider.getConnection(), dataStore);
+    	ArrayList<Object> args = new ArrayList<Object>();
+		Scope scope = new Scope(targetUnit.getCProject().getProject());
+    	DataElement dataElement = dataStore.createObject(null, CDTMiner.T_SCOPE_SCOPENAME_DESCRIPTOR, scope.getName());
+
+    	args.add(dataElement);
+    	args.add(createSerializableElement(dataStore, targetUnit));
+    	args.add(dataStore.createObject(null, CDTMiner.T_INDEX_INT_DESCRIPTOR, Integer.toString(docLength)));
+    	args.add(dataStore.createObject(null, CDTMiner.T_INDEX_BOOLEAN_DESCRIPTOR, Boolean.toString(fPreprocessorBranchFoldingEnabled)));
+    	args.add(dataStore.createObject(null, CDTMiner.T_INDEX_BOOLEAN_DESCRIPTOR, Boolean.toString(fStatementsFoldingEnabled)));
+    
+    	// execute the command
+    	DataElement status = dataStore.command(queryCmd, args, dataStore.getDescriptorRoot());
+
+    	try {
+        	smonitor.waitForUpdate(status, monitor);
+        }
+        catch (Exception e) {
+        	RDTLog.logError(e);
+        }
+
+    	DataElement element = status.get(0);
+    	
+    	String data = element.getName();
+    	try {
+    		Object result = Serializer.deserialize(data);
+			if (result == null || !(result instanceof FoldingRegionsResult)) {
+				return null;
+			}
+			return (FoldingRegionsResult) result;
+    	} catch (IOException e) {
+			RDTLog.logError(e);
+		} catch (ClassNotFoundException e) {
+			RDTLog.logError(e);
+		}
+    	return null;
 	}
 
 }

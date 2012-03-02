@@ -11,6 +11,12 @@
         <filter id="403804204">
             <message_arguments>
                 <message_argument value="org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2"/>
+                <message_argument value="getRemoteCodeFoldingService()"/>
+            </message_arguments>
+        </filter>
+        <filter id="403804204">
+            <message_arguments>
+                <message_argument value="org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2"/>
                 <message_argument value="getRemoteSemanticHighlightingService()"/>
             </message_arguments>
         </filter>

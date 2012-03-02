@@ -129,4 +129,12 @@ public interface IRemoteCEditorInfoProvider {
 	public boolean isSemanticHighlightingEnabled(IPreferenceStore store);
 	
 	public void installSemanticHighlighting(ISourceViewer sourceViewer, IPreferenceStore prefStore);
+
+	public void installRemoteCodeFolding(ISourceViewer sourceViewer);
+	
+	public void uninstallRemoteCodeFolding();
+
+	public void uninstallSemanticHighlighting();
+	
+	public void refreshRemoteSemanticManager();
 }

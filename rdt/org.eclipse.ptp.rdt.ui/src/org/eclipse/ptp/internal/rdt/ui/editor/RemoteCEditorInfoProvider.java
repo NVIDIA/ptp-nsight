@@ -31,6 +31,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
+import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
 import org.eclipse.ptp.internal.rdt.ui.RDTHelpContextIds;
 import org.eclipse.ptp.internal.rdt.ui.actions.OpenViewActionGroup;
@@ -67,6 +68,8 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	 * Remote Semantic highlighting manager
 	 */
 	private RemoteSemanticHighlightingManager fRemoteSemanticManager;
+	
+	private RemoteCFoldingStructureProvider fRemoteFoldingProvider; 
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider#initializeEditor(org.eclipse.ptp.internal.rdt.editor.RemoteCEditor)
@@ -225,8 +228,7 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	 * @see org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider#dispose()
 	 */
 	public void dispose() {
-		// nothing to do
-
+		uninstallRemoteCodeFolding();
 	}
 
 	/* (non-Javadoc)
@@ -424,13 +426,46 @@ public class RemoteCEditorInfoProvider implements IRemoteCEditorInfoProvider {
 	 * Install Semantic Highlighting.
 	 */
 	public void installSemanticHighlighting(ISourceViewer sourceViewer, IPreferenceStore prefStore) {
-		if (isRemote() && fRemoteSemanticManager == null && isSemanticHighlightingEnabled(prefStore)) {
+		if (!isLocalServiceProvider() && fRemoteSemanticManager == null && isSemanticHighlightingEnabled(prefStore)) {
 			fRemoteSemanticManager= new RemoteSemanticHighlightingManager();
 			fRemoteSemanticManager.install(editor, (CSourceViewer) sourceViewer, CUIPlugin.getDefault().getTextTools().getColorManager(), prefStore);
+		} else if (isLocalServiceProvider()) { //airplane mode
+			//reset so when workspace is online, semantic highlighting gets triggered
+			uninstallSemanticHighlighting();
 		}
+	}
+	
+	public void refreshRemoteSemanticManager() {
+		if (fRemoteSemanticManager != null)
+			fRemoteSemanticManager.refresh();
 	}
 	
 	public boolean isSemanticHighlightingEnabled(IPreferenceStore prefStore) {
 		return SemanticHighlightings.isEnabled(prefStore) && !(editor.isEnableScalablilityMode() && prefStore.getBoolean(PreferenceConstants.SCALABILITY_SEMANTIC_HIGHLIGHT));
+	}
+	
+	public void installRemoteCodeFolding(ISourceViewer sourceViewer){
+		String id= CUIPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.EDITOR_FOLDING_PROVIDER);
+
+		// If the folding provider is the default one and we are not 
+		// in off-line mode, then uninstall local folding and install remote folding:
+		if (id.compareTo("org.eclipse.cdt.ui.text.defaultFoldingProvider") == 0 && !isLocalServiceProvider()) { //$NON-NLS-1$
+			editor.uninstallProjectionModelUpdater();
+			fRemoteFoldingProvider = new RemoteCFoldingStructureProvider();
+			ProjectionViewer projectionViewer = (ProjectionViewer) sourceViewer;
+			fRemoteFoldingProvider.install(editor, projectionViewer);
+		}
+	}
+	
+	public void uninstallRemoteCodeFolding() {
+		if (fRemoteFoldingProvider != null)
+			fRemoteFoldingProvider.uninstall();
+	}
+
+	public void uninstallSemanticHighlighting() {
+		if (fRemoteSemanticManager != null) {
+			fRemoteSemanticManager.uninstall();
+			fRemoteSemanticManager= null;
+		}
 	}
 }

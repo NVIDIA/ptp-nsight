@@ -122,7 +122,7 @@ public class PositionCollector extends CPPASTVisitor {
 	public PositionCollector(boolean visitImplicitNames) {
 		
 		fJobSemanticHighlightings = SemanticHighlightings.getSemanticHighlightings();
-		
+		includeInactiveNodes = true;
 		fMinLocation= -1;
 		shouldVisitTranslationUnit= true;
 		shouldVisitNames= true;

@@ -30,6 +30,7 @@ import org.eclipse.ptp.internal.rdt.core.model.Scope;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchMatch;
 import org.eclipse.ptp.internal.rdt.core.search.RemoteSearchQuery;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.THGraph;
+import org.eclipse.ptp.internal.rdt.core.navigation.FoldingRegionsResult;
 import org.eclipse.ptp.internal.rdt.core.navigation.OpenDeclarationResult;
 
 
@@ -269,5 +270,6 @@ public interface ICIndexSubsystem {
 	public EventType getReIndexEventType();
 
 	public String computeHighlightPositions(ITranslationUnit targetUnit);
-
+	
+	public FoldingRegionsResult computeFoldingRegions(ITranslationUnit targetUnit, int docLength, boolean fPreprocessorBranchFoldingEnabled, boolean fStatementsFoldingEnabled);
 }

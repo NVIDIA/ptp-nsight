@@ -9,6 +9,7 @@
  *    IBM Corporation - Initial API and implementation
  *******************************************************************************/ 
 
+
 package org.eclipse.ptp.internal.rdt.ui.editor;
 
 import java.util.Map;
@@ -23,29 +24,29 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.ptp.internal.rdt.core.RemoteIndexerInfoProviderFactory;
 import org.eclipse.ptp.internal.rdt.core.model.ModelAdapter;
 import org.eclipse.ptp.internal.rdt.core.model.TranslationUnit;
+import org.eclipse.ptp.internal.rdt.core.navigation.FoldingRegionsResult;
 import org.eclipse.ptp.internal.rdt.core.serviceproviders.AbstractRemoteService;
 import org.eclipse.ptp.internal.rdt.core.subsystems.ICIndexSubsystem;
 import org.eclipse.ptp.rdt.core.RDTLog;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 
 /**
- * A service for computing semantic highlighting on a remote host.
+ * A service for computing code folding on a remote host.
  */
-public class RemoteSemanticHighlightingService extends AbstractRemoteService implements IRemoteSemanticHighlightingService {
-
-	public RemoteSemanticHighlightingService(IConnectorService connectorService) {
+public class RemoteCCodeFoldingService extends AbstractRemoteService implements IRemoteCCodeFoldingService {
+	public RemoteCCodeFoldingService(IConnectorService connectorService) {
 		super(connectorService);
 	}
 
-	public RemoteSemanticHighlightingService(ICIndexSubsystem subsystem) {
+	public RemoteCCodeFoldingService(ICIndexSubsystem subsystem) {
 		super(subsystem);
 	}
 
-	public String computeSemanticHighlightingPositions(IWorkingCopy workingCopy) {
+	public FoldingRegionsResult computeCodeFoldingRegions(IWorkingCopy workingCopy, int docLength, boolean fPreprocessorBranchFoldingEnabled, boolean fStatementsFoldingEnabled) {
 		ICIndexSubsystem subsystem = getSubSystem();
-		if(subsystem == null) {
+		if (subsystem == null) 
 			return null;
-		}
+		
 		ITranslationUnit unit = workingCopy.getTranslationUnit();
 		
     	ITranslationUnit targetUnit;
@@ -78,6 +79,8 @@ public class RemoteSemanticHighlightingService extends AbstractRemoteService imp
 			((TranslationUnit)targetUnit).setASTContext(scannerInfo, langaugeProperties);
 		}
 		
-		return subsystem.computeHighlightPositions(targetUnit);
+		return subsystem.computeFoldingRegions(targetUnit, docLength, fPreprocessorBranchFoldingEnabled, fStatementsFoldingEnabled); 
 	}
+	
+
 }

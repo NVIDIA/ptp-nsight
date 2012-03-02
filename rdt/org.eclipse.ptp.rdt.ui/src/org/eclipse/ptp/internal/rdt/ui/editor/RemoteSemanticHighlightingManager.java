@@ -13,13 +13,17 @@
 package org.eclipse.ptp.internal.rdt.ui.editor;
 
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.TextAttribute;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
+import org.eclipse.swt.SWT;
 import org.eclipse.cdt.ui.text.ICPartitions;
 import org.eclipse.cdt.ui.text.IColorManager;
 import org.eclipse.cdt.internal.ui.editor.CSourceViewer;
+import org.eclipse.cdt.internal.ui.editor.SemanticHighlighting;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingManager;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingPresenter;
+import org.eclipse.cdt.internal.ui.editor.SemanticHighlightings;
 import org.eclipse.cdt.internal.ui.text.CPresentationReconciler;
 import org.eclipse.cdt.internal.ui.text.CSourceViewerScalableConfiguration;
 
@@ -143,12 +147,81 @@ public class RemoteSemanticHighlightingManager extends SemanticHighlightingManag
 	 *
 	 * @param event The event
 	 */
-	protected boolean handlePropertyChangeEvent(PropertyChangeEvent event) {
-		if (super.handlePropertyChangeEvent(event) && fRemoteReconciler != null) {
-			fRemoteReconciler.refresh();
-			return true;
+	protected boolean handlePropertyChangeEvent(PropertyChangeEvent event) {		
+		if (fPreferenceStore == null)
+			return false; // Uninstalled during event notification
+
+		if (fConfiguration != null)
+			fConfiguration.handlePropertyChangeEvent(event);
+
+		if (SemanticHighlightings.affectsEnablement(fPreferenceStore, event)) {
+			if (isEnabled())
+				enable();
+			else
+				disable();
 		}
-		return false;
+
+		if (!isEnabled())
+			return false;
+		
+		boolean refreshNeeded= false;
+
+		for (int i= 0, n= fSemanticHighlightings.length; i < n; i++) {
+			SemanticHighlighting semanticHighlighting= fSemanticHighlightings[i];
+
+			String colorKey= SemanticHighlightings.getColorPreferenceKey(semanticHighlighting);
+			if (colorKey.equals(event.getProperty())) {
+				adaptToTextForegroundChange(fHighlightings[i], event);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+
+			String boldKey= SemanticHighlightings.getBoldPreferenceKey(semanticHighlighting);
+			if (boldKey.equals(event.getProperty())) {
+				adaptToTextStyleChange(fHighlightings[i], event, SWT.BOLD);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+
+			String italicKey= SemanticHighlightings.getItalicPreferenceKey(semanticHighlighting);
+			if (italicKey.equals(event.getProperty())) {
+				adaptToTextStyleChange(fHighlightings[i], event, SWT.ITALIC);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+
+			String strikethroughKey= SemanticHighlightings.getStrikethroughPreferenceKey(semanticHighlighting);
+			if (strikethroughKey.equals(event.getProperty())) {
+				adaptToTextStyleChange(fHighlightings[i], event, TextAttribute.STRIKETHROUGH);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+
+			String underlineKey= SemanticHighlightings.getUnderlinePreferenceKey(semanticHighlighting);
+			if (underlineKey.equals(event.getProperty())) {
+				adaptToTextStyleChange(fHighlightings[i], event, TextAttribute.UNDERLINE);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+
+			String enabledKey= SemanticHighlightings.getEnabledPreferenceKey(semanticHighlighting);
+			if (enabledKey.equals(event.getProperty())) {
+				adaptToEnablementChange(fHighlightings[i], event);
+				fPresenter.highlightingStyleChanged(fHighlightings[i]);
+				refreshNeeded= true;
+				continue;
+			}
+		}
+		
+		if (refreshNeeded && fRemoteReconciler != null)
+			fRemoteReconciler.refresh();
+		
+		return refreshNeeded;		
 	}
 
 	/**

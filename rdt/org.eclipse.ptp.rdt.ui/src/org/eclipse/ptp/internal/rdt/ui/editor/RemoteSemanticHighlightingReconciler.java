@@ -16,29 +16,22 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.model.ICElement;
-import org.eclipse.cdt.core.model.ILanguage;
 import org.eclipse.cdt.core.model.IWorkingCopy;
-import org.eclipse.cdt.internal.core.model.ASTCache;
-import org.eclipse.cdt.internal.ui.editor.ASTProvider;
-import org.eclipse.cdt.internal.ui.editor.CEditorMessages;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlighting;
+import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingManager.HighlightedPosition;
+import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingManager.HighlightingStyle;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingPresenter;
 import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingReconciler;
-import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingManager.HighlightedPosition;
-import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
-import org.eclipse.ptp.internal.rdt.ui.editor.RemoteSemanticHighlightingManager;
-import org.eclipse.cdt.internal.ui.editor.SemanticHighlightingManager.HighlightingStyle;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.IWorkingCopyManager;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.TextPresentation;
 import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.ptp.internal.rdt.editor.RemoteCEditor;
 import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.ui.serviceproviders.IIndexServiceProvider2;
 import org.eclipse.ptp.services.core.IService;
@@ -283,63 +276,12 @@ public class RemoteSemanticHighlightingReconciler extends SemanticHighlightingRe
 		fHighlightings= null;
 		fPresenter= null;
 	}
-	
-	/**
-	 * Schedule a background job used for preference changes.  
-	 * This is a copy of super.scheduleJob. The The local ast is NOT used here.
-	 */
-	private void scheduleJob() {
-		final ICElement element= fRemoteEditor.getInputCElement();
-
-		synchronized (fJobLock) {
-			final Job oldJob= fJob;
-			if (fJob != null) {
-				fJob.cancel();
-				fJob= null;
-			}
-			
-			if (element != null) {
-				fJob= new Job(CEditorMessages.SemanticHighlighting_job) { 
-					@Override
-					protected IStatus run(final IProgressMonitor monitor) {
-						if (oldJob != null) {
-							try {
-								oldJob.join();
-							} catch (InterruptedException e) {
-								CUIPlugin.log(e);
-								return Status.CANCEL_STATUS;
-							}
-						}
-						if (monitor.isCanceled())
-							return Status.CANCEL_STATUS;
-						
-						final Job me= this;
-						ASTProvider astProvider= CUIPlugin.getDefault().getASTProvider();
-						IStatus status= astProvider.runOnAST(element, ASTProvider.WAIT_IF_OPEN, monitor, new ASTCache.ASTRunnable() {
-							public IStatus runOnAST(ILanguage lang, IASTTranslationUnit ast) {
-								reconciled(ast, true, monitor);
-								synchronized (fJobLock) {
-									// allow the job to be gc'ed
-									if (fJob == me)
-										fJob= null;
-								}
-								return Status.OK_STATUS;
-							}
-						});
-						return status;
-					}
-				};
-				fJob.setPriority(Job.SHORT);
-				fJob.schedule();
-			}
-		}
-	}
 
 	/**
 	 * Refreshes the highlighting.
 	 */
 	public void refresh() {
-		scheduleJob();
+		reconciled(null, true, new NullProgressMonitor());
 	}
 
 }

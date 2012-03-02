@@ -24,7 +24,9 @@ import org.eclipse.ptp.internal.rdt.core.typehierarchy.ITypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.core.typehierarchy.RemoteTypeHierarchyService;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.IContentAssistService;
 import org.eclipse.ptp.internal.rdt.ui.contentassist.RemoteContentAssistService;
+import org.eclipse.ptp.internal.rdt.ui.editor.IRemoteCCodeFoldingService;
 import org.eclipse.ptp.internal.rdt.ui.editor.IRemoteSemanticHighlightingService;
+import org.eclipse.ptp.internal.rdt.ui.editor.RemoteCCodeFoldingService;
 import org.eclipse.ptp.internal.rdt.ui.editor.RemoteSemanticHighlightingService;
 import org.eclipse.ptp.internal.rdt.ui.navigation.INavigationService;
 import org.eclipse.ptp.internal.rdt.ui.navigation.RemoteNavigationService;
@@ -54,6 +56,10 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 	 * @since 2.1
 	 */
 	protected RemoteSemanticHighlightingService fRemoteSemanticHighlightingService = null;
+	/**
+	 * @since 2.1
+	 */
+	protected RemoteCCodeFoldingService fRemoteCCodeFoldingService = null;
 	protected RemoteToolsCIndexSubsystem fSubsystem = null;
 	protected boolean fIsDirty = false;
 	protected RemoteToolsCIndexServiceProvider fProvider = null;
@@ -427,5 +433,18 @@ public class RemoteToolsCIndexServiceProvider extends ServiceProvider implements
 			fRemoteSemanticHighlightingService = new RemoteSemanticHighlightingService(fSubsystem);
 
 		return fRemoteSemanticHighlightingService;
+	}
+
+	/**
+	 * @since 2.1
+	 */
+	public IRemoteCCodeFoldingService getRemoteCodeFoldingService() {
+		if(!isConfigured())
+			return null;
+
+		if(fRemoteCCodeFoldingService== null)
+			fRemoteCCodeFoldingService = new RemoteCCodeFoldingService(fSubsystem);
+
+		return fRemoteCCodeFoldingService;
 	}
 }
