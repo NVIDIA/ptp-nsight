@@ -58,7 +58,7 @@
 	
 
 	<!-- CDT PROPERTIES -->
-	<property name="cdtBaseUrl" value="http://download.eclipse.org/tools/cdt/builds/7.0.2/201202091230"/>
+	<property name="cdtBaseUrl" value="http://download.eclipse.org/tools/cdt/builds/7.0.2/201203021134"/>
 	
 	<!-- CDT branch need to be added for PTP maintenance builds -->
 	<property name="cdtBranch" value="cdt_7_0"/>
