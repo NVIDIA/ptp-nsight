@@ -59,8 +59,7 @@ public class RemoteIndexManager {
 	
 	private final Map<String,StandaloneIndexer> scopeToIndexerMap;
 	private final Map<String,String> scopeToIndexLocationMap;
-	
-	
+		
 	private RemoteIndexManager() {
 		scopeToIndexerMap = new HashMap<String,StandaloneIndexer>();
 		scopeToIndexLocationMap = new HashMap<String,String>();
@@ -75,7 +74,7 @@ public class RemoteIndexManager {
 	
 	
 	
-	public IIndex getIndexForScope(String scope, DataStore dataStore) {
+	public synchronized IIndex getIndexForScope(String scope, DataStore dataStore) {
 		if(scope.equals(Scope.WORKSPACE_ROOT_SCOPE_NAME)) {
 			Set<IIndexFragment> fragments = new HashSet<IIndexFragment>();
 			
@@ -94,7 +93,7 @@ public class RemoteIndexManager {
 			return new CIndex(fragments.toArray(new IIndexFragment[fragments.size()]), fragments.size()); 
 		}
 		else {
-			StandaloneFastIndexer indexer = getIndexerForScope(scope, dataStore, null);
+			StandaloneFastIndexer indexer = getIndexerForScope(scope, dataStore, dataStore.getStatus());
 			//return indexer.getIndex();
 			//create a new CIndex wrapper each time to prevent deadlock.
 			return new CIndex(new IIndexFragment[]{indexer.getIndex().getWritableFragment()}, 1);
@@ -106,7 +105,7 @@ public class RemoteIndexManager {
 	 * 
 	 * @see PDOMIndexerTask constructor
 	 */
-	public StandaloneFastIndexer getIndexerForScope(String scope, IRemoteIndexerInfoProvider provider, DataStore dataStore, DataElement status) {
+	public synchronized StandaloneFastIndexer getIndexerForScope(String scope, IRemoteIndexerInfoProvider provider, DataStore dataStore, DataElement status) {
 		StandaloneFastIndexer indexer = getIndexerForScope(scope, dataStore, status);
 		if(indexer!=null){
 			// configure the indexer using the provider
@@ -161,7 +160,7 @@ public class RemoteIndexManager {
 	}
 
 	
-	public StandaloneFastIndexer getIndexerForScope(String scope, DataStore dataStore, DataElement status) {
+	public synchronized StandaloneFastIndexer getIndexerForScope(String scope, DataStore dataStore, DataElement status) {
 				
 		if(scope.equals(Scope.WORKSPACE_ROOT_SCOPE_NAME)) {
 			throw new IllegalArgumentException("Attempted to get indexer for root scope."); //$NON-NLS-1$
@@ -239,7 +238,7 @@ public class RemoteIndexManager {
 	 * @param scope
 	 * @return true if and only if the file is successfully deleted; false otherwise
 	 */
-	public boolean removeIndexFile(String scope, DataStore dataStore) {
+	public synchronized boolean removeIndexFile(String scope, DataStore dataStore) {
 		
 		if(scope.equals(Scope.WORKSPACE_ROOT_SCOPE_NAME)) {
 			throw new IllegalArgumentException("Attempted to remove index file for root scope."); //$NON-NLS-1$
@@ -266,7 +265,7 @@ public class RemoteIndexManager {
 	 * Return a list of indexes, in which each element is an index of a given project (in projects)
 	 * @param projects the projects to get the index for
 	 */
-	public IWritableIndex[] getIndexListForProjects(ICProject[] projects, DataStore dataStore) {
+	public synchronized IWritableIndex[] getIndexListForProjects(ICProject[] projects, DataStore dataStore) {
 		if(projects == null) {
 			throw new IllegalArgumentException("Get index for projects - projects cannot be null."); //$NON-NLS-1$
 		}
@@ -295,7 +294,7 @@ public class RemoteIndexManager {
 	 * Return a list of indexes, in which each element is an index of a given project in the given scope
 	 * @param scope, a scope to get indexes
 	 */
-	public IWritableIndex[] getIndexListForScope(String scope, DataStore dataStore) {
+	public synchronized IWritableIndex[] getIndexListForScope(String scope, DataStore dataStore) {
 		IWritableIndex[] indexList;
 		if(scope.equals(Scope.WORKSPACE_ROOT_SCOPE_NAME)) {
 			indexList = new IWritableIndex[ScopeManager.getInstance().getAllScopes().size()];
@@ -313,7 +312,7 @@ public class RemoteIndexManager {
 	}
 
 	
-	public String setIndexFileLocation(String scope, String configLocation) {
+	public synchronized String setIndexFileLocation(String scope, String configLocation) {
 		String oldLocation = scopeToIndexLocationMap.get(scope); 
 		if(configLocation.equals(oldLocation))
 			return configLocation;
@@ -340,7 +339,7 @@ public class RemoteIndexManager {
 	 * 
 	 * @return The actual path to where the file was moved.
 	 */
-	public String moveIndexFile(String scope, String path, DataStore dataStore) {
+	public synchronized String moveIndexFile(String scope, String path, DataStore dataStore) {
 		String oldLocation = scopeToIndexLocationMap.get(scope); 
 		String newLocation = setIndexFileLocation(scope, path);
 		if(!newLocation.equals(path)) {
@@ -373,7 +372,7 @@ public class RemoteIndexManager {
 	}
 	
 	//clear cached index
-	public void clearIndex(String scope) throws InterruptedException, CoreException{
+	public synchronized void clearIndex(String scope) throws InterruptedException, CoreException{
 		scopeToIndexerMap.put(scope, null);
 		
 	}
