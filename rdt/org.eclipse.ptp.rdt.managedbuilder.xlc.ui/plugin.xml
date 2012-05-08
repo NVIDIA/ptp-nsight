@@ -197,12 +197,6 @@
        isAbstract="false"
        name="%tool.cpp.name"
        superClass="cdt.managedbuild.tool.xlc.cpp.compiler.abstract">
-           <inputType
-          id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.cpp.c.compiler.input"
-          primaryInput="true"
-          scannerConfigDiscoveryProfileId="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.RemoteXLCPerFileProfile"
-          superClass="cdt.managedbuild.tool.xlc.c.compiler.input">
-          </inputType>
     <inputType
           id="org.eclipse.ptp.rdt.managedbuilder.xlc.ui.cpp.compiler.input"
           primaryInput="true"
@@ -271,7 +265,7 @@
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.so.debug"
                   isAbstract="false"
                   superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.debug"
-                  natureFilter="cnature">
+                  natureFilter="both">
             </tool>
             <tool
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.so.debug"
@@ -332,7 +326,7 @@
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.so.release"
                   isAbstract="false"
                   superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.release"
-                  natureFilter="cnature">
+                  natureFilter="both">
                   
             </tool>
             <tool
@@ -402,7 +396,7 @@
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.lib.debug"
                   isAbstract="false"
                   superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.debug"
-                  natureFilter="cnature">
+                  natureFilter="both">
             </tool>
             <tool
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.lib.debug"
@@ -461,7 +455,7 @@
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.lib.release"
                   isAbstract="false"
                   superClass="org.eclipse.ptp.rdt.managedbuild.tool.xlc.c.compiler.exe.release"
-                  natureFilter="cnature">
+                  natureFilter="both">
             </tool>
             <tool
                   id="org.eclipse.ptp.rdt.managedbuild.tool.xlc.cpp.compiler.lib.release"
