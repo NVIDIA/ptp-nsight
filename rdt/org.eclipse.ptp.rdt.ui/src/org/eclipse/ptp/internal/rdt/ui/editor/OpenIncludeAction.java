@@ -43,6 +43,7 @@ import org.eclipse.cdt.utils.EFSExtensionManager;
 import org.eclipse.cdt.utils.PathUtil;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -315,6 +316,11 @@ public class OpenIncludeAction extends
 	 */
 	private URI replacePath(URI u, String path) {
 		try {
+			
+			if(u.getScheme().equals(EFS.getLocalFileSystem().getScheme())) {
+				return URIUtil.toURI(path);
+			}
+			
 			//Bug 332798: handle remote tools connection
 			return new URI(u.getScheme(), u.getAuthority(),
 							path, //replaced!
