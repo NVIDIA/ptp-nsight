@@ -58,8 +58,14 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
-import org.eclipse.ptp.rdt.core.RDTLog;
-import org.eclipse.ptp.rdt.core.resources.RemoteNature;
+import org.eclipse.ptp.rdt.core.serviceproviders.IIndexServiceProvider;
+import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
+import org.eclipse.ptp.rdt.ui.UIPlugin;
+import org.eclipse.ptp.services.core.IService;
+import org.eclipse.ptp.services.core.IServiceConfiguration;
+import org.eclipse.ptp.services.core.IServiceModelManager;
+import org.eclipse.ptp.services.core.IServiceProvider;
+import org.eclipse.ptp.services.core.ServiceModelManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
@@ -101,33 +107,27 @@ public class OpenIncludeAction extends
 			ArrayList<URI> filesFound = new ArrayList<URI>(4);
 			IResource res = include.getUnderlyingResource(); //the resource that contains this include
 			String fullFileName= include.getFullFileName(); //the full path, if there is one
+			IProject project = include.getCProject().getProject();
 			
 			if (fullFileName != null) {
-				IPath fullPath= new Path(fullFileName);
-				if (fullPath.isAbsolute() && fullPath.toFile().exists()) { //local
-					//Bug 343648 - Remote project outline displays header file from local host
-					if (!RemoteNature.hasRemoteNature(include.getCProject().getProject())) {
-						filesFound.add(fullPath.toFile().toURI());
-					}
-				}
-				if (filesFound.isEmpty()) {
-					//remote: get remote information and try again
+				// Bug 379298 - Open include file from Outline view throws errors for remote project
+				if (!isLocalServiceConfiguration(project)) { //files are on remote server
+					//get remote location information
 					URI locationURI = include.getLocationURI(); //the location of the innermost file enclosing this include
-					
-					// Bug 379298 - Open include file from Outline view throws errors for remote project
 					if (EFSExtensionManager.getDefault().isVirtual(locationURI)) {  //this is pointing to another underlying URI
 						// get the underlying URI
 						locationURI = EFSExtensionManager.getDefault().getLinkedURI(locationURI);
 					}
 					
+					//attempt to get the path of the include file
 					URI includeURI = replacePath(locationURI, fullFileName);
-					
+
 					IFileStore fileStore = EFS.getStore(includeURI);
-					if (!fileStore.fetchInfo().isDirectory() && fileStore.fetchInfo().exists()) {
+					String scheme = fileStore.getFileSystem().getScheme();
+					//since files are on remote server - the include file should not be found locally
+					if (!scheme.equals(EFS.getLocalFileSystem().getScheme()) && !fileStore.fetchInfo().isDirectory() && fileStore.fetchInfo().exists()) {
 						filesFound.add(includeURI);
-						
-					} 
-					else {
+					} else {
 						URI projectURI = include.getCProject().getProject().getLocationURI();						
 						//get the full project path on the server
 						String projectPath = EFSExtensionManager.getDefault().getPathFromURI(projectURI);
@@ -136,23 +136,33 @@ public class OpenIncludeAction extends
 							//this include is not in the project - check if the EFS store 
 							//represented by locationURI is linked to another URI and try again
 							
+							//make sure the locationURI refers to the server location
 							URI linkedURI = EFSExtensionManager.getDefault().getLinkedURI(locationURI);
 							includeURI = replacePath(linkedURI, fullFileName);
-							
 							fileStore = EFS.getStore(includeURI);
-							if (!fileStore.fetchInfo().isDirectory() && fileStore.fetchInfo().exists()) {
+							if (!fileStore.fetchInfo().isDirectory() && fileStore.fetchInfo().exists()) { //find the file on server
 								filesFound.add(includeURI);
 							}
 						} // since this include is in the project, the code below will try to find it within the project
 					}
 				}
-			}			
+				else {
+					IPath fullPath= new Path(fullFileName);
+					if (fullPath.isAbsolute() && fullPath.toFile().exists()) { //local
+						filesFound.add(fullPath.toFile().toURI());
+					}
+				}
+			}	
 
 			if (filesFound.isEmpty() && res != null) {
 				boolean isSystemInclude = include.isStandard();
 				IProject proj = res.getProject();
 				String includeName = include.getElementName();
 				URI locationURI = include.getLocationURI(); //the location of the innermost file enclosing this include
+				if (EFSExtensionManager.getDefault().isVirtual(locationURI)) {  //this is pointing to another underlying URI
+					// get the underlying URI
+					locationURI = EFSExtensionManager.getDefault().getLinkedURI(locationURI);
+				}
 				
 				// Search in the scannerInfo information
 				IScannerInfoProvider provider =  CCorePlugin.getDefault().getScannerInfoProvider(proj);
@@ -217,9 +227,9 @@ public class OpenIncludeAction extends
 				EditorUtility.openInEditor((URI)fileToOpen, include.getCProject());					
 			
 		} catch (CModelException e) {
-			CUIPlugin.log(e.getStatus());
+			UIPlugin.log(e.getStatus());
 		} catch (CoreException e) {
-			CUIPlugin.log(e.getStatus());
+			UIPlugin.log(e.getStatus());
 		}
 	}
 	
@@ -293,7 +303,7 @@ public class OpenIncludeAction extends
 						list.add(uri);
 					}
 				} catch (URISyntaxException e) {
-					RDTLog.logError(e);
+					UIPlugin.log(e);
 				}
 			}
 		}
@@ -353,9 +363,24 @@ public class OpenIncludeAction extends
 							u.getQuery(),
 							u.getFragment());
 		} catch (URISyntaxException e) {
-			RDTLog.logError(e);
+			UIPlugin.log(e);
 			return null;
 		}
+	}
+	
+	private static boolean isLocalServiceConfiguration (IProject project) {
+		IServiceModelManager smm = ServiceModelManager.getInstance();
+		
+		if(smm.isConfigured(project)) {
+			IServiceConfiguration serviceConfig = smm.getActiveConfiguration(project);
+			IService indexingService = smm.getService(IRDTServiceConstants.SERVICE_C_INDEX);
+			IServiceProvider serviceProvider = serviceConfig.getServiceProvider(indexingService);
+	
+			if (serviceProvider instanceof IIndexServiceProvider) {
+				return !((IIndexServiceProvider)serviceProvider).isRemote();
+			}
+		}
+		return false;
 	}
 
 }
