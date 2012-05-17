@@ -130,8 +130,10 @@ public class LauncherTool extends ToolStep implements IToolLaunchConfigurationCo
 			}
 			
 			if ((testStore != null&&testStore.fetchInfo().exists()&&!testStore.fetchInfo().isDirectory()) || progStoreGood) {
-				
-				savePath = confWC.getAttribute(apppathattrib, (String) null);
+				if(apppathattrib!=null)
+					savePath = confWC.getAttribute(apppathattrib, (String) null);
+				else
+					savePath=null;
 				
 				//IFileStore testStore=utilBlob.getFile(progPath);
 				//IFileStore progStore=utilBlob.getFile(projectLocation);
