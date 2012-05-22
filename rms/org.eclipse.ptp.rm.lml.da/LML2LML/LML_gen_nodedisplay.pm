@@ -7,6 +7,7 @@
 #*
 #* Contributors:
 #*    Wolfgang Frings (Forschungszentrum Juelich GmbH) 
+#*    Kevin A. Huck (ParaTools, Inc.) Added support for BG/Q
 #*******************************************************************************/ 
 package LML_gen_nodedisplay;
 
@@ -82,6 +83,17 @@ sub process {
 	
 	$self->_adjust_layout_bg();
 
+
+    } elsif($self->{SYSTEMTYPE} eq "BG/Q") {
+	my($maxlx,$maxly,$maxlz,$maxpx,$maxpy,$maxpz)=$self->_get_system_size_bg();
+	if(!$self->_init_trees_bgq($maxlx,$maxly,$maxlz,$maxpx,$maxpy,$maxpz)) {
+	    print "ERROR: could not init internal data structures, system type: $self->{SYSTEMTYPE}, aborting ...\n";
+	    return(-1);
+	}
+	# init data tree with empty root nodes
+	$self->_add_empty_root_elements();
+	
+	$self->_adjust_layout_bg();
 
     } elsif($self->{SYSTEMTYPE} eq "ALPS") {
 	my($maxpcol,$maxprow,$maxpcage,$maxpslot,$maxpnode,$maxpcore)=$self->_get_system_size_alps();
@@ -328,7 +340,7 @@ sub _remap_nodes {
     my($self) = shift;
     my($nodelist)=shift;
     my($newnodelist,$spec,$node,$num,$newnode);
-    if($self->{SYSTEMTYPE} eq "BG/P") {
+    if(($self->{SYSTEMTYPE} eq "BG/P") || ($self->{SYSTEMTYPE} eq "BG/Q")) {
 	return($nodelist);
     }
     foreach $spec (split(/\),?\(/,$nodelist)) {
@@ -356,7 +368,7 @@ sub _remap_nodes_vnode {
     my($self) = shift;
     my($nodelist)=shift;
     my($newnodelist,$spec,$node,$num,$number,$newnode,$start,$generatelist);
-    if($self->{SYSTEMTYPE} eq "BG/P") {
+    if(($self->{SYSTEMTYPE} eq "BG/P") || ($self->{SYSTEMTYPE} eq "BG/Q")) {
 	return($nodelist);
     }
     foreach $spec (split(/\),?\(/,$nodelist)) {
@@ -879,7 +891,8 @@ sub _get_system_size_bg  {
     keys(%{$self->{LMLFH}->{DATA}->{OBJECT}}); # reset iterator
     while(($key,$ref)=each(%{$self->{LMLFH}->{DATA}->{OBJECT}})) {
 	next if($ref->{type} ne 'partition');
-	next if($ref->{id}!~/^bgbp/s);
+	# next if($ref->{id}!~/^bgbp/s);
+	next if($ref->{id}!~/^bgb/s);
 	$partref=$self->{LMLFH}->{DATA}->{INFODATA}->{$key};
 	$part=$partref->{bgp_partitionid};
 	$px=$partref->{x_loc};
@@ -946,6 +959,52 @@ sub _init_trees_bg  {
     $treenode->add_attr({ tagname => 'core',
 			  min     => 0,
 			  max     => 3,
+			  mask    => '-%01d' });
+
+    return(1);
+}
+
+sub _init_trees_bgq  {
+    my($self) = shift;
+    my($maxlx,$maxly,$maxlz,$maxpx,$maxpy,$maxpz)=@_;
+    my($id,$subid,$treenode,$schemeroot,$bgsystem);
+
+    $schemeroot=$self->{SCHEMEROOT};
+    $treenode=$schemeroot;
+    $bgsystem=$treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'row',
+			  min     => 0,
+			  max     => $maxpx,
+			  mask    => 'R%01d' });
+
+    $treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'rack',
+			  min     => 0,
+			  max     => $maxpy,
+			  mask    => '%01d' });
+
+    $treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'midplane',
+			  min     => 0,
+			  max     => $maxpz,
+			  mask    => '-M%01d' });
+
+    $treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'nodecard',
+			  min     => 0,
+			  max     => 15,
+			  mask    => '-N%02d' });
+
+    $treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'computecard',
+			  min     => 0,
+			  max     => 31,
+			  mask    => '-C%02d' });
+
+    $treenode=$treenode->new_child();
+    $treenode->add_attr({ tagname => 'core',
+			  min     => 0,
+			  max     => 15,
 			  mask    => '-%01d' });
 
     return(1);

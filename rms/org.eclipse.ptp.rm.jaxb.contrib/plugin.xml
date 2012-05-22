@@ -31,6 +31,14 @@
             configurationFile="data/openmpi-generic-interactive.xml"
             name="Open MPI-Generic-Interactive">
       </JAXBResourceManagerConfiguration>
+      <JAXBResourceManagerConfiguration
+            configurationFile="data/gov.anl.alcf.bgp.pbs.batch.xml"
+        name="gov.anl.alcf.bgp.pbs.batch">
+      </JAXBResourceManagerConfiguration>
+      <JAXBResourceManagerConfiguration
+            configurationFile="data/gov.anl.alcf.bgq.pbs.batch.xml"
+        name="gov.anl.alcf.bgq.pbs.batch">
+      </JAXBResourceManagerConfiguration>
    </extension>
 
 </plugin>
