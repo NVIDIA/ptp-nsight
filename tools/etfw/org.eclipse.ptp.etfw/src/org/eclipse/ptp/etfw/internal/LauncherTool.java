@@ -18,6 +18,7 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
+import org.eclipse.ptp.core.IPTPLaunchConfigurationConstants;
 import org.eclipse.ptp.etfw.IBuildLaunchUtils;
 import org.eclipse.ptp.etfw.IToolLaunchConfigurationConstants;
 import org.eclipse.ptp.etfw.messages.Messages;
@@ -226,7 +227,13 @@ public class LauncherTool extends ToolStep implements IToolLaunchConfigurationCo
 				}
 
 				if (envMap.size() > 0) {
-					String projectDir=getDirectory(path);
+					
+					String wd = configuration.getAttribute(IPTPLaunchConfigurationConstants.ATTR_WORKING_DIR, (String) null);
+					String projectDir=null;
+					if(wd !=null && wd.length()>0)
+						projectDir=wd;
+					else
+					projectDir=getDirectory(path);
 					if(projectDir==null){
 						projectDir=getDirectory(prog);
 					}
