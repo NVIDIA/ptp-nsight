@@ -21,6 +21,7 @@ import org.eclipse.cdt.internal.ui.editor.SemanticHighlightings;
 import org.eclipse.cdt.ui.PreferenceConstants;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.source.AnnotationRulerColumn;
@@ -30,6 +31,8 @@ import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.IVerticalRulerColumn;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.ptp.internal.rdt.editor.actions.PrintAction;
+import org.eclipse.ptp.internal.rdt.editor.preferences.PrintPreferencePage;
 import org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProvider;
 import org.eclipse.ptp.rdt.editor.info.IRemoteCEditorInfoProviderSaveAsExtension;
 import org.eclipse.ptp.rdt.editor.info.RemoteCInfoProviderUtilities;
@@ -42,6 +45,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 /**
  * Remote enabled version of the CEditor.
@@ -284,6 +288,8 @@ public class RemoteCEditor extends CEditor implements HelpListener {
 		super.createActions();
 		if (provider != null)
 			provider.createActions(getVerticalRuler());
+		IAction print = getAction(ITextEditorActionConstants.PRINT);
+		setAction(ITextEditorActionConstants.PRINT, new PrintAction(print, this));
 	}
 
 	@Override
@@ -397,9 +403,10 @@ public class RemoteCEditor extends CEditor implements HelpListener {
 		if (provider!=null) {
 			String[] additional = provider.collectContextMenuPreferencePages();
 			if (additional!=null && additional.length>0) {
-				String[] newResult = new String[result.length+additional.length];
+				String[] newResult = new String[result.length+additional.length+1];
 				System.arraycopy(result, 0, newResult, 0, result.length);
 				System.arraycopy(additional, 0, newResult, result.length, additional.length);
+				newResult[newResult.length-1] = PrintPreferencePage.PAGE_ID;
 				result = newResult;
 			}
 		}
