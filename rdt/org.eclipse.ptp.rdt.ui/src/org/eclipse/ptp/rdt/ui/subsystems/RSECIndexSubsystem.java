@@ -777,7 +777,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	public CalledByResult getCallers(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RSECIndexSubsystem.5") + subject, 100); //$NON-NLS-1$
     	String path = EFSExtensionManager.getDefault().getPathFromURI(subject.getLocationURI());
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLERS, new Object[] { scope, getHostName(), subject, path }, null);
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLERS, new Object[] { scope, getHostName(), subject, path }, monitor);
 		if (result == null) {
 			return new CalledByResult();
 		}
@@ -790,7 +790,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	public CallsToResult getCallees(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RSECIndexSubsystem.6") + subject, 100); //$NON-NLS-1$
     	String path = EFSExtensionManager.getDefault().getPathFromURI(subject.getLocationURI());
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLS, new Object[] { scope, getHostName(), subject, path }, null);
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_CALLS, new Object[] { scope, getHostName(), subject, path }, monitor);
 		if (result == null) {
 			return new CallsToResult();
 		}
@@ -803,7 +803,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	public ICElement[] getCHDefinitions(Scope scope, ICElement subject, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RSECIndexSubsystem.7") + subject, 100); //$NON-NLS-1$
     	String path = EFSExtensionManager.getDefault().getPathFromURI(subject.getLocationURI());
-		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_ELEMENT, new Object[] { scope, getHostName(), subject, path }, null);
+		Object result = sendRequest(CDTMiner.C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_ELEMENT, new Object[] { scope, getHostName(), subject, path }, monitor);
 		if (result == null) {
 			return new ICElement[0];
 		}
@@ -823,7 +823,7 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
 	@SuppressWarnings("unchecked")
 	public List<RemoteSearchMatch> runQuery(Scope scope, RemoteSearchQuery query, IProgressMonitor monitor) {
     	monitor.beginTask(Messages.getString("RSECIndexSubsystem.8") + query.getScopeDescription(), 100); //$NON-NLS-1$
-		Object result = sendRequest(CDTMiner.C_SEARCH_RUN_QUERY, new Object[] { scope, getHostName(), query  }, null);
+		Object result = sendRequest(CDTMiner.C_SEARCH_RUN_QUERY, new Object[] { scope, getHostName(), query  }, monitor);
 		if (result == null) {
 			return Collections.emptyList();
 		}
@@ -1086,14 +1086,19 @@ public class RSECIndexSubsystem extends SubSystem implements ICIndexSubsystem {
     	// execute the command
     	DataElement status = dataStore.command(queryCmd, args, dataStore.getDescriptorRoot());
     	
-    	try
-        {
-    		monitor = monitor == null ? new NullProgressMonitor() : monitor;
-        	statusMonitor.waitForUpdate(status, monitor);
-        }
-        catch (Exception e) {
-        	RDTLog.logError(e);	
-        }
+		try {
+			//monitor = monitor == null ? new NullProgressMonitor() : monitor;
+			StatusMonitor smonitor = StatusMonitorFactory.getInstance().getStatusMonitorFor(getConnectorService(),
+					dataStore);
+			try {
+				smonitor.waitForUpdate(status, monitor);
+			} catch (InterruptedException e) { // Canceled
+				if (monitor.isCanceled())
+					cancelOperation(status.getParent());
+			}
+		} catch (Exception e) {
+			RDTLog.logError(e);
+		}
     	
     	DataElement element = status.get(0);
     	if (element == null) {

@@ -102,6 +102,8 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class CDTMiner extends Miner {
 	
+	private static final String CANCELLED = "cancelled"; //$NON-NLS-1$
+
 	public static final String CLASSNAME="org.eclipse.ptp.internal.rdt.core.miners.CDTMiner"; //$NON-NLS-1$
 
 	// index management
@@ -345,7 +347,12 @@ public class CDTMiner extends Miner {
 			if(C_INDEX_REINDEX.equals(commandName) || C_INDEX_DELTA.equals(commandName)) {
 				handleIndexCancel(cancelStatus);
 			}
-			// add more cancelable commands here
+			else {
+				// set the status object to canceled.  It'll be up to the command to poll
+				// the status object now and then to see if it's canceled and handle it
+				// appropriately
+				statusCancelled(cancelStatus);
+			}
 		}
 		
 		else if(name.equals(C_MOVE_INDEX_FILE)) {
@@ -1041,177 +1048,218 @@ public class CDTMiner extends Miner {
 		
 	}
 	
-	protected void handleFindInclude(String scopeName, String hostName, IIndexFileLocation location, String name, int offset, DataElement status) 
+	protected void handleFindInclude(final String scopeName, final String hostName, final IIndexFileLocation location, final String name, final int offset, final DataElement status) 
 	{
-		try 
-		{
-			String scheme = location.getURI().getScheme();
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
-			index.acquireReadLock();
-
-			try
-			{
-				IIndexIncludeValue includeToReturn = null;
-				IIndexFile[] files= index.getFiles(location);
-				
-				if (files.length == 0)
-				{
-					UniversalServerUtilities.logDebugMessage(LOG_TAG, "No index files found", _dataStore); //$NON-NLS-1$
-				}
-				else 
-				{
-					IIndexInclude best= null;
-
-					for (int j = 0; j < files.length; j ++) 
-					{
-						IIndexFile file = files[j];
-
-						IIndexInclude[] includes= index.findIncludes(file);
-						int bestDiff= Integer.MAX_VALUE;
-
-						for (int i = 0; i < includes.length; i++) 
-						{
-							IIndexInclude candidate = includes[i];
-							int diff = Math.abs(candidate.getNameOffset()- offset);
-							if (diff > bestDiff) 
-							{
-								break;
-							}
-							if (candidate.getName().endsWith(name)) 
-							{
-								bestDiff= diff;
-								best= candidate;
-							}
-						}
-						
-						if (best != null)
-						{
-							includeToReturn = new IndexIncludeValue(best, getLocationConverter(scheme, hostName));
-							break;
-						}
-					}
-					
-				}
-	
-				// create the result object
-				String resultString = Serializer.serialize(includeToReturn);
-				status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDE_RESULT, resultString);
-			}			         
-			finally 
-			{
-				if (index != null)
-					index.releaseReadLock();
-								
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Released read lock", _dataStore); //$NON-NLS-1$
-				
-			}
-		} 
-		catch (Exception e) 
-		{
-			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
-		} 
 		
-		finally {
-			statusDone(status);
-		}
+		Thread findIncludeThread = new Thread() {
+
+			@Override
+			public void run() {
+				try 
+				{
+					String scheme = location.getURI().getScheme();
+					IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+					index.acquireReadLock();
+
+					try
+					{
+						IIndexIncludeValue includeToReturn = null;
+						IIndexFile[] files= index.getFiles(location);
+						
+						if (files.length == 0)
+						{
+							UniversalServerUtilities.logDebugMessage(LOG_TAG, "No index files found", _dataStore); //$NON-NLS-1$
+						}
+						else 
+						{
+							IIndexInclude best= null;
+
+							for (int j = 0; j < files.length; j ++) 
+							{
+								if(isCancelled(status)) {
+									break;
+								}
+								
+								IIndexFile file = files[j];
+
+								IIndexInclude[] includes= index.findIncludes(file);
+								int bestDiff= Integer.MAX_VALUE;
+
+								for (int i = 0; i < includes.length; i++) 
+								{
+									if(isCancelled(status)) {
+										break;
+									}
+									
+									IIndexInclude candidate = includes[i];
+									int diff = Math.abs(candidate.getNameOffset()- offset);
+									if (diff > bestDiff) 
+									{
+										break;
+									}
+									if (candidate.getName().endsWith(name)) 
+									{
+										bestDiff= diff;
+										best= candidate;
+									}
+								}
+								
+								if (best != null)
+								{
+									includeToReturn = new IndexIncludeValue(best, getLocationConverter(scheme, hostName));
+									break;
+								}
+							}
+							
+						}
+			
+						// create the result object
+						String resultString = Serializer.serialize(includeToReturn);
+						status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDE_RESULT, resultString);
+					}			         
+					finally 
+					{
+						if (index != null)
+							index.releaseReadLock();
+										
+						UniversalServerUtilities.logDebugMessage(LOG_TAG, "Released read lock", _dataStore); //$NON-NLS-1$
+						
+					}
+				} 
+				catch (Exception e) 
+				{
+					UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+				} 
+				
+				finally {
+					statusDone(status);
+				}
+			}
+			
+			
+		};
+		
+		findIncludeThread.start();
 		
 	}
 
-	protected void handleFindIncludedBy(String scopeName, String hostName, IIndexFileLocation location, DataElement status) 
+	protected void handleFindIncludedBy(final String scopeName, final String hostName, final IIndexFileLocation location, final DataElement status) 
 	{
-		try 
-		{
-			String scheme = location.getURI().getScheme();
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
-			index.acquireReadLock();
+		
+		Thread findIncludedByThread = new Thread() {
 
-			try
-			{
-				IIndexIncludeValue[] includesToReturn;
-				IIndexFile[] files= index.getFiles(location);
-				
-				if (files.length == 0)
+			@Override
+			public void run() {
+				try 
 				{
-					UniversalServerUtilities.logDebugMessage(LOG_TAG, "No index files found", _dataStore); //$NON-NLS-1$
+					String scheme = location.getURI().getScheme();
+					IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+					index.acquireReadLock();
 
-					includesToReturn = new IIndexIncludeValue[0];
-				}
-				else if (files.length == 1) 
-				{
-//					System.out.println("Found 1 index file"); //$NON-NLS-1$ 
-//					System.out.flush();
-
-					IIndexInclude[] includes = index.findIncludedBy(files[0]);
-					
-					if (includes == null)
-						includesToReturn = new IIndexIncludeValue[0];
-					else
+					try
 					{
-						includesToReturn = new IIndexIncludeValue[includes.length];
-						for (int i = 0; i < includes.length; i ++)
+						IIndexIncludeValue[] includesToReturn;
+						IIndexFile[] files= index.getFiles(location);
+						
+						if (files.length == 0)
 						{
-							includesToReturn[i] = new IndexIncludeValue(includes[i], getLocationConverter(scheme, hostName));
-							
-							UniversalServerUtilities.logDebugMessage(LOG_TAG, "IndexIncludeValue to return: " + includesToReturn[i], _dataStore); //$NON-NLS-1$
+							UniversalServerUtilities.logDebugMessage(LOG_TAG, "No index files found", _dataStore); //$NON-NLS-1$
+
+							includesToReturn = new IIndexIncludeValue[0];
 						}
+						else if (files.length == 1) 
+						{
+//							System.out.println("Found 1 index file"); //$NON-NLS-1$ 
+//							System.out.flush();
+
+							IIndexInclude[] includes = index.findIncludedBy(files[0]);
+							
+							if (includes == null)
+								includesToReturn = new IIndexIncludeValue[0];
+							else
+							{
+								includesToReturn = new IIndexIncludeValue[includes.length];
+								for (int i = 0; i < includes.length; i ++)
+								{
+									if(isCancelled(status)) {
+										break;
+									}
+									
+									includesToReturn[i] = new IndexIncludeValue(includes[i], getLocationConverter(scheme, hostName));
+									
+									UniversalServerUtilities.logDebugMessage(LOG_TAG, "IndexIncludeValue to return: " + includesToReturn[i], _dataStore); //$NON-NLS-1$
+								}
+								
+							}
+						}
+						else 
+						{
+//							System.out.println("Found " + files.length + " index files"); //$NON-NLS-1$ //$NON-NLS-2$
+//							System.out.flush();
+
+							ArrayList<IIndexIncludeValue> list= new ArrayList<IIndexIncludeValue>();
+							HashSet<IIndexFileLocation> handled= new HashSet<IIndexFileLocation>();
+							
+							for (int i = 0; i < files.length; i++) 
+							{
+								if(isCancelled(status)) {
+									break;
+								}
+								
+								final IIndexInclude[] includes = index.findIncludedBy(files[i]);
+
+//								System.out.println("Found " + includes.length + " includes"); //$NON-NLS-1$ //$NON-NLS-2$
+//								System.out.flush();
+
+								for (int j = 0; j < includes.length; j++) 
+								{
+									if(isCancelled(status)) {
+										break;
+									}
+									
+									IIndexInclude indexInclude = includes[j];
+									if (handled.add(indexInclude.getIncludedByLocation())) 
+									{
+										IIndexIncludeValue value = new IndexIncludeValue(indexInclude, getLocationConverter(scheme, hostName));
+										list.add(value);
+
+										UniversalServerUtilities.logDebugMessage(LOG_TAG, "IndexIncludeValue to return: " + value, _dataStore); //$NON-NLS-1$
+									}
+
+								}
+							}
+							
+							includesToReturn = list.toArray(new IIndexIncludeValue[list.size()]);
+						}
+			
+						// create the result object
+						String resultString = Serializer.serialize(includesToReturn);
+						status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDED_BY_RESULT, resultString);
+					}			         
+					finally 
+					{
+						if (index != null)
+							index.releaseReadLock();
+						
+			    		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Released read lock", _dataStore); //$NON-NLS-1$
 						
 					}
-				}
-				else 
+				} 
+				catch (Exception e) 
 				{
-//					System.out.println("Found " + files.length + " index files"); //$NON-NLS-1$ //$NON-NLS-2$
-//					System.out.flush();
-
-					ArrayList<IIndexIncludeValue> list= new ArrayList<IIndexIncludeValue>();
-					HashSet<IIndexFileLocation> handled= new HashSet<IIndexFileLocation>();
-					
-					for (int i = 0; i < files.length; i++) 
-					{
-						final IIndexInclude[] includes = index.findIncludedBy(files[i]);
-
-//						System.out.println("Found " + includes.length + " includes"); //$NON-NLS-1$ //$NON-NLS-2$
-//						System.out.flush();
-
-						for (int j = 0; j < includes.length; j++) 
-						{
-							IIndexInclude indexInclude = includes[j];
-							if (handled.add(indexInclude.getIncludedByLocation())) 
-							{
-								IIndexIncludeValue value = new IndexIncludeValue(indexInclude, getLocationConverter(scheme, hostName));
-								list.add(value);
-
-								UniversalServerUtilities.logDebugMessage(LOG_TAG, "IndexIncludeValue to return: " + value, _dataStore); //$NON-NLS-1$
-							}
-
-						}
-					}
-					
-					includesToReturn = list.toArray(new IIndexIncludeValue[list.size()]);
+					UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+				} 
+				
+				finally {
+					statusDone(status);
 				}
-	
-				// create the result object
-				String resultString = Serializer.serialize(includesToReturn);
-				status.getDataStore().createObject(status, T_INCLUDES_FIND_INCLUDED_BY_RESULT, resultString);
-			}			         
-			finally 
-			{
-				if (index != null)
-					index.releaseReadLock();
-				
-	    		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Released read lock", _dataStore); //$NON-NLS-1$
-				
 			}
-		} 
-		catch (Exception e) 
-		{
-			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
-		} 
+			
+		};
 		
-		finally {
-			statusDone(status);
-		}
+		findIncludedByThread.start();
 		
 	}
 	
@@ -1386,40 +1434,57 @@ public class CDTMiner extends Miner {
 		}
 	}
 
-	protected void handleComputeTypeGraph(String scopeName, String hostName, ICElement input, String path, DataElement status) {
-		try {
-			
-			String scheme = input.getLocationURI().getScheme();
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + input.getLocationURI(), _dataStore); //$NON-NLS-1$
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Element: " + input.getElementName(), _dataStore); //$NON-NLS-1$
-	
-			IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
-			index.acquireReadLock();
-			try {
-				IProgressMonitor monitor = new NullProgressMonitor();
-				THGraph graph = new THGraph();
-				graph.setLocationConverterFactory(new RemoteIndexLocationConverterFactory(scheme, hostName, _dataStore));
-				final RemoteCProjectFactory projectFactory = new RemoteCProjectFactory(input.getCProject());
-				graph.defineInputNode(index, input, projectFactory, path);
-				graph.addSuperClasses(index, monitor, projectFactory);
-				graph.addSubClasses(index, monitor, projectFactory);
-
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + graph.getLeaveNodes().size() + " leaf node(s).", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
-				
-
-				String resultString = Serializer.serialize(graph);
-				status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
-			} finally {
-				index.releaseReadLock();
-			}
-		} catch (Exception e) {
-			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
-		}
+	protected void handleComputeTypeGraph(final String scopeName, final String hostName, final ICElement input, final String path, final DataElement status) {
 		
-		finally {
-			statusDone(status);
-		}
+		Thread typeGraphThread = new Thread() {
+
+			@Override
+			public void run() {
+				try {
+					
+					String scheme = input.getLocationURI().getScheme();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "File: " + input.getLocationURI(), _dataStore); //$NON-NLS-1$
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Element: " + input.getElementName(), _dataStore); //$NON-NLS-1$
+			
+					IIndex index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+					index.acquireReadLock();
+					IProgressMonitor monitor = new NullProgressMonitor();
+					
+					CancellationThread cancellationThread = new CancellationThread(status, monitor);
+					cancellationThread.start();
+					
+					try {
+						
+						
+						THGraph graph = new THGraph();
+						graph.setLocationConverterFactory(new RemoteIndexLocationConverterFactory(scheme, hostName, _dataStore));
+						final RemoteCProjectFactory projectFactory = new RemoteCProjectFactory(input.getCProject());
+						graph.defineInputNode(index, input, projectFactory, path);
+						graph.addSuperClasses(index, monitor, projectFactory);
+						graph.addSubClasses(index, monitor, projectFactory);
+
+						UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + graph.getLeaveNodes().size() + " leaf node(s).", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+						
+
+						String resultString = Serializer.serialize(graph);
+						status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
+					} finally {
+						cancellationThread.setDone(true);
+						index.releaseReadLock();
+					}
+				} catch (Exception e) {
+					UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+				}
+				
+				finally {
+					statusDone(status);
+				}
+			}
+			
+		};
+		
+		typeGraphThread.start();
 	}
 
 	protected void handleComputeCompletionProposals(String scopeName, RemoteContentAssistInvocationContext context, ITranslationUnit unit, String path, DataElement status) {
@@ -1468,52 +1533,111 @@ public class CDTMiner extends Miner {
 			statusDone(status);
 		}
 	}
+	
+	private class CancellationThread extends Thread {
 
-	protected void handleRunQuery(String scopeName, RemoteSearchQuery query, String scheme, String hostName, DataElement status) {
-		try {
-			
-			IWritableIndex[] indexList;
-			ICProject[] projects = query.getProjects();
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Searching for: \"" + query + "\"", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
-			
-			if (projects == null)
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
-			else
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + query.getScopeDescription(), _dataStore); //$NON-NLS-1$
-			
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
-			
-						
-			if (projects == null) {
-				indexList = RemoteIndexManager.getInstance().getIndexListForScope(scopeName, _dataStore);
-			}
-			else{			
-				indexList = RemoteIndexManager.getInstance().getIndexListForProjects(projects, _dataStore);
-			}
-
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
-			
-			
+		private boolean cancelled=false, done=false;
+		private DataElement fStatus;
+		private IProgressMonitor fMonitor;
 		
-			IStatus exceptionStatus = query.runWithIndex(indexList, getLocationConverter(scheme, hostName), new StdoutProgressMonitor());
-			if(exceptionStatus !=Status.OK_STATUS){
-				UniversalServerUtilities.logError(LOG_TAG, exceptionStatus.getMessage(), null, _dataStore);
-			}
-			List<RemoteSearchMatch> matches = query.getMatches();
-
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found " + matches.size() + " match(es)", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
-			
-			
-			String resultString = Serializer.serialize(matches);
-			status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
-		
-		} catch (Exception e) {
-			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+		public CancellationThread(DataElement status, IProgressMonitor monitor) {
+			 fStatus = status;
+			 fMonitor = monitor;
 		}
 		
-		finally {
-			statusDone(status);
+		private CancellationThread() {}
+		
+		public void setDone(boolean isDone) {
+			done = isDone;
 		}
+		
+		@Override
+		public void run() {
+			while (!cancelled & !done) {
+				if (fStatus.getAttribute(DE.A_NAME).equals(CANCELLED)) {
+					fMonitor.setCanceled(true);
+				}
+				else {
+					try {
+						sleep(100);
+					} catch (InterruptedException e) {
+						// ignore
+					}
+				}
+			}
+		}
+		
+	};
+	
+	
+	protected boolean isCancelled(DataElement status) {
+		return status.getAttribute(DE.A_NAME).equals(CANCELLED);
+	}
+
+	protected void handleRunQuery(final String scopeName, final RemoteSearchQuery query, final String scheme,
+			final String hostName, final DataElement status) {
+		Thread queryThread = new Thread() {
+
+			@Override
+			public void run() {
+				
+				final NullProgressMonitor monitor = new NullProgressMonitor();
+
+				CancellationThread cancellationThread = new CancellationThread(status, monitor);
+				cancellationThread.start();
+				
+				try {
+
+					IWritableIndex[] indexList;
+					ICProject[] projects = query.getProjects();
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Searching for: \"" + query + "\"", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+
+					if (projects == null)
+						UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+					else
+						UniversalServerUtilities.logDebugMessage(LOG_TAG,
+								"scope: " + query.getScopeDescription(), _dataStore); //$NON-NLS-1$
+
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+
+					if (projects == null) {
+						indexList = RemoteIndexManager.getInstance().getIndexListForScope(scopeName, _dataStore);
+					} else {
+						indexList = RemoteIndexManager.getInstance().getIndexListForProjects(projects, _dataStore);
+					}
+
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock", _dataStore); //$NON-NLS-1$
+
+					IStatus exceptionStatus = query.runWithIndex(indexList, getLocationConverter(scheme, hostName),
+							monitor);
+					if (exceptionStatus != Status.OK_STATUS) {
+						UniversalServerUtilities.logError(LOG_TAG, exceptionStatus.getMessage(), null, _dataStore);
+					}
+
+					List<RemoteSearchMatch> matches = query.getMatches();
+
+					UniversalServerUtilities.logDebugMessage(LOG_TAG,
+							"Found " + matches.size() + " match(es)", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+
+					String resultString = Serializer.serialize(matches);
+					status.getDataStore().createObject(status, T_SEARCH_RESULT, resultString);
+
+				} catch (Exception e) {
+					UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+				}
+
+				finally {
+					// no longer running the query so halt the cancellation thread
+					cancellationThread.setDone(true);
+					
+					statusDone(status);
+				}
+			}
+
+		};
+
+		queryThread.start();
+
 	}
 
 	private IIndexLocationConverter getLocationConverter(String scheme, String hostName) {
@@ -1568,7 +1692,8 @@ public class CDTMiner extends Miner {
 		createCommandDescriptor(schemaRoot, "Get definitions from working copy", C_CALL_HIERARCHY_GET_DEFINITIONS_FROM_WORKING_COPY, false); //$NON-NLS-1$
 		
 		// search
-		createCommandDescriptor(schemaRoot, "Run query", C_SEARCH_RUN_QUERY, false); //$NON-NLS-1$
+		DataElement search = createCommandDescriptor(schemaRoot, "Run query", C_SEARCH_RUN_QUERY, false); //$NON-NLS-1$
+		_dataStore.createReference(cancellable, search, DataStoreResources.model_abstracts, DataStoreResources.model_abstracted_by);
 		
 		// content assist
 		createCommandDescriptor(schemaRoot, "Compute completion proposals", C_CONTENT_ASSIST_COMPUTE_PROPOSALS, false); //$NON-NLS-1$
@@ -1915,77 +2040,93 @@ public class CDTMiner extends Miner {
 		return false;
 	}
 	
-	protected void handleGetCallees(String scopeName, ICElement subject, String path, String hostName, DataElement status) {
-		String subjectName = subject.getElementName();
-		String scheme = subject.getLocationURI().getScheme();
-		UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callees for subject " + subjectName, _dataStore); //$NON-NLS-1$
-		UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
-		UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + subject.getLocationURI(), _dataStore); //$NON-NLS-1$
+	protected void handleGetCallees(final String scopeName, final ICElement subject, final String path, final String hostName, final DataElement status) {
 		
-		try {
-			CallsToResult result = new CallsToResult();
-			
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
-			
+		Thread getCalleesThread = new Thread() {
 
-			// search the index for the name
-			IIndex project_index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
-			IIndex workspace_scope_index = RemoteIndexManager.getInstance().getIndexForScope(Scope.WORKSPACE_ROOT_SCOPE_NAME, _dataStore);
-			IIndexName callerName = null;
-			
-			UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock for project_index", _dataStore); //$NON-NLS-1$
-			project_index.acquireReadLock();
-			try {
+			@Override
+			public void run() {
+				String subjectName = subject.getElementName();
+				String scheme = subject.getLocationURI().getScheme();
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting callees for subject " + subjectName, _dataStore); //$NON-NLS-1$
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "scope: " + scopeName, _dataStore); //$NON-NLS-1$
+				UniversalServerUtilities.logDebugMessage(LOG_TAG, "path: " + subject.getLocationURI(), _dataStore); //$NON-NLS-1$
 				
-				callerName= IndexQueries.remoteElementToName(project_index, subject, path);
-				
-			}
+				try {
+					CallsToResult result = new CallsToResult();
+					
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Getting index", _dataStore); //$NON-NLS-1$
+					
 
-			finally {
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Releasing read lock for project_index", _dataStore); //$NON-NLS-1$
-				project_index.releaseReadLock();
-				
-			}
-			
-			if (callerName != null) {
-				UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock for workspace_scope_index", _dataStore); //$NON-NLS-1$
-				workspace_scope_index.acquireReadLock();
-				try{
-					IIndexName[] refs= callerName.getEnclosedNames();
-					for (int i = 0; i < refs.length; i++) {
-						IIndexName name = refs[i];
-						IBinding binding= workspace_scope_index.findBinding(name);
-						if (isRelevantForCallHierarchy(binding)) {
-							IIndexLocationConverterFactory converter = new RemoteIndexLocationConverterFactory(scheme, hostName, _dataStore);
-							ICElement[] defs = IndexQueries.findRepresentative(workspace_scope_index, binding, converter, subject.getCProject(), new RemoteCProjectFactory());
-							if (defs != null && defs.length > 0) {
-								IIndexFileLocation indexLocation = createLocation(scheme, hostName, name.getFile().getLocation());
-								IIndexName reference = new DummyName(name, name.getFileLocation(), indexLocation);
+					// search the index for the name
+					IIndex project_index = RemoteIndexManager.getInstance().getIndexForScope(scopeName, _dataStore);
+					IIndex workspace_scope_index = RemoteIndexManager.getInstance().getIndexForScope(Scope.WORKSPACE_ROOT_SCOPE_NAME, _dataStore);
+					IIndexName callerName = null;
+					
+					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock for project_index", _dataStore); //$NON-NLS-1$
+					project_index.acquireReadLock();
+					try {
+						
+						callerName= IndexQueries.remoteElementToName(project_index, subject, path);
+						
+					}
+
+					finally {
+						UniversalServerUtilities.logDebugMessage(LOG_TAG, "Releasing read lock for project_index", _dataStore); //$NON-NLS-1$
+						project_index.releaseReadLock();
+						
+					}
+					
+					if (callerName != null) {
+						UniversalServerUtilities.logDebugMessage(LOG_TAG, "Acquiring read lock for workspace_scope_index", _dataStore); //$NON-NLS-1$
+						workspace_scope_index.acquireReadLock();
+						try{
+							IIndexName[] refs= callerName.getEnclosedNames();
+							for (int i = 0; i < refs.length; i++) {
 								
-								UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found a callee: " + defs[0].getElementName() + "\n", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
-								result.add(defs, reference);
+								if(isCancelled(status)) {
+									break;
+								}
+								
+								IIndexName name = refs[i];
+								IBinding binding= workspace_scope_index.findBinding(name);
+								if (isRelevantForCallHierarchy(binding)) {
+									IIndexLocationConverterFactory converter = new RemoteIndexLocationConverterFactory(scheme, hostName, _dataStore);
+									ICElement[] defs = IndexQueries.findRepresentative(workspace_scope_index, binding, converter, subject.getCProject(), new RemoteCProjectFactory());
+									if (defs != null && defs.length > 0) {
+										IIndexFileLocation indexLocation = createLocation(scheme, hostName, name.getFile().getLocation());
+										IIndexName reference = new DummyName(name, name.getFileLocation(), indexLocation);
+										
+										UniversalServerUtilities.logDebugMessage(LOG_TAG, "Found a callee: " + defs[0].getElementName() + "\n", _dataStore); //$NON-NLS-1$ //$NON-NLS-2$
+										result.add(defs, reference);
+									}
+								}
 							}
 						}
+						finally {
+							UniversalServerUtilities.logDebugMessage(LOG_TAG, "Releasing read lock for workspace_scope_index", _dataStore); //$NON-NLS-1$
+							workspace_scope_index.releaseReadLock();
+						}
 					}
+
+					// create the result object
+					String resultString = Serializer.serialize(result);
+					status.getDataStore().createObject(status, T_CALL_HIERARCHY_RESULT, resultString);
 				}
+
+				catch (Exception e) {
+					UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
+				}
+				
 				finally {
-					UniversalServerUtilities.logDebugMessage(LOG_TAG, "Releasing read lock for workspace_scope_index", _dataStore); //$NON-NLS-1$
-					workspace_scope_index.releaseReadLock();
+					statusDone(status);
 				}
 			}
-
-			// create the result object
-			String resultString = Serializer.serialize(result);
-			status.getDataStore().createObject(status, T_CALL_HIERARCHY_RESULT, resultString);
-		}
-
-		catch (Exception e) {
-			UniversalServerUtilities.logError(LOG_TAG, e.toString(), e, _dataStore);
-		}
+			
+		};
 		
-		finally {
-			statusDone(status);
-		}
+		getCalleesThread.start();
+		
 	}
 
 	protected void handleIndexDelta(String scopeName, List<String> addedFiles, List<String> changedFiles, List<String> removedFiles, 
@@ -2109,7 +2250,7 @@ public class CDTMiner extends Miner {
 	 * Cancel status.
 	 */
 	public static DataElement statusCancelled(DataElement status) {
-		status.setAttribute(DE.A_NAME, "cancelled"); //$NON-NLS-1$
+		status.setAttribute(DE.A_NAME, CANCELLED);
 		status.getDataStore().refresh(status);
 		return status;
 	}

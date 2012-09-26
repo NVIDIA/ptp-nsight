@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2009, 2012 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -115,6 +115,12 @@ class OpenDeclarationsJob extends Job{
 		
 		if(result == null) // can happen when using the null service provider
 			return Status.OK_STATUS;
+		
+		
+		// check for cancellation... don't navigate if we cancelled
+		if(monitor.isCanceled()) {
+			return Status.CANCEL_STATUS;
+		}
 		
 		switch(result.getResultType()) {
 			case RESULT_NAMES:
