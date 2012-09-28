@@ -19,8 +19,10 @@ import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.ui.newui.IncludeTab;
 import org.eclipse.ptp.internal.rdt.ui.RDTHelpContextIds;
+import org.eclipse.ptp.internal.rdt.ui.RSEUtils;
 import org.eclipse.ptp.rdt.core.services.IRDTServiceConstants;
 import org.eclipse.ptp.rdt.ui.serviceproviders.IRemoteToolsIndexServiceProvider;
+import org.eclipse.ptp.rdt.ui.serviceproviders.NullCIndexServiceProvider;
 import org.eclipse.ptp.rdt.ui.serviceproviders.RSECIndexServiceProvider;
 import org.eclipse.ptp.services.core.IService;
 import org.eclipse.ptp.services.core.IServiceConfiguration;
@@ -71,7 +73,7 @@ public class RemoteIncludeTab extends IncludeTab {
 		return RDTHelpContextIds.REMOTE_INCLUDE_TAB;
 	}
 
-	private void setRemoteConnection(RemoteIncludeDialog dlg) {
+	protected void setRemoteConnection(RemoteIncludeDialog dlg) {
 		IServiceModelManager manager = ServiceModelManager.getInstance();
 		IServiceConfiguration config = manager.getActiveConfiguration(page.getProject());
 		if (config != null) {
@@ -79,7 +81,9 @@ public class RemoteIncludeTab extends IncludeTab {
 			if (service != null) {
 				IServiceProvider provider = config.getServiceProvider(service);
 				if (provider != null) {
-					if (provider instanceof RSECIndexServiceProvider) {
+					if (provider instanceof NullCIndexServiceProvider) {
+						dlg.setHost(RSEUtils.getConnection(page.getProject().getLocationURI()));
+					} else if (provider instanceof RSECIndexServiceProvider) {
 						dlg.setHost(((RSECIndexServiceProvider) provider).getHost());
 					} else if (provider instanceof IRemoteToolsIndexServiceProvider) {
 						dlg.setConnection(((IRemoteToolsIndexServiceProvider) provider).getConnection());
