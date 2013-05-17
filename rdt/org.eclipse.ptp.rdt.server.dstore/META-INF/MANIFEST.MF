@@ -22,7 +22,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.rse.connectorservice.dstore,
  org.eclipse.rse.core,
  org.eclipse.text
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.ptp.rdt.server.dstore.core,
  org.eclipse.ptp.rdt.server.dstore.ui
