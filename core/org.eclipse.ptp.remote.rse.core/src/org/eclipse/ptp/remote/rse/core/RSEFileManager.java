@@ -60,7 +60,10 @@ public class RSEFileManager implements IRemoteFileManager {
 			path = new Path(fConnection.getWorkingDirectory()).append(path);
 		}
 		try {
-			return EFS.getFileSystem("rse").getStore(toURI(path)); //$NON-NLS-1$
+			if (fConnection.getHost().getSystemType().getId().equals(IRSESystemType.SYSTEMTYPE_LOCAL_ID) && fConnection.getHost().getSystemType().isWindows())
+				return EFS.getLocalFileSystem().getStore(path);
+			else
+				return EFS.getFileSystem("rse").getStore(toURI(path)); //$NON-NLS-1$
 		} catch (CoreException e) {
 			return null;
 		}

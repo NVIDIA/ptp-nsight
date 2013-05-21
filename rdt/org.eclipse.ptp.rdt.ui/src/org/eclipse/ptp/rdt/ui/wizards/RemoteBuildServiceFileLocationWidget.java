@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.eclipse.ptp.rdt.ui.wizards;
 
+import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.cdt.utils.EFSExtensionManager;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.internal.filesystem.local.LocalFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Path;
@@ -38,7 +40,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 
@@ -148,10 +149,16 @@ public class RemoteBuildServiceFileLocationWidget extends Composite {
 				IFileStore homeStore = remoteServices.getFileManager(connection).getResource(homeDir);
 				URI uri = homeStore.toURI();
 				String pathString = EFSExtensionManager.getDefault().getPathFromURI(uri);
+				boolean isLocal = homeStore instanceof LocalFile;
+				if (pathString==null && isLocal)
+					pathString = (new File(uri)).getAbsolutePath();
 				if(pathString!=null){
 					IPath path = new Path(pathString);
 					path = path.append(RSEUtils.DEFAULT_CONFIG_DIR_NAME);
-					return path.toString();
+					if (isLocal)
+						return path.toOSString();
+					else
+						return path.toString();
 				}
 			}
 		}
