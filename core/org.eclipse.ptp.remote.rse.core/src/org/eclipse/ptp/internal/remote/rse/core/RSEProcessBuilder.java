@@ -112,7 +112,7 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 			if (i > 0) {
 				remoteCmd += " "; //$NON-NLS-1$
 			}
-			remoteCmd += spaceEscapify(cmdArgs.get(i));
+			remoteCmd += quote(cmdArgs.get(i));
 		}
 
 		IHostShell hostShell = null;
@@ -211,14 +211,44 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 		return null;
 	}
 
-	private String spaceEscapify(String inputString) {
-		if (inputString == null) {
-			return null;
-		}
-		return inputString.replaceAll(" ", "\\\\ "); //$NON-NLS-1$ //$NON-NLS-2$
+	/**
+	 * Quotes the arguments string and escapes all characters that conflict. 
+	 */
+	private static String quote(String inputString) {
+	    if (inputString == null) {
+	        return null;
+	    }
+	    // 1. Decide if we even need it
+	    if (inputString.matches(".*[ \\\\\"].*")) { //$NON-NLS-1$
+	        // Reserve 1/10th for characters we need to escape
+	        final StringBuffer b = new StringBuffer(inputString.length() * 11 /10 + 2);
+	        b.append("\""); //$NON-NLS-1$
+	        int ind;
+	        int offset = 0;
+	        while ((ind = inputString.indexOf("\"", offset)) >= 0) { //$NON-NLS-1$
+	            if (ind - offset > 0) {
+	                b.append(escapeTrailingSlashes(inputString.substring(offset, ind)));
+	            }
+	            b.append("\\\""); //$NON-NLS-1$
+	            offset = ind + 1;
+	        }
+	        b.append(inputString.substring(offset, inputString.length()));
+	        b.append("\""); //$NON-NLS-1$
+	        return b.toString();
+	    } else {
+	        return inputString;
+	    }
 	}
 
-	/*
+    private static String escapeTrailingSlashes(String substring) {
+        if (!substring.endsWith("\\")) { //$NON-NLS-1$
+            return substring;
+        } else {
+            return escapeTrailingSlashes(substring.substring(0, substring.length() - 1)) + "\\\\"; //$NON-NLS-1$
+        }
+    }
+
+    /*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.eclipse.ptp.remote.core.AbstractRemoteProcessBuilder#directory()
