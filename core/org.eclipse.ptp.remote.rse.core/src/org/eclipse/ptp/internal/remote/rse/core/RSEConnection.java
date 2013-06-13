@@ -37,14 +37,17 @@ import org.eclipse.rse.core.subsystems.CommunicationsEvent;
 import org.eclipse.rse.core.subsystems.ICommunicationsListener;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.ISubSystem;
+import org.eclipse.rse.internal.services.ssh.ISshService;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.dstore.IDStoreService;
 import org.eclipse.rse.services.shells.IShellService;
+import org.eclipse.rse.services.terminals.ITerminalService;
 import org.eclipse.rse.subsystems.files.core.model.RemoteFileUtility;
 import org.eclipse.rse.subsystems.files.core.servicesubsystem.IFileServiceSubSystem;
 import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFileSubSystem;
 import org.eclipse.rse.subsystems.shells.core.subsystems.servicesubsystem.IShellServiceSubSystem;
 
+@SuppressWarnings("restriction")
 public class RSEConnection implements IRemoteConnection {
 	private IShellService fShellService = null;
 	private ISubSystem fSubSystem = null;
@@ -558,4 +561,8 @@ public class RSEConnection implements IRemoteConnection {
 		}
 		return true;
 	}
+
+    public boolean isRSESSHConnection() {
+        return fShellService != null && fShellService.getAdapter(ITerminalService.class) instanceof ISshService;
+    }
 }

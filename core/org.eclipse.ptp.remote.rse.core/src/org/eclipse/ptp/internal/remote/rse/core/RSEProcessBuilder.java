@@ -27,9 +27,14 @@ import org.eclipse.rse.connectorservice.dstore.DStoreConnectorService;
 import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.ISubSystem;
 import org.eclipse.rse.internal.connectorservice.local.LocalConnectorService;
+import org.eclipse.rse.internal.services.ssh.ISshService;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.shells.IHostShell;
 import org.eclipse.rse.services.shells.IShellService;
+import org.eclipse.rse.services.terminals.ITerminalService;
+
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSchException;
 
 @SuppressWarnings("restriction")
 public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
@@ -115,7 +120,6 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 			remoteCmd += quote(cmdArgs.get(i));
 		}
 
-		IHostShell hostShell = null;
 		try {
 			String initialDir = ""; //$NON-NLS-1$
 			if (directory() != null) {
@@ -123,25 +127,23 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 			}
 
 			SpawnerSubsystem subsystem = getSpawnerSubsystem();
-			
+
 			if(subsystem instanceof LocalSpawnerSubsystem) {
 				Process process = subsystem.spawnLocalRedirected(remoteCmd, initialDir, null, getEnvironment(), new NullProgressMonitor());
 				return new LocalProcessWrapper(process);
 			}
-			
+
 			else {
 				if (subsystem != null) {
-					hostShell = subsystem.spawnRedirected(remoteCmd, initialDir, null, getEnvironment(),
+					IHostShell hostShell = subsystem.spawnRedirected(remoteCmd, initialDir, null, getEnvironment(),
 							new NullProgressMonitor());
 
-					if (hostShell == null) {
-						// fall back to old method of using RSE
-						hostShell = launchCommandWithRSE(remoteCmd, initialDir);
+					if (hostShell != null) {
+					    return new RSEProcess(hostShell, redirectErrorStream());
 					}
-				} else {
-					// fall back to old method of using RSE
-					hostShell = launchCommandWithRSE(remoteCmd, initialDir);
 				}
+				// fall back to old method of using RSE
+				return launchCommandWithRSE(remoteCmd, initialDir);
 			}
 		} catch (SystemMessageException e) {
 			// TODO Auto-generated catch block
@@ -149,24 +151,40 @@ public class RSEProcessBuilder extends AbstractRemoteProcessBuilder {
 			return null;
 		}
 
-		return new RSEProcess(hostShell, redirectErrorStream());
 	}
 
-	private IHostShell launchCommandWithRSE(String remoteCmd, String initialDir) throws IOException, SystemMessageException {
-		// The exit command is called to force the remote shell to close after
-		// our command
-		// is executed. This is to prevent a running process at the end of the
-		// debug session.
-		// See Bug 158786.
-		IHostShell hostShell;
-		remoteCmd += CMD_DELIMITER + EXIT_CMD;
+	private IRemoteProcess launchCommandWithRSE(String remoteCmd, String initialDir) throws IOException, SystemMessageException {
+        IShellService shellService = fConnection.getRemoteShellService();
+        if (fConnection.isRSESSHConnection()) {
+            // In this case we will use special JSCH channel type
+            ISshService sshService = (ISshService) shellService.getAdapter(ITerminalService.class); // We known this cast is safe, tested in isRSESSHConnection
+            try {
+                ChannelExec channel = (ChannelExec) sshService.getSessionProvider().getSession()
+                        .openChannel("exec"); //$NON-NLS-1$
+                if (initialDir != null && initialDir.length() > 0) {
+                    remoteCmd = "cd " + quote(initialDir) + CMD_DELIMITER + remoteCmd; //$NON-NLS-1$
+                }
+                channel.setCommand(remoteCmd);
+                channel.connect();
+                return new RSESSHProcess(channel);
+            } catch (JSchException e) {
+                throw new IOException("Failed to open exec channel", e); //$NON-NLS-1$
+            }
+        } else {
+            // The exit command is called to force the remote shell to close after
+            // our command
+            // is executed. This is to prevent a running process at the end of the
+            // debug session.
+            // See Bug 158786.
+            remoteCmd += CMD_DELIMITER + EXIT_CMD;
 
-		IShellService shellService = fConnection.getRemoteShellService();
-		if (shellService == null) {
-			throw new IOException(Messages.RSEProcessBuilder_0);
-		}
-		hostShell = shellService.runCommand(initialDir, remoteCmd, getEnvironment(), new NullProgressMonitor());
-		return hostShell;
+            if (shellService == null) {
+                throw new IOException(Messages.RSEProcessBuilder_0);
+            }
+            IHostShell hostShell = shellService.runCommand(initialDir, remoteCmd, getEnvironment(),
+                    new NullProgressMonitor());
+            return new RSEProcess(hostShell, redirectErrorStream());
+        }
 	}
 
 	private SpawnerSubsystem getSpawnerSubsystem() {

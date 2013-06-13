@@ -20,10 +20,12 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.cdt.core,
  org.eclipse.dstore.extra,
  org.eclipse.rse.connectorservice.local,
- org.eclipse.rse.services.local
+ org.eclipse.rse.services.local,
+ org.eclipse.rse.services.ssh;bundle-version="3.2.100"
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.ptp.internal.remote.rse.core;x-internal:=true,
  org.eclipse.ptp.internal.remote.rse.core.messages;x-internal:=true,
  org.eclipse.ptp.internal.remote.rse.core.miners;x-internal:=true
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Import-Package: com.jcraft.jsch;version="0.1.46"
